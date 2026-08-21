@@ -7,6 +7,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "../../App";
 import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
+import { decodePolyline } from "../lib/polyline";
+import { startTrip } from "../lib/tripStore";
+import { startTripService } from "../lib/tripService";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
 
@@ -43,6 +46,21 @@ export default function PlanScreen({ route }: Props) {
     if (plan === null) {
       return;
     }
+
+    // Record the trip before handing over. Once Google Maps is in front
+    // this app is backgrounded, and the location task reads everything it
+    // needs from storage.
+    const unavoidable = plan.cameras.filter((camera) => !camera.avoided);
+    await startTrip(destination, decodePolyline(plan.routePolyline), unavoidable);
+
+    // Warnings are a bonus, not a precondition. A driver who declines
+    // background location still gets the camera-avoiding route, which is
+    // the main thing they came for.
+    const watching = await startTripService();
+    if (!watching && unavoidable.length > 0) {
+      setError("Location access is off, so you will not get camera warnings.");
+    }
+
     try {
       await openInGoogleMaps(plan.deepLinkUrl);
     } catch {
