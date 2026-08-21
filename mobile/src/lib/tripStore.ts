@@ -23,6 +23,10 @@ export type ActiveTrip = {
   announcedCameraIds: number[];
   drift: DriftState;
   startedAtMs: number;
+  // For the stationary timeout. A trip nobody ended should not keep a
+  // foreground service and the GPS alive all night.
+  lastPosition: LatLng | null;
+  lastMovedAtMs: number;
   // Set when an off-route prompt is showing. Deciding whether to prompt
   // already cost a re-plan, so the link it produced is kept here and the
   // notification action fires it without asking again.
@@ -41,6 +45,8 @@ export async function startTrip(
     announcedCameraIds: [],
     drift: initialDriftState,
     startedAtMs: Date.now(),
+    lastPosition: null,
+    lastMovedAtMs: Date.now(),
   };
   await save(trip);
   return trip;

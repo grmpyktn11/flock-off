@@ -28,6 +28,13 @@ const TICK_METERS = 10;
 // Near enough to the destination that the trip is over.
 const ARRIVED_METERS = 150;
 
+// A trip that has not moved this far in this long is over, whether or not
+// the driver ever arrived. Someone who abandons a trip, or plans one and
+// never drives it, should not be left with a foreground service and the
+// GPS running until they notice the notification.
+const STATIONARY_METERS = 80;
+const STATIONARY_LIMIT_MS = 10 * 60 * 1000;
+
 TaskManager.defineTask(LOCATION_TASK, async ({ data, error }: any) => {
   if (error || !data?.locations?.length) return;
   const last = data.locations[data.locations.length - 1];
@@ -50,13 +57,27 @@ export async function handleLocation(
   position: LatLng,
   speedMps: number
 ): Promise<TickResult> {
-  const trip = await loadTrip();
+  let trip = await loadTrip();
   if (!trip) return { offRouteMeters: 0 };
 
   const offRouteMeters = distanceToRouteMeters(position, trip.route);
   if (await arrivedAt(trip, position)) {
     return { offRouteMeters, arrived: true };
   }
+
+  const moved =
+    trip.lastPosition === null ||
+    haversineMeters(position, trip.lastPosition) > STATIONARY_METERS;
+  const now = Date.now();
+  if (!moved && now - trip.lastMovedAtMs > STATIONARY_LIMIT_MS) {
+    await stopTrip();
+    return { offRouteMeters, arrived: true };
+  }
+  trip = {
+    ...trip,
+    lastPosition: position,
+    lastMovedAtMs: moved ? now : trip.lastMovedAtMs,
+  };
 
   const spoke = await announceCameras(trip, position, speedMps);
   // One thing at a time in a moving car: a spoken warning and a re-plan
@@ -182,7 +203,7 @@ async function startLocationUpdates(): Promise<boolean> {
     pausesUpdatesAutomatically: false,
     foregroundService: {
       notificationTitle: "Watching for cameras",
-      notificationBody: "Tracking your route to warn about cameras ahead.",
+      notificationBody: "Tap to open flock-off and stop.",
       notificationColor: "#1f2937",
     },
   });

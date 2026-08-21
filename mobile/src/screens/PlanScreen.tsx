@@ -9,13 +9,14 @@ import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
 import { haversineMeters } from "../lib/geo";
 import { decodePolyline } from "../lib/polyline";
-import { startTrip } from "../lib/tripStore";
+import { loadTrip, startTrip } from "../lib/tripStore";
 import {
   TickResult,
   canWatchDrive,
   handleLocation,
   requestDrivePermissions,
   startTripService,
+  stopTrip,
 } from "../lib/tripService";
 import { simulateDrive } from "../lib/simulate";
 
@@ -28,10 +29,14 @@ export default function PlanScreen({ route }: Props) {
   const [simulating, setSimulating] = useState(false);
   const [tick, setTick] = useState<TickResult | null>(null);
   const [canWarn, setCanWarn] = useState(true);
+  const [watching, setWatching] = useState(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     canWatchDrive().then(setCanWarn);
+    // A trip survives the app being closed, so coming back to this screen
+    // has to reflect one that is already running.
+    loadTrip().then((trip) => setWatching(trip !== null));
   }, []);
 
   useEffect(() => {
@@ -61,6 +66,12 @@ export default function PlanScreen({ route }: Props) {
     // Development only. Replays the planned route through the same handler
   // the GPS task calls, so warnings, drift and the re-plan prompt all run
   // without leaving the desk. Stripped from release builds.
+  async function endTrip() {
+    await stopTrip();
+    setWatching(false);
+    setTick(null);
+  }
+
   async function enableWarnings() {
     const granted = await requestDrivePermissions();
     setCanWarn(granted);
@@ -111,6 +122,7 @@ export default function PlanScreen({ route }: Props) {
     // opens the system settings page instead of showing a dialog, so the
     // driver taps this button and lands in Settings rather than Maps.
     await startTripService();
+    setWatching(true);
 
     try {
       await openInGoogleMaps(plan.deepLinkUrl);
@@ -122,6 +134,12 @@ export default function PlanScreen({ route }: Props) {
   // Development only. Replays the planned route through the same handler
   // the GPS task calls, so warnings, drift and the re-plan prompt all run
   // without leaving the desk. Stripped from release builds.
+  async function endTrip() {
+    await stopTrip();
+    setWatching(false);
+    setTick(null);
+  }
+
   async function enableWarnings() {
     const granted = await requestDrivePermissions();
     setCanWarn(granted);
@@ -226,8 +244,15 @@ export default function PlanScreen({ route }: Props) {
 
       <View className="px-4 pt-2" style={{ paddingBottom: insets.bottom + 48 }}>
         <Button mode="contained" icon="navigation" onPress={startNavigation}>
-          Start in Google Maps
+          {watching ? "Back to Google Maps" : "Start in Google Maps"}
         </Button>
+        {watching ? (
+          <View className="mt-2">
+            <Button mode="outlined" icon="stop" onPress={endTrip}>
+              Stop watching
+            </Button>
+          </View>
+        ) : null}
         {__DEV__ && tick !== null ? (
           <View className="mt-2 rounded border border-gray-200 p-2">
             <Text className="text-xs text-gray-600">
