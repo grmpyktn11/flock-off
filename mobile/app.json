@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "nav-app",
-    "slug": "nav-app",
-    "scheme": "navapp",
+    "name": "flock-off",
+    "slug": "flock-off",
+    "scheme": "flockoff",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,7 +11,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.navapp.app",
+      "package": "com.flockoff.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

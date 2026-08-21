@@ -9,7 +9,8 @@ import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
 import { decodePolyline } from "../lib/polyline";
 import { startTrip } from "../lib/tripStore";
-import { startTripService } from "../lib/tripService";
+import { handleLocation, startTripService } from "../lib/tripService";
+import { simulateDrive } from "../lib/simulate";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
 
@@ -17,6 +18,7 @@ export default function PlanScreen({ route }: Props) {
   const { origin, destination } = route.params;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [error, setError] = useState("");
+  const [simulating, setSimulating] = useState(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -43,7 +45,27 @@ export default function PlanScreen({ route }: Props) {
   }, [origin, destination]);
 
   async function startNavigation() {
-    if (plan === null) {
+    // Development only. Replays the planned route through the same handler
+  // the GPS task calls, so warnings, drift and the re-plan prompt all run
+  // without leaving the desk. Stripped from release builds.
+  async function simulate(veerMeters: number) {
+    if (plan === null || simulating) {
+      return;
+    }
+    const route = decodePolyline(plan.routePolyline);
+    await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
+    setSimulating(true);
+    simulateDrive({
+      route,
+      veerMeters,
+      speedMps: 25,
+      tickMs: 400,
+      onTick: handleLocation,
+      onFinish: () => setSimulating(false),
+    });
+  }
+
+  if (plan === null) {
       return;
     }
 
@@ -66,6 +88,26 @@ export default function PlanScreen({ route }: Props) {
     } catch {
       setError("Could not open Google Maps.");
     }
+  }
+
+  // Development only. Replays the planned route through the same handler
+  // the GPS task calls, so warnings, drift and the re-plan prompt all run
+  // without leaving the desk. Stripped from release builds.
+  async function simulate(veerMeters: number) {
+    if (plan === null || simulating) {
+      return;
+    }
+    const route = decodePolyline(plan.routePolyline);
+    await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
+    setSimulating(true);
+    simulateDrive({
+      route,
+      veerMeters,
+      speedMps: 25,
+      tickMs: 400,
+      onTick: handleLocation,
+      onFinish: () => setSimulating(false),
+    });
   }
 
   if (plan === null) {
@@ -117,6 +159,21 @@ export default function PlanScreen({ route }: Props) {
         <Button mode="contained" icon="navigation" onPress={startNavigation}>
           Start in Google Maps
         </Button>
+        {__DEV__ ? (
+          <View className="mt-2 flex-row">
+            <View className="flex-1">
+              <Button mode="outlined" disabled={simulating} onPress={() => simulate(0)}>
+                {simulating ? "Simulating" : "Simulate drive"}
+              </Button>
+            </View>
+            <View className="w-2" />
+            <View className="flex-1">
+              <Button mode="outlined" disabled={simulating} onPress={() => simulate(300)}>
+                Simulate wrong turn
+              </Button>
+            </View>
+          </View>
+        ) : null}
       </View>
 
       <Snackbar visible={error !== ""} onDismiss={() => setError("")}>
