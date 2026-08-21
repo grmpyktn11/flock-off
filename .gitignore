@@ -1,0 +1,42 @@
+# Python (backend, ingestion)
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Ingestion output
+*.geojson
+!ingestion/ingestion/sample_roads.geojson
+
+# Node / Expo (mobile)
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+
+# Generated native folders
+/mobile/ios
+/mobile/android
+.kotlin/
+*.orig.*
+
+# Signing material and keys
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# Local env
+.env
+.env*.local
+
+# macOS
+.DS_Store

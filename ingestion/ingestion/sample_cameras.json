@@ -1,0 +1,17 @@
+{
+  "comment": "Fake Overpass response shaped exactly like the real one, for offline runs.",
+  "elements": [
+    {"type": "node", "id": 900000001, "lat": 38.9700, "lon": -77.3850,
+     "tags": {"man_made": "surveillance", "surveillance:type": "ALPR", "camera:direction": "85"}},
+    {"type": "node", "id": 900000002, "lat": 38.9712, "lon": -77.3700,
+     "tags": {"man_made": "surveillance", "surveillance:type": "ALPR", "direction": "265"}},
+    {"type": "node", "id": 900000003, "lat": 38.9100, "lon": -77.3380,
+     "tags": {"man_made": "surveillance", "surveillance:type": "ALPR", "camera:direction": "95"}},
+    {"type": "node", "id": 900000004, "lat": 38.9225, "lon": -77.3400,
+     "tags": {"highway": "speed_camera"}},
+    {"type": "node", "id": 900000005, "lat": 38.8800, "lon": -77.2980,
+     "tags": {"man_made": "surveillance", "surveillance:type": "ALPR", "direction": "forward"}},
+    {"type": "node", "id": 900000006, "lat": 38.8000, "lon": -77.2000,
+     "tags": {"highway": "speed_camera", "camera:direction": "180"}}
+  ]
+}

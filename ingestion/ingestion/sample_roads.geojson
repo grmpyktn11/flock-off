@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "comment": "Hand-traced approximations of a few Fairfax/Herndon roads, for testing the dead zone math until a real roads table exists.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"name": "Elden Street", "direction": "west to east"},
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-77.3990, 38.9690], [-77.3850, 38.9700], [-77.3700, 38.9712], [-77.3560, 38.9725]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"name": "Fairfax County Parkway", "direction": "south to north"},
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-77.3400, 38.8800], [-77.3380, 38.9100], [-77.3350, 38.9400], [-77.3320, 38.9700]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"name": "Leesburg Pike (VA-7)", "direction": "west to east"},
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-77.4200, 38.9200], [-77.3800, 38.9210], [-77.3400, 38.9225], [-77.3000, 38.9240]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"name": "Chain Bridge Road (VA-123)", "direction": "south to north"},
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-77.3100, 38.8400], [-77.3050, 38.8600], [-77.2980, 38.8800], [-77.2900, 38.9000]]
+      }
+    }
+  ]
+}
