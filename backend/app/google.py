@@ -32,8 +32,13 @@ def directions(
     origin: tuple[float, float],
     waypoints: list[tuple[float, float]],
     destination: tuple[float, float],
-) -> list[tuple[float, float]]:
-    """The path Google would drive, used to validate the waypoint picks."""
+) -> tuple[list[tuple[float, float]], int]:
+    """The path Google would drive, and how long it takes.
+
+    Used to validate the waypoint picks. The duration comes back in the
+    same response, so pricing our avoidance route costs no extra call as
+    long as the picks survive validation unchanged.
+    """
     if config.USE_MOCK_GOOGLE:
         return mock_data.google_directions(origin, waypoints, destination)
     raise NotImplementedError("Routes API call lands with the key")

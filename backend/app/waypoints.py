@@ -30,6 +30,20 @@ class Span:
 
 
 @dataclass
+class Picks:
+    """The chosen waypoints, and Google's duration for them if we know it.
+
+    eta_seconds is set when the validation call happened to price exactly
+    these waypoints, which is the common case. It is None when there was
+    no validation call, or when the picks were adjusted after the last
+    one, and then the caller has to ask Google itself.
+    """
+
+    waypoints: list["Waypoint"]
+    eta_seconds: int | None
+
+
+@dataclass
 class Waypoint:
     lat: float
     lng: float
@@ -107,17 +121,17 @@ def pick_waypoints(
     baseline_route: list[tuple[float, float]],
     camera_points: list[tuple[float, float]],
     directions_fn=None,
-) -> list[Waypoint]:
+) -> Picks:
     """Return up to MAX_WAYPOINTS waypoints, in travel order.
 
     directions_fn, when given, is used to validate the picks: it takes the
     origin, the waypoints and the destination and returns the route Google
-    would actually drive. Spans whose waypoint fails validation are nudged
-    to the middle of the span and rechecked.
+    would actually drive along with its duration. Spans whose waypoint
+    fails validation are nudged to the middle of the span and rechecked.
     """
     spans = find_divergence_spans(our_route, baseline_route, camera_points)
     if not spans:
-        return []
+        return Picks([], None)
 
     # Closest-to-a-camera first, then keep travel order for the deep link.
     spans = sorted(spans, key=lambda s: s.nearest_camera_m)[:MAX_WAYPOINTS]
@@ -125,7 +139,7 @@ def pick_waypoints(
 
     waypoints = [_anchor(span) for span in spans]
     if directions_fn is None:
-        return waypoints
+        return Picks(waypoints, None)
     return _validate(waypoints, spans, our_route, directions_fn)
 
 
@@ -134,10 +148,15 @@ def _validate(
     spans: list[Span],
     our_route: list[tuple[float, float]],
     directions_fn,
-) -> list[Waypoint]:
-    """Drive the waypoints through Google and adjust any span it shortcuts."""
+) -> Picks:
+    """Drive the waypoints through Google and adjust any span it shortcuts.
+
+    The duration is only handed back when the call that produced it priced
+    the waypoints being returned. Once a span is adjusted, the last
+    response describes a set of picks that no longer exists.
+    """
     for _ in range(MAX_ADJUSTMENTS):
-        google_route = directions_fn(
+        google_route, eta_seconds = directions_fn(
             our_route[0], [(w.lat, w.lng) for w in waypoints], our_route[-1]
         )
         bad = [
@@ -146,10 +165,10 @@ def _validate(
             if _span_missed(span, google_route)
         ]
         if not bad:
-            break
+            return Picks(waypoints, eta_seconds)
         for i in bad:
             waypoints[i] = _midpoint_waypoint(spans[i])
-    return waypoints
+    return Picks(waypoints, None)
 
 
 def _span_missed(span: Span, google_route: list[tuple[float, float]]) -> bool:

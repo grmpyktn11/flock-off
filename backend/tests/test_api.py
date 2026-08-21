@@ -159,3 +159,47 @@ def test_plan_answers_503_when_the_routing_engine_is_down():
 
     assert response.status_code == 503
     assert "unavailable" in response.json()["detail"].lower()
+
+
+def test_a_plan_prices_the_avoidance_route_without_a_second_call(monkeypatch):
+    """The validation call already knows how long our route takes.
+
+    Every Google Routes call is billed, so planning should cost one ETA
+    lookup for the baseline rather than two. The picker routes its picks
+    through Google to check Google will follow them, and that response
+    carries the duration of exactly those picks.
+
+    Google has to actually follow the picks for the duration to describe
+    them, so this stubs a Google that does. The bundled mock never can:
+    it draws straight legs between waypoints, which no bowed avoidance
+    route matches, so validation always exhausts its adjustments and the
+    saving never applies against mock data.
+    """
+    from app import planner
+    from app.geo import decode_polyline
+
+    eta_calls: list[list] = []
+
+    def counting_eta(origin, waypoints, destination):
+        eta_calls.append(list(waypoints))
+        return 900
+
+    plan_first = client.post("/plan", json=TRIP).json()
+    ours = decode_polyline(plan_first["route_polyline"])
+
+    def cooperative_directions(origin, waypoints, destination):
+        # Google drives exactly our route, so every span validates.
+        return ours, 1234
+
+    monkeypatch.setattr(planner.google, "route_eta_seconds", counting_eta)
+    monkeypatch.setattr(planner.google, "directions", cooperative_directions)
+
+    body = client.post("/plan", json=TRIP).json()
+    assert body["waypoints"], "this trip is supposed to need waypoints"
+
+    # One call, and it is the baseline: no waypoints on it.
+    assert len(eta_calls) == 1
+    assert eta_calls[0] == []
+    # The avoidance ETA came from the validation response, not a new call.
+    assert body["route_eta_seconds"] == 1234
+    assert body["baseline_eta_seconds"] == 900

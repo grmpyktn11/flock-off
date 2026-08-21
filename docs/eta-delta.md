@@ -85,10 +85,22 @@ Valhalla's duration is no longer read anywhere. `_route_avoiding` returns
 geometry only, which sidesteps finding 1 entirely: the suboptimal
 baseline stops mattering because nothing shows it to anyone.
 
-The cost is one extra Routes call per plan. The spec already calls for
-Google's baseline, so the addition is pricing our own route; that is the
-whole point, and there is no cheaper way to learn what Google thinks our
-detour costs.
+### Cost
+
+One Routes call per plan, not two. The picker already routes its picks
+through Google to check Google will follow them, and that response
+carries the duration of exactly those picks, so the avoidance ETA is free
+whenever validation passes first time. Only the baseline needs a call of
+its own, and the spec always called for that.
+
+The second call comes back when the picks are adjusted after the last
+validation call, because then the duration on hand describes a set of
+waypoints that no longer exists. Against the bundled mock that is every
+trip: mock Google draws straight legs between waypoints, which no bowed
+avoidance route matches, so validation always exhausts its adjustments.
+Real Google follows roads, so the common case should be the cheap one -
+worth confirming once the key is in, by counting calls on a few real
+trips.
 
 With no key configured the mock answers and the numbers are placeholders,
 but the structure is right and one invariant is now testable and tested:

@@ -96,14 +96,14 @@ def google_directions(
     origin: tuple[float, float],
     waypoints: list[tuple[float, float]],
     destination: tuple[float, float],
-) -> list[tuple[float, float]]:
-    """Stand-in for Google Directions: straight legs through the waypoints."""
+) -> tuple[list[tuple[float, float]], int]:
+    """Stand-in for the Routes API: straight legs, and how long they take."""
     points = [origin, *waypoints, destination]
     route: list[tuple[float, float]] = []
     for i in range(len(points) - 1):
         leg = resample([points[i], points[i + 1]], 100.0)
         route.extend(leg if not route else leg[1:])
-    return route
+    return route, _eta_seconds(route)
 
 
 def google_route_eta(
@@ -112,15 +112,14 @@ def google_route_eta(
     destination: tuple[float, float],
 ) -> int:
     """Stand-in for the Routes API duration, waypoints included."""
-    return _eta_seconds(google_directions(origin, waypoints, destination))
+    return google_directions(origin, waypoints, destination)[1]
 
 
 def google_baseline_route(
     origin: tuple[float, float], destination: tuple[float, float]
 ) -> tuple[list[tuple[float, float]], int]:
     """Stand-in for Google's default route: the direct path, no avoidance."""
-    route = google_directions(origin, [], destination)
-    return route, _eta_seconds(route)
+    return google_directions(origin, [], destination)
 
 
 def valhalla_route(

@@ -44,12 +44,13 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
     reported = [c for c in cameras if c.id in avoided_ids or c.id in unavoidable_ids]
     avoided = [c for c in reported if c.id in avoided_ids]
 
-    waypoints = pick_waypoints(
+    picked = pick_waypoints(
         route,
         baseline_route,
         [(c.lat, c.lng) for c in avoided],
         google.directions,
     )
+    waypoints = picked.waypoints
     picks = [(w.lat, w.lng) for w in waypoints]
 
     # Both ETAs come from Google, and the second one prices the route the
@@ -58,10 +59,16 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
     # different paths. Comparing Valhalla's avoidance ETA against Google's
     # baseline would report the gap between two routing engines as if it
     # were the cost of dodging a camera - see docs/eta-delta.md.
+    # Validating the picks already priced them, so the usual path costs one
+    # Google call, not two. picked.eta_seconds is only None when the picks
+    # changed after the last validation call, which is the uncommon case.
     baseline_eta = google.route_eta_seconds(origin, [], destination)
-    route_eta = (
-        google.route_eta_seconds(origin, picks, destination) if picks else baseline_eta
-    )
+    if not picks:
+        route_eta = baseline_eta
+    elif picked.eta_seconds is not None:
+        route_eta = picked.eta_seconds
+    else:
+        route_eta = google.route_eta_seconds(origin, picks, destination)
 
     return PlanResponse(
         deep_link=build_deep_link(origin, picks, destination),
