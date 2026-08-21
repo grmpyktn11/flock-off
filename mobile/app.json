@@ -42,6 +42,14 @@
       ],
       "expo-notifications",
       "expo-task-manager"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bae497a8-cb45-47f9-a2b3-64cb3dd628f8"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
