@@ -102,6 +102,23 @@ Four things only this can answer:
 
 Record what you find in [premise-test.md](premise-test.md).
 
+## What has actually been seen working
+
+As of 2026-08-21, in Expo Go against live services - real Google Places,
+real cameras from the DMV table, real Valhalla avoidance:
+
+- Search, resolve, plan, and the handover to Google Maps.
+- Google opening with our waypoint in its route, and driving through it.
+- Spoken warnings for each unavoidable camera, firing spaced out along
+  the route rather than stacked together, and never repeating.
+
+Not yet seen working, all of it needing the development build:
+
+- Location delivered to the task while the app is backgrounded.
+- The foreground service surviving a screen lock and an app switch.
+- The off-route notification and its Re-plan action.
+- Anything at real driving speed, in a real car, with real GPS noise.
+
 ## Backend, against real services
 
     cd backend && pytest
