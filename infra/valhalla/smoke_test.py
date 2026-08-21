@@ -16,8 +16,11 @@ import time
 import requests
 from shapely.geometry import LineString
 
-# Run from anywhere: this script lives one directory below the package.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Run from anywhere. This script lives at infra/valhalla/, and the
+# ingestion package it borrows the dead zone code from is at
+# <repo>/ingestion/ingestion, so walk up to the repo root and in again.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(_REPO_ROOT, "ingestion"))
 
 from ingestion.deadzone import compute_dead_zone
 
