@@ -86,6 +86,12 @@ def write_postgres(records, database_url, batch_size=1000):
             for start in range(0, len(rows), batch_size):
                 cur.executemany(UPSERT_SQL, rows[start : start + batch_size])
             cur.execute(DEACTIVATE_SQL, ([r[0] for r in rows],))
+        # A bulk upsert leaves the planner's row estimates stale, and a bad
+        # estimate on the bounding box query costs /plan a good plan. Cheap
+        # on a table this size, so just do it every run.
+        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute("ANALYZE cameras")
     return len(rows)
 
 
