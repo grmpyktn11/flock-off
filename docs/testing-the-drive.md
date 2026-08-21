@@ -20,6 +20,26 @@ why `src/lib/` is kept that way.
 
 **Blind to:** everything about actually running on a phone.
 
+## 1b. Replay a real plan, on localhost
+
+    cd backend && uvicorn app.main:app --port 8000
+    cd mobile  && TEST_API_URL=http://127.0.0.1:8000 npm test
+
+Fetches a real plan from a running backend and drives the whole route
+through the drift and alert logic. No phone, no build.
+
+This is the seam the unit tests cannot reach. Their thresholds were tuned
+against straight synthetic lines, and a real Google route bends and has
+unevenly spaced vertices. It checks that driving the route exactly never
+reports drift - measured worst deviation under 5m end to end, where 100m
+is the threshold - that a 300m wrong turn is caught in exactly three
+ticks, and that every unavoidable camera is announced once and once only.
+
+Skipped without `TEST_API_URL`, so the normal suite stays offline.
+
+**Blind to:** anything that only exists on a device - text to speech, the
+notification, background delivery, the foreground service.
+
 ## 2. Simulated drive, in the app
 
 In a development build, the plan screen has **Simulate drive** and
