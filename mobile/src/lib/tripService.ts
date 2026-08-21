@@ -66,7 +66,7 @@ export async function handleLocation(
   }
 
   const moved =
-    trip.lastPosition === null ||
+    !trip.lastPosition ||
     haversineMeters(position, trip.lastPosition) > STATIONARY_METERS;
   const now = Date.now();
   if (!moved && now - trip.lastMovedAtMs > STATIONARY_LIMIT_MS) {
