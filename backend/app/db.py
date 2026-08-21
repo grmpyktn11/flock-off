@@ -9,6 +9,8 @@ user stage, and Supabase's own pooler already sits in front of this, so
 there is nothing to pool yet.
 """
 
+import json
+
 import psycopg
 
 from app.config import DATABASE_URL
@@ -29,6 +31,7 @@ _SEEING_ROUTE = """
     FROM cameras
     WHERE id = ANY(%s)
       AND dead_zone IS NOT NULL
+      AND NOT ST_IsEmpty(dead_zone)
       AND ST_Intersects(dead_zone, ST_SetSRID(ST_GeomFromText(%s), 4326))
 """
 
@@ -47,6 +50,34 @@ def fetch_ids_seeing_route(camera_ids: list[int], route_wkt: str) -> set[int]:
         with conn.cursor() as cur:
             cur.execute(_SEEING_ROUTE, (camera_ids, route_wkt))
             return {row[0] for row in cur.fetchall()}
+
+
+# The polygons handed to Valhalla as exclude_polygons. Expanding them is
+# how a verification retry asks for a wider berth; ST_Buffer on geography
+# takes metres, which is what the retry step counts in.
+_DEAD_ZONES = """
+    SELECT ST_AsGeoJSON(
+               CASE WHEN %s > 0
+                    THEN ST_Buffer(dead_zone::geography, %s)::geometry
+                    ELSE dead_zone
+               END)
+    FROM cameras
+    WHERE id = ANY(%s)
+      AND dead_zone IS NOT NULL
+      AND NOT ST_IsEmpty(dead_zone)
+"""
+
+
+def fetch_dead_zone_rings(
+    camera_ids: list[int], expand_m: float = 0.0
+) -> list[list[list[float]]]:
+    """Outer rings as [[lng, lat], ...], the shape Valhalla wants."""
+    if not camera_ids:
+        return []
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(_DEAD_ZONES, (expand_m, expand_m, camera_ids))
+            return [json.loads(row[0])["coordinates"][0] for row in cur.fetchall()]
 
 
 def route_wkt(route: list[tuple[float, float]]) -> str:

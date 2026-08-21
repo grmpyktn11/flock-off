@@ -154,3 +154,24 @@ def test_dead_zone_and_snap_reports_whether_a_road_was_found():
 
     assert dead_zone_and_snap(*CAMERA, 90, [ROAD])[1] is True
     assert dead_zone_and_snap(-77.2000, 38.8000, 90, [ROAD])[1] is False
+
+
+def test_camera_at_the_end_of_a_road_facing_off_it_still_gets_a_dead_zone():
+    """The directional clip has nothing to clip here.
+
+    Clamping start and end to the same point makes a zero-length line, and
+    the flat buffer of that is an empty polygon. Six of the 2,872 real DMV
+    cameras hit this. An empty dead zone intersects nothing, so the camera
+    silently stops being checked, which is the one failure this whole
+    table exists to prevent.
+    """
+    from shapely.geometry import LineString
+
+    from ingestion.deadzone import compute_dead_zone
+
+    # A camera on the last node of the road, facing further along it.
+    road = LineString([(-77.30, 38.85), (-77.29, 38.85)])
+    zone = compute_dead_zone(-77.29, 38.85, 90.0, [road])
+
+    assert not zone.is_empty
+    assert zone.area > 0

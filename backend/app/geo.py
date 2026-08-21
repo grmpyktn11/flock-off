@@ -9,12 +9,18 @@ import math
 EARTH_RADIUS_M = 6371008.8
 
 
-def decode_polyline(encoded: str) -> list[tuple[float, float]]:
-    """Decode a Google encoded polyline (precision 5) into (lat, lng) points."""
+def decode_polyline(encoded: str, precision: int = 5) -> list[tuple[float, float]]:
+    """Decode an encoded polyline into (lat, lng) points.
+
+    Google encodes at precision 5, Valhalla at 6. Decoding one as the
+    other silently puts the route in the wrong hemisphere rather than
+    raising, so the caller says which it has.
+    """
     points = []
     index = 0
     lat = 0
     lng = 0
+    scale = float(10**precision)
     while index < len(encoded):
         for is_lat in (True, False):
             result = 0
@@ -31,7 +37,7 @@ def decode_polyline(encoded: str) -> list[tuple[float, float]]:
                 lat += delta
             else:
                 lng += delta
-        points.append((lat / 1e5, lng / 1e5))
+        points.append((lat / scale, lng / scale))
     return points
 
 

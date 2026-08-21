@@ -104,3 +104,28 @@ def test_plan_of_a_trip_with_no_cameras_is_a_plain_google_route():
 def test_plan_rejects_an_impossible_coordinate():
     bad = {"origin": {"lat": 200.0, "lng": 0.0}, "destination": TRIP["destination"]}
     assert client.post("/plan", json=bad).status_code == 422
+
+
+def test_a_trip_still_plans_when_avoidance_cannot_route(monkeypatch):
+    """Our own exclusions can seal off every way through.
+
+    Widening a dead zone far enough makes Valhalla answer "no path could be
+    found", which is a real 400 seen on a Fairfax corridor. The driver
+    still needs to get there, so the plan falls back to the plain route
+    and calls the cameras on it unavoidable rather than failing the trip.
+    """
+    from app import planner
+    from app.valhalla import RoutingError
+
+    def cannot_route(*args, **kwargs):
+        raise RoutingError("no path could be found for input")
+
+    monkeypatch.setattr(planner.routing, "avoidance_route", cannot_route)
+
+    response = client.post("/plan", json=TRIP)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["deep_link"].startswith("https://www.google.com/maps/dir/")
+    assert body["avoided_count"] == 0, "nothing was avoided, because nothing routed"
+    assert body["unavoidable_count"] >= 1
+    assert all(c["avoided"] is False for c in body["cameras"])

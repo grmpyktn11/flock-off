@@ -127,7 +127,26 @@ def road_dead_zone(road_m, camera_m, facing_deg):
     # substring clamps to the ends of the line, so a camera near the end of
     # a road segment just gets a shorter dead zone.
     clipped = substring(road_m, max(start, 0.0), min(end, road_m.length))
+
+    # At the exact end of a segment, facing off the end, the clamp leaves
+    # nothing at all: start and end collapse to the same point and the flat
+    # buffer of a point is an empty polygon. An empty dead zone intersects
+    # nothing, so the camera would quietly stop being checked. Fall back to
+    # watching both directions, the same shape an unknown facing gets.
+    if _degenerate(clipped):
+        clipped = substring(
+            road_m, max(offset - reach, 0.0), min(offset + reach, road_m.length)
+        )
+    if _degenerate(clipped):
+        # A road segment shorter than a rounding error. Nothing to clip, so
+        # fall back to the circle an unsnapped camera would have got.
+        return camera_m.buffer(DEAD_ZONE_FT * METERS_PER_FOOT)
+
     return clipped.buffer(ROAD_WIDTH_FT / 2 * METERS_PER_FOOT, cap_style="flat")
+
+
+def _degenerate(line):
+    return line.is_empty or line.length == 0
 
 
 def facing_along_road(road_m, offset, facing_deg):

@@ -34,6 +34,14 @@ _load_env_file()
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 USE_MOCK_CAMERAS = DATABASE_URL == ""
 
+# Same rule: unset means use the mock router.
+VALHALLA_URL = os.environ.get("VALHALLA_URL", "").rstrip("/")
+USE_MOCK_ROUTING = VALHALLA_URL == ""
+
+# A cold Valhalla call on a large exclusion set is slower than a warm one,
+# but nothing here should take seconds.
+VALHALLA_TIMEOUT_S = 20
+
 # Cameras further than this from the trip's bounding box are not worth
 # fetching. Wide enough to cover a real detour.
 BBOX_PADDING_M = 3000.0

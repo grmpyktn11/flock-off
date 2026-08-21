@@ -7,28 +7,39 @@ pick waypoints, and build the Google Maps deep link.
 from urllib.parse import urlencode
 
 from app import cameras as camera_source
-from app import mock_data
+from app import mock_data, routing
+from app.valhalla import RoutingError
 from app.geo import encode_polyline
 from app.models import Camera
 from app.schemas import CameraResult, PlanResponse, WaypointResult
 from app.waypoints import pick_waypoints
 
 MAX_VERIFY_RETRIES = 2
-EXCLUSION_EXPAND_STEP_M = 100.0
+
+# How much wider to make the exclusions when a route still clips one. A
+# dead zone is a 75ft road slice buffered to road width, about 23m by 7m,
+# so this only has to push the route off the edge of that. It was 100m,
+# which is four times the length of the thing being avoided: three of
+# those stacked around a suburban corridor sealed the road network and
+# Valhalla answered "no path could be found".
+EXCLUSION_EXPAND_STEP_M = 15.0
 
 DEEP_LINK_BASE = "https://www.google.com/maps/dir/"
 
 
 def plan_route(origin: tuple[float, float], destination: tuple[float, float]) -> PlanResponse:
     cameras = camera_source.in_bbox(origin, destination)
-    baseline_route, baseline_eta = mock_data.google_baseline_route(origin, destination)
-    route, route_eta, unavoidable_ids = _route_avoiding(origin, destination, cameras)
-
-    # A camera is only avoided if the normal route would have driven into
-    # its dead zone and ours does not. The bounding box also returns
-    # cameras kilometers off the trip, and counting those as avoided would
-    # claim credit for every camera in the county.
+    baseline_route, baseline_eta = routing.baseline_route(origin, destination)
+    # The cameras that would see the driver on the route they would
+    # otherwise have taken. These are the ones worth routing around, and
+    # the only ones that can be "avoided" in any meaningful sense - the
+    # bounding box also returns cameras kilometers off the trip, and
+    # counting those would claim credit for every camera in the county.
     baseline_ids = camera_source.seen_by(baseline_route, cameras)
+
+    route, route_eta, unavoidable_ids = _route_avoiding(
+        origin, destination, cameras, baseline_ids, (baseline_route, baseline_eta)
+    )
     avoided_ids = baseline_ids - unavoidable_ids
     reported = [c for c in cameras if c.id in avoided_ids or c.id in unavoidable_ids]
     avoided = [c for c in reported if c.id in avoided_ids]
@@ -70,20 +81,50 @@ def _route_avoiding(
     origin: tuple[float, float],
     destination: tuple[float, float],
     cameras: list[Camera],
+    exclude_ids: set[int],
+    fallback: tuple[list[tuple[float, float]], int],
 ) -> tuple[list[tuple[float, float]], int, set[int]]:
-    """Route around the cameras, widening the exclusions while any remain.
+    """Route around the dead zones, retrying while the result still hits any.
+
+    Two things can go wrong on an attempt, and the retry handles both. The
+    detour can run into a camera that was not on the original route, which
+    is fixed by adding it to the exclusion set. Or the route can clip a
+    zone it was already told to avoid by hugging its edge, which is fixed
+    by widening the exclusions.
 
     Some cameras cannot be avoided at all, for instance one sitting on the
     only road out of the origin, so we stop retrying and report them.
+
+    fallback is the route to use if avoidance cannot produce one, which
+    happens when the exclusions close off every way through. A route that
+    passes a camera the driver is warned about beats no route at all.
     """
     expand_m = 0.0
+    excluded = set(exclude_ids)
+    best: tuple[list[tuple[float, float]], int, set[int]] | None = None
+
     for attempt in range(MAX_VERIFY_RETRIES + 1):
-        route, eta = mock_data.valhalla_route(origin, destination, cameras, expand_m)
+        avoid = [c for c in cameras if c.id in excluded]
+        try:
+            route, eta = routing.avoidance_route(origin, destination, avoid, expand_m)
+        except RoutingError:
+            # Widening the exclusions can seal the network. Keep whatever
+            # the last attempt managed rather than failing the trip.
+            break
+
         unavoidable_ids = camera_source.seen_by(route, cameras)
+        best = (route, eta, unavoidable_ids)
         if not unavoidable_ids or attempt == MAX_VERIFY_RETRIES:
-            return route, eta, unavoidable_ids
+            break
+        excluded |= unavoidable_ids
         expand_m += EXCLUSION_EXPAND_STEP_M
-    raise AssertionError("unreachable")
+
+    if best is None:
+        # Not even the first attempt routed. Report the plain route, with
+        # every camera on it called unavoidable, because it is.
+        route, eta = fallback
+        return route, eta, camera_source.seen_by(route, cameras)
+    return best
 
 
 def build_deep_link(
