@@ -61,7 +61,9 @@ B. With one waypoint on Locust Lane.
 
 ## Result
 
-**Passes.** Confirmed by khalid on 2026-08-21, tapping both cases on an
+**Passes.** And confirmed again end to end on 2026-08-21 with the real
+app: a plan built from live cameras opened in Google Maps carrying its
+waypoint, and Google routed through it. Confirmed by khalid on 2026-08-21, tapping both cases on an
 Android phone. The waypoint links route differently from the baseline and
 hold the detour. The project's core premise is sound: Google Maps accepts
 a deep link with waypoints and drives the route we hand it.
@@ -80,14 +82,20 @@ answered by tapping a link:
   wrong the failure is silent: the plan screen would keep reporting
   cameras as avoided while the driver passes them. A drive down one of
   these corridors, missing a turn on purpose, still settles it cheaply.
-- **Whether the waypoint presents as a stop the driver must acknowledge**
-  was not recorded, and it is now the more likely of the two to bite.
-  Waypoints surviving a reroute implies Google is treating them as stops,
-  and stops appear in the UI: "Stop 1 of 2" on screen, possibly an
-  arrival prompt, in the middle of a road nobody is stopping at.
+- **Waypoints do present as stops. Confirmed 2026-08-21** on a real
+  handover, Fairfax to Tysons Corner Center. Google Maps opened with a
+  three-row stop list: the origin, then `Towers Crescent, Fashion Blvd`,
+  then the destination. That middle row is our waypoint, a point on a
+  road chosen to hold a detour, listed as somewhere the driver is going.
 
-  The waypoint picker allows up to 9, which would be 9 phantom stops.
-  Real trips measured so far need 0 to 4, so the cap is rarely reached -
-  but if the UI does announce each one, the picker should prefer fewer
-  waypoints rather than the most robust set.
+  It is not fatal - the route was correct and one minute slower - but it
+  scales badly. The picker allows up to nine waypoints, which would be
+  nine phantom stops on a road nobody is stopping at. Real trips have
+  needed 0 to 4.
+
+  Two things follow. The picker should prefer the fewest waypoints that
+  hold the detour rather than the most robust set, and `MAX_WAYPOINTS`
+  should probably come down from 9 once someone has seen how Google
+  narrates several of them at speed. Whether it also announces an arrival
+  at each one is still unknown and needs the car.
 all woorks 

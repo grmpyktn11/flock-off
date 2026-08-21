@@ -27,7 +27,12 @@ EXCLUSION_EXPAND_STEP_M = 15.0
 DEEP_LINK_BASE = "https://www.google.com/maps/dir/"
 
 
-def plan_route(origin: tuple[float, float], destination: tuple[float, float]) -> PlanResponse:
+def plan_route(
+    origin: tuple[float, float],
+    destination: tuple[float, float],
+    origin_place_id: str | None = None,
+    destination_place_id: str | None = None,
+) -> PlanResponse:
     cameras = camera_source.in_bbox(origin, destination)
 
     # The baseline is Google's route, not Valhalla's, and one call gives
@@ -78,7 +83,9 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
     reported = [c for c in cameras if c.id in avoided_ids or c.id in unavoidable_ids]
 
     return PlanResponse(
-        deep_link=build_deep_link(origin, picks, destination),
+        deep_link=build_deep_link(
+            origin, picks, destination, origin_place_id, destination_place_id
+        ),
         route_polyline=encode_polyline(driven_route),
         waypoints=[
             WaypointResult(lat=w.lat, lng=w.lng, nearest_camera_m=round(w.nearest_camera_m, 1))
@@ -160,13 +167,29 @@ def build_deep_link(
     origin: tuple[float, float],
     waypoints: list[tuple[float, float]],
     destination: tuple[float, float],
+    origin_place_id: str | None = None,
+    destination_place_id: str | None = None,
 ) -> str:
+    """The Google Maps URL the app hands over.
+
+    Coordinates are what actually position the trip. A place id alongside
+    them only changes the label: without one Google names the point after
+    whatever it finds nearest, so a trip to Tysons Corner Center can open
+    showing a business called "Default".
+
+    The waypoints have no place ids and should not have any. They are
+    points on a road chosen to hold a detour, not destinations.
+    """
     params = {
         "api": "1",
         "origin": _format_point(origin),
         "destination": _format_point(destination),
         "travelmode": "driving",
     }
+    if origin_place_id:
+        params["origin_place_id"] = origin_place_id
+    if destination_place_id:
+        params["destination_place_id"] = destination_place_id
     if waypoints:
         params["waypoints"] = "|".join(_format_point(w) for w in waypoints)
     return DEEP_LINK_BASE + "?" + urlencode(params)

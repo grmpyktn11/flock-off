@@ -81,6 +81,8 @@ def plan(request: PlanRequest) -> PlanResponse:
     return plan_route(
         (request.origin.lat, request.origin.lng),
         (request.destination.lat, request.destination.lng),
+        request.origin_place_id,
+        request.destination_place_id,
     )
 
 
@@ -90,4 +92,6 @@ def replan(request: ReplanRequest) -> PlanResponse:
     return plan_route(
         (request.current.lat, request.current.lng),
         (request.destination.lat, request.destination.lng),
+        None,
+        request.destination_place_id,
     )

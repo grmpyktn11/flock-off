@@ -246,3 +246,24 @@ def test_a_plan_prices_the_avoidance_route_without_a_second_call(monkeypatch):
     # validation call each returned a duration alongside their geometry.
     assert eta_calls == []
     assert body["route_eta_seconds"] == 1234
+
+
+def test_the_deep_link_labels_its_endpoints_when_given_place_ids():
+    """Google names a bare coordinate after whatever it finds nearest.
+
+    A real trip to Tysons Corner Center opened in Maps showing a business
+    called "Default", because all the link carried was a lat and lng.
+    """
+    body = client.post(
+        "/plan",
+        json={**TRIP, "origin_place_id": "ChIJorigin", "destination_place_id": "ChIJdest"},
+    ).json()
+    assert "origin_place_id=ChIJorigin" in body["deep_link"]
+    assert "destination_place_id=ChIJdest" in body["deep_link"]
+
+
+def test_waypoints_carry_no_place_ids():
+    """They are points on a road chosen to hold a detour, not places."""
+    body = client.post("/plan", json=TRIP).json()
+    assert body["waypoints"], "this trip is supposed to need waypoints"
+    assert "waypoint_place_ids" not in body["deep_link"]

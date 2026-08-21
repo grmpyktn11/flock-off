@@ -139,8 +139,11 @@ export default function SearchScreen({ navigation }: Props) {
             )}
             ListEmptyComponent={
               <Text className="mt-6 text-center text-gray-500">
-                Search for a place to fill the{" "}
-                {activeField === "origin" ? "start" : "destination"} field.
+                {canPlan
+                  ? "Both places set. Plan the route below."
+                  : `Search for a place to fill the ${
+                      activeField === "origin" ? "start" : "destination"
+                    } field.`}
               </Text>
             }
           />

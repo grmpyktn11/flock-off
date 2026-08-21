@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RootStackParamList } from "../../App";
 import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
+import { haversineMeters } from "../lib/geo";
 import { decodePolyline } from "../lib/polyline";
 import { startTrip } from "../lib/tripStore";
 import { TickResult, handleLocation, startTripService } from "../lib/tripService";
@@ -147,7 +148,9 @@ export default function PlanScreen({ route }: Props) {
       <ScrollView className="flex-1 px-4 pt-4">
         <View className="items-center rounded-lg border border-gray-200 py-8">
           <Text className="text-6xl font-bold text-gray-900">{plan.avoidedCount}</Text>
-          <Text className="mt-1 text-gray-600">cameras avoided</Text>
+          <Text className="mt-1 text-gray-600">
+            {plan.avoidedCount === 1 ? "camera avoided" : "cameras avoided"}
+          </Text>
         </View>
 
         <View className="mt-4 rounded-lg border border-gray-200 p-4">
@@ -161,7 +164,9 @@ export default function PlanScreen({ route }: Props) {
         <Text className="mb-1 mt-6 text-gray-600">
           {unavoidable.length === 0
             ? "No cameras on this route."
-            : `${unavoidable.length} camera(s) could not be avoided. You will get an audio alert near each one.`}
+            : `${unavoidable.length} ${
+                unavoidable.length === 1 ? "camera" : "cameras"
+              } could not be avoided. You will get an audio alert near each one.`}
         </Text>
 
         {unavoidable.map((camera) => (
@@ -169,7 +174,7 @@ export default function PlanScreen({ route }: Props) {
             <Divider />
             <List.Item
               title={cameraLabel(camera)}
-              description={`${camera.lat.toFixed(4)}, ${camera.lng.toFixed(4)}`}
+              description={describeCamera(camera, plan)}
               left={(props) => <List.Icon {...props} icon="cctv" />}
             />
           </View>
@@ -233,6 +238,22 @@ function formatDelta(seconds: number): string {
     return "under a minute slower than";
   }
   return `${minutes(seconds)} min slower than`;
+}
+
+// How far into the trip the driver meets this camera. A latitude and
+// longitude tells them nothing they can use from behind a wheel.
+function describeCamera(camera: Camera, plan: Plan): string {
+  const route = decodePolyline(plan.routePolyline);
+  let travelled = 0;
+  let best = { distance: Infinity, along: 0 };
+  for (let i = 0; i < route.length - 1; i++) {
+    const step = haversineMeters(route[i], route[i + 1]);
+    const distance = haversineMeters(route[i], { lat: camera.lat, lng: camera.lng });
+    if (distance < best.distance) best = { distance, along: travelled };
+    travelled += step;
+  }
+  const km = best.along / 1000;
+  return km < 1 ? "Near the start of the route" : `About ${km.toFixed(1)} km in`;
 }
 
 function cameraLabel(camera: Camera): string {

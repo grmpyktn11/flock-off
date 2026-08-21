@@ -11,6 +11,11 @@ class Point(BaseModel):
 class PlanRequest(BaseModel):
     origin: Point
     destination: Point
+    # Optional, and only used to label the deep link. Google names a bare
+    # coordinate after whatever it finds nearest, which is how "Tysons
+    # Corner Center" arrives in the Maps app called "Default".
+    origin_place_id: str | None = None
+    destination_place_id: str | None = None
 
 
 class ReplanRequest(BaseModel):
@@ -18,6 +23,7 @@ class ReplanRequest(BaseModel):
 
     current: Point
     destination: Point
+    destination_place_id: str | None = None
 
 
 class PlaceSuggestion(BaseModel):

@@ -65,6 +65,10 @@ export async function planRoute(
   const body = await request("/plan", {
     origin: { lat: origin.lat, lng: origin.lng },
     destination: { lat: destination.lat, lng: destination.lng },
+    // Only used to label the deep link. Without them Google names the
+    // endpoints after whatever it finds nearest the coordinate.
+    origin_place_id: origin.placeId,
+    destination_place_id: destination.placeId,
   });
   return toPlan(body);
 }
@@ -78,6 +82,7 @@ export async function replanRoute(
   const body = await request("/replan", {
     current,
     destination: { lat: destination.lat, lng: destination.lng },
+    destination_place_id: destination.placeId,
   });
   return toPlan(body);
 }
