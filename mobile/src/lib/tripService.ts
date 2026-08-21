@@ -166,8 +166,7 @@ export async function reconcileTrip(): Promise<boolean> {
   const trip = await loadTrip();
   if (!trip) return false;
 
-  const running = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK);
-  if (!running) {
+  if (!(await isWatching())) {
     await endTrip();
     return false;
   }
@@ -237,9 +236,33 @@ async function startLocationUpdates(): Promise<boolean> {
   return true;
 }
 
+/**
+ * Are location updates actually running?
+ *
+ * Not the same question as whether the task is registered. defineTask
+ * registers it at module load and it stays registered whether or not
+ * anything is watching, so TaskManager answers yes long after the
+ * service has gone - and then stopping it throws TaskNotFoundException,
+ * because the Location module disagrees. Ask the module that owns the
+ * answer.
+ */
+async function isWatching(): Promise<boolean> {
+  try {
+    return await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK);
+  } catch {
+    return false;
+  }
+}
+
 export async function stopTrip(): Promise<void> {
-  if (await TaskManager.isTaskRegisteredAsync(LOCATION_TASK)) {
-    await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+  try {
+    if (await isWatching()) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    }
+  } catch {
+    // Stopping something already stopped is the outcome we wanted.
+    // Android can kill the service out from under us at any moment, so
+    // this race is normal rather than exceptional.
   }
   await endTrip();
 }
