@@ -13,6 +13,15 @@ from app.geo import haversine_m, point_to_polyline_m, resample
 
 SAMPLE_INTERVAL_M = 100.0
 DIVERGENCE_THRESHOLD_M = 60.0
+
+# A span only earns a waypoint if it happens near a camera we are dodging.
+# Our route and Google's differ for reasons that have nothing to do with
+# cameras - the two engines simply prefer different roads - and forcing
+# Google through those points buys nothing and costs a great deal. Measured
+# on one Fairfax trip: three spans, nearest avoided camera 1.5km, 5.4km and
+# 7.2km away, together adding 23 minutes to avoid two cameras neither span
+# went near.
+SPAN_CAMERA_RADIUS_M = 500.0
 MAX_WAYPOINTS = 9
 VALIDATION_TOLERANCE_M = 150.0
 MAX_ADJUSTMENTS = 2
@@ -41,6 +50,10 @@ class Picks:
 
     waypoints: list["Waypoint"]
     eta_seconds: int | None
+    # The route Google said it would drive through these waypoints. This
+    # is the one the driver actually takes, so it is what the cameras
+    # should be checked against.
+    route: list[tuple[float, float]] | None = None
 
 
 @dataclass
@@ -129,7 +142,13 @@ def pick_waypoints(
     would actually drive along with its duration. Spans whose waypoint
     fails validation are nudged to the middle of the span and rechecked.
     """
+    if not camera_points:
+        # Nothing to dodge, so nothing to steer around. Google's own route
+        # is the answer and the deep link should carry no waypoints.
+        return Picks([], None)
+
     spans = find_divergence_spans(our_route, baseline_route, camera_points)
+    spans = [s for s in spans if s.nearest_camera_m <= SPAN_CAMERA_RADIUS_M]
     if not spans:
         return Picks([], None)
 
@@ -165,7 +184,7 @@ def _validate(
             if _span_missed(span, google_route)
         ]
         if not bad:
-            return Picks(waypoints, eta_seconds)
+            return Picks(waypoints, eta_seconds, google_route)
         for i in bad:
             waypoints[i] = _midpoint_waypoint(spans[i])
     return Picks(waypoints, None)

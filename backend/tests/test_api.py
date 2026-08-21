@@ -136,13 +136,13 @@ def test_a_trip_still_plans_when_avoidance_cannot_route(monkeypatch):
     assert all(c["avoided"] is False for c in body["cameras"])
 
 
-def test_plan_answers_503_when_the_routing_engine_is_down():
-    """A dependency being unreachable is not a bug in this service.
+def test_a_trip_still_plans_when_valhalla_is_down(monkeypatch):
+    """Losing the avoidance engine degrades the trip, it does not end it.
 
-    The planner absorbs a routing failure during avoidance by falling back
-    to the plain route, but a failed baseline leaves nothing to hand the
-    driver. Answer 503 so the app can say so and retry, rather than 500
-    with a stack trace.
+    The baseline, the ETA and the waypoint check all come from Google, so
+    Valhalla being unreachable costs us the detour and nothing else. The
+    driver gets the plain route with the cameras on it named, which is a
+    worse trip but still a trip.
     """
     from app import planner
     from app.valhalla import RoutingError
@@ -150,13 +150,30 @@ def test_plan_answers_503_when_the_routing_engine_is_down():
     def unreachable(*args, **kwargs):
         raise RoutingError("Valhalla did not answer")
 
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(planner.routing, "baseline_route", unreachable)
-    try:
-        response = client.post("/plan", json=TRIP)
-    finally:
-        monkeypatch.undo()
+    monkeypatch.setattr(planner.routing, "avoidance_route", unreachable)
 
+    body = client.post("/plan", json=TRIP).json()
+    assert body["deep_link"].startswith("https://www.google.com/maps/dir/")
+    assert body["avoided_count"] == 0
+    assert body["unavoidable_count"] >= 1
+    assert body["eta_delta_seconds"] == 0
+
+
+def test_plan_answers_503_when_google_is_down(monkeypatch):
+    """Google is the dependency with no fallback.
+
+    No baseline, no ETA, and no way to check our waypoints. Answer 503 so
+    the app can say so and retry, rather than 500 with a stack trace.
+    """
+    from app import planner
+    from app.google import GoogleError
+
+    def unreachable(*args, **kwargs):
+        raise GoogleError("Routes API did not answer")
+
+    monkeypatch.setattr(planner.google, "directions", unreachable)
+
+    response = client.post("/plan", json=TRIP)
     assert response.status_code == 503
     assert "unavailable" in response.json()["detail"].lower()
 
@@ -186,9 +203,15 @@ def test_a_plan_prices_the_avoidance_route_without_a_second_call(monkeypatch):
 
     plan_first = client.post("/plan", json=TRIP).json()
     ours = decode_polyline(plan_first["route_polyline"])
+    real_directions = planner.google.directions
 
     def cooperative_directions(origin, waypoints, destination):
-        # Google drives exactly our route, so every span validates.
+        if not waypoints:
+            # The baseline call. Has to stay the real baseline, or there
+            # is nothing for our route to diverge from.
+            return real_directions(origin, waypoints, destination)
+        # Given our picks, Google drives exactly our route, so every span
+        # validates and the duration describes the picks being returned.
         return ours, 1234
 
     monkeypatch.setattr(planner.google, "route_eta_seconds", counting_eta)
@@ -197,9 +220,7 @@ def test_a_plan_prices_the_avoidance_route_without_a_second_call(monkeypatch):
     body = client.post("/plan", json=TRIP).json()
     assert body["waypoints"], "this trip is supposed to need waypoints"
 
-    # One call, and it is the baseline: no waypoints on it.
-    assert len(eta_calls) == 1
-    assert eta_calls[0] == []
-    # The avoidance ETA came from the validation response, not a new call.
+    # No standalone ETA lookup at all. The baseline call and the
+    # validation call each returned a duration alongside their geometry.
+    assert eta_calls == []
     assert body["route_eta_seconds"] == 1234
-    assert body["baseline_eta_seconds"] == 900

@@ -29,7 +29,19 @@ DEEP_LINK_BASE = "https://www.google.com/maps/dir/"
 
 def plan_route(origin: tuple[float, float], destination: tuple[float, float]) -> PlanResponse:
     cameras = camera_source.in_bbox(origin, destination)
-    baseline_route, _ = routing.baseline_route(origin, destination)
+
+    # The baseline is Google's route, not Valhalla's, and one call gives
+    # us all three things we need from it: the geometry, for deciding
+    # which cameras the driver would have passed and where our route
+    # diverges from theirs, and the traffic-aware duration.
+    #
+    # It has to be Google's. The two engines pick genuinely different
+    # roads - on one Fairfax trip, 26.6 km against 32.3 km - so waypoints
+    # derived from Valhalla's baseline describe a detour from a route
+    # Google was never going to drive, and handing them over drags it
+    # kilometres off course.
+    baseline_route, baseline_eta = google.directions(origin, [], destination)
+
     # The cameras that would see the driver on the route they would
     # otherwise have taken. These are the ones worth routing around, and
     # the only ones that can be "avoided" in any meaningful sense - the
@@ -37,45 +49,40 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
     # counting those would claim credit for every camera in the county.
     baseline_ids = camera_source.seen_by(baseline_route, cameras)
 
-    route, unavoidable_ids = _route_avoiding(
-        origin, destination, cameras, baseline_ids, baseline_route
-    )
-    avoided_ids = baseline_ids - unavoidable_ids
-    reported = [c for c in cameras if c.id in avoided_ids or c.id in unavoidable_ids]
-    avoided = [c for c in reported if c.id in avoided_ids]
+    route, _ = _route_avoiding(origin, destination, cameras, baseline_ids, baseline_route)
 
     picked = pick_waypoints(
         route,
         baseline_route,
-        [(c.lat, c.lng) for c in avoided],
+        [(c.lat, c.lng) for c in cameras if c.id in baseline_ids],
         google.directions,
     )
-    waypoints = picked.waypoints
-    picks = [(w.lat, w.lng) for w in waypoints]
+    picks = [(w.lat, w.lng) for w in picked.waypoints]
 
-    # Both ETAs come from Google, and the second one prices the route the
-    # deep link will actually drive rather than the one Valhalla planned.
-    # Google routes between our waypoints its own way, so those are
-    # different paths. Comparing Valhalla's avoidance ETA against Google's
-    # baseline would report the gap between two routing engines as if it
-    # were the cost of dodging a camera - see docs/eta-delta.md.
-    # Validating the picks already priced them, so the usual path costs one
-    # Google call, not two. picked.eta_seconds is only None when the picks
-    # changed after the last validation call, which is the uncommon case.
-    baseline_eta = google.route_eta_seconds(origin, [], destination)
+    # What the driver actually drives. Valhalla proposes a route, but the
+    # deep link hands Google waypoints and Google fills in the rest its own
+    # way, so the cameras have to be checked against Google's answer. With
+    # no waypoints the driver simply gets Google's plain route.
+    #
+    # Validating the picks already produced both that route and its
+    # duration, so the usual trip costs no extra call.
     if not picks:
-        route_eta = baseline_eta
-    elif picked.eta_seconds is not None:
-        route_eta = picked.eta_seconds
+        driven_route, route_eta = baseline_route, baseline_eta
+    elif picked.route is not None and picked.eta_seconds is not None:
+        driven_route, route_eta = picked.route, picked.eta_seconds
     else:
-        route_eta = google.route_eta_seconds(origin, picks, destination)
+        driven_route, route_eta = google.directions(origin, picks, destination)
+
+    unavoidable_ids = camera_source.seen_by(driven_route, cameras)
+    avoided_ids = baseline_ids - unavoidable_ids
+    reported = [c for c in cameras if c.id in avoided_ids or c.id in unavoidable_ids]
 
     return PlanResponse(
         deep_link=build_deep_link(origin, picks, destination),
-        route_polyline=encode_polyline(route),
+        route_polyline=encode_polyline(driven_route),
         waypoints=[
             WaypointResult(lat=w.lat, lng=w.lng, nearest_camera_m=round(w.nearest_camera_m, 1))
-            for w in waypoints
+            for w in picked.waypoints
         ],
         cameras=[
             CameraResult(

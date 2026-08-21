@@ -8,7 +8,21 @@ docs/eta-delta.md.
 No key configured means the mock answers, same rule as the other sources.
 """
 
+import requests
+
 from app import config, mock_data
+from app.geo import decode_polyline
+
+ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
+
+# Billing follows the field mask, so each call asks for the least it can.
+# The ETA lookup needs no geometry at all.
+_DURATION_ONLY = "routes.duration"
+_DURATION_AND_SHAPE = "routes.duration,routes.polyline.encodedPolyline"
+
+
+class GoogleError(RuntimeError):
+    pass
 
 
 def route_eta_seconds(
@@ -25,7 +39,7 @@ def route_eta_seconds(
     """
     if config.USE_MOCK_GOOGLE:
         return mock_data.google_route_eta(origin, waypoints, destination)
-    raise NotImplementedError("Routes API call lands with the key")
+    return _compute_route(origin, waypoints, destination, _DURATION_ONLY)[1]
 
 
 def directions(
@@ -41,7 +55,7 @@ def directions(
     """
     if config.USE_MOCK_GOOGLE:
         return mock_data.google_directions(origin, waypoints, destination)
-    raise NotImplementedError("Routes API call lands with the key")
+    return _compute_route(origin, waypoints, destination, _DURATION_AND_SHAPE)
 
 
 def search_places(
@@ -56,3 +70,59 @@ def search_places(
     if config.USE_MOCK_GOOGLE:
         return mock_data.search_places(query, lat, lng)
     raise NotImplementedError("Places API (New) call lands with the key")
+
+
+def _compute_route(
+    origin: tuple[float, float],
+    waypoints: list[tuple[float, float]],
+    destination: tuple[float, float],
+    field_mask: str,
+) -> tuple[list[tuple[float, float]], int]:
+    """One Routes API call. Returns (points, seconds); points may be empty.
+
+    Intermediates are left as stopovers rather than marked `via`, because
+    that is what the deep link's `waypoints=` parameter produces in Google
+    Maps. Pricing a pass-through route would time a trip nobody drives.
+    """
+    body = {
+        "origin": _waypoint(origin),
+        "destination": _waypoint(destination),
+        "travelMode": "DRIVE",
+        # TRAFFIC_AWARE, not TRAFFIC_AWARE_OPTIMAL: the cheaper tier, and
+        # the difference does not show up in a minutes-level comparison.
+        "routingPreference": "TRAFFIC_AWARE",
+        "units": "METRIC",
+    }
+    if waypoints:
+        body["intermediates"] = [_waypoint(w) for w in waypoints]
+
+    try:
+        response = requests.post(
+            ROUTES_URL,
+            json=body,
+            headers={
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": config.GOOGLE_API_KEY,
+                "X-Goog-FieldMask": field_mask,
+            },
+            timeout=config.GOOGLE_TIMEOUT_S,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except requests.RequestException as cause:
+        raise GoogleError(f"Routes API did not answer: {cause}") from cause
+
+    routes = payload.get("routes") or []
+    if not routes:
+        raise GoogleError("Routes API found no route")
+
+    route = routes[0]
+    # Durations come back as a protobuf duration string, "1234s".
+    seconds = round(float(route["duration"].rstrip("s")))
+    encoded = route.get("polyline", {}).get("encodedPolyline", "")
+    points = decode_polyline(encoded) if encoded else []
+    return points, seconds
+
+
+def _waypoint(point: tuple[float, float]) -> dict:
+    return {"location": {"latLng": {"latitude": point[0], "longitude": point[1]}}}

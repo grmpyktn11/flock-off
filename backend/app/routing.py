@@ -1,29 +1,12 @@
 """Route calculation, from Valhalla or from the mock.
 
-Only the avoidance route goes through here. The baseline route is Google's
-and lives with the other Google calls.
+Only the avoidance route goes through here. Valhalla is the only engine
+that can route around a polygon, which is the sole reason it exists in
+this system. The baseline is Google's and lives in app.google.
 """
 
 from app import config, db, mock_data, valhalla
 from app.models import Camera
-
-
-def baseline_route(
-    origin: tuple[float, float], destination: tuple[float, float]
-) -> tuple[list[tuple[float, float]], int]:
-    """The route with no cameras considered - what the driver would drive.
-
-    Its geometry decides which cameras count as avoided, so it has to
-    follow real roads: a straight line between two points misses the dead
-    zones entirely, because a dead zone is a 23m by 7m slice of road.
-
-    Its ETA is a placeholder. The number shown to the user has to come
-    from Google, priced against Google, for the reasons in
-    docs/eta-delta.md.
-    """
-    if config.USE_MOCK_ROUTING:
-        return mock_data.google_baseline_route(origin, destination)
-    return valhalla.route(origin, destination)
 
 
 def avoidance_route(

@@ -114,3 +114,49 @@ Valhalla must be serving the DMV tiles on port 8003 and `DATABASE_URL`
 must point at the cameras table. `infra/valhalla/smoke_test.py` covers
 the single-route case; the table above came from routing the eight pairs
 with and without the dead zones their baseline crosses.
+
+
+## Addendum: the baseline has to be Google's, and so does the verification
+
+Found on the first live Routes API run, 2026-08-21. Deltas came back at
++22.7 and +15.9 minutes to avoid two and five cameras, which is not a
+trade any driver makes.
+
+Two causes, both structural.
+
+**The baseline was Valhalla's.** The waypoint picker finds spans where our
+avoidance route leaves the baseline and drops a waypoint in each. If the
+baseline is Valhalla's, those spans describe a detour from a route Google
+was never going to drive. The engines disagree substantially - 26.6 km
+against 32.3 km on Burke to Dulles - so the waypoints were steering Google
+off its own corridor for reasons that had nothing to do with cameras. On
+that trip the three spans had their nearest avoided camera 1.5 km, 5.4 km
+and 7.2 km away. Not one existed because of a camera, and together they
+cost 23 minutes.
+
+Fixed two ways. The baseline is now Google's, from one call that supplies
+the geometry, the camera comparison and the traffic-aware duration
+together. And a span only earns a waypoint when a camera being avoided is
+within `SPAN_CAMERA_RADIUS_M`, so engine disagreement no longer buys
+waypoints. No cameras to avoid now means no waypoints at all, and the deep
+link is Google's own route untouched.
+
+**Verification was against the wrong route.** The plan reported cameras as
+avoided based on Valhalla's route, but the deep link hands Google
+waypoints and Google fills in the rest itself. Those are different paths -
+median deviation 1456 m on one trip. So the app could report a camera
+avoided while the driver drove straight past it, which is the worst
+failure this system has: silently wrong, and wrong in the direction that
+matters.
+
+Cameras are now checked against the route Google said it would drive,
+which the validation call already returns. `route_polyline` is that route
+too, so the app's drift detection watches the path the driver is actually
+on rather than one Valhalla imagined.
+
+After both fixes the same trips report 0 to 1 cameras avoided at a cost of
+0 to 2.5 minutes, and Burke to Dulles honestly says it avoided nothing.
+
+One artefact to know about: the baseline and the driven route are priced
+by two separate calls seconds apart, so traffic can move between them. A
+trip measured at -0.4 minutes is that jitter, not a saving.
