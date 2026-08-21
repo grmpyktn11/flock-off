@@ -83,6 +83,7 @@ def plan(request: PlanRequest) -> PlanResponse:
         (request.destination.lat, request.destination.lng),
         request.origin_place_id,
         request.destination_place_id,
+        request.strict,
     )
 
 

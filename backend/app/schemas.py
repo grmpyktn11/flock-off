@@ -16,6 +16,10 @@ class PlanRequest(BaseModel):
     # Corner Center" arrives in the Maps app called "Default".
     origin_place_id: str | None = None
     destination_place_id: str | None = None
+    # Avoid whatever it costs. Pins Google to our route rather than
+    # letting it rejoin its own, which avoids more cameras and can add a
+    # lot of time.
+    strict: bool = False
 
 
 class ReplanRequest(BaseModel):

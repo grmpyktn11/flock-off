@@ -105,7 +105,8 @@ export async function searchPlaces(
 
 export async function planRoute(
   origin: Place,
-  destination: Place
+  destination: Place,
+  _strict = false
 ): Promise<Plan> {
   await delay(900);
 

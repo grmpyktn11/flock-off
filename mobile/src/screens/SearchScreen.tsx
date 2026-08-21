@@ -1,7 +1,14 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useRef, useState } from "react";
 import { FlatList, Text, View } from "react-native";
-import { ActivityIndicator, Button, Divider, List, TextInput } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Button,
+  Divider,
+  List,
+  Switch,
+  TextInput,
+} from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
@@ -18,6 +25,7 @@ export default function SearchScreen({ navigation }: Props) {
   const [originQuery, setOriginQuery] = useState("");
   const [destinationQuery, setDestinationQuery] = useState("");
   const [activeField, setActiveField] = useState<Field>("origin");
+  const [strict, setStrict] = useState(false);
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [resolving, setResolving] = useState(false);
@@ -151,12 +159,22 @@ export default function SearchScreen({ navigation }: Props) {
       </View>
 
       <View className="pt-2" style={{ paddingBottom: insets.bottom + 48 }}>
+        <View className="mb-3 flex-row items-center justify-between">
+          <View className="flex-1 pr-3">
+            <Text className="text-gray-900">Avoid at any cost</Text>
+            <Text className="text-xs text-gray-500">
+              Holds the detour instead of letting Google rejoin the fast road.
+              Avoids more cameras, sometimes for a lot more time.
+            </Text>
+          </View>
+          <Switch value={strict} onValueChange={setStrict} />
+        </View>
         <Button
           mode="contained"
           disabled={!canPlan}
           onPress={() => {
             if (origin !== null && destination !== null) {
-              navigation.navigate("Plan", { origin, destination });
+              navigation.navigate("Plan", { origin, destination, strict });
             }
           }}
         >

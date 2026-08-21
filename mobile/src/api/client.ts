@@ -60,7 +60,8 @@ export async function placeDetails(
 
 export async function planRoute(
   origin: Place,
-  destination: Place
+  destination: Place,
+  strict = false
 ): Promise<Plan> {
   const body = await request("/plan", {
     origin: { lat: origin.lat, lng: origin.lng },
@@ -69,6 +70,7 @@ export async function planRoute(
     // endpoints after whatever it finds nearest the coordinate.
     origin_place_id: origin.placeId,
     destination_place_id: destination.placeId,
+    strict,
   });
   return toPlan(body);
 }

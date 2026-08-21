@@ -134,6 +134,7 @@ def pick_waypoints(
     baseline_route: list[tuple[float, float]],
     camera_points: list[tuple[float, float]],
     directions_fn=None,
+    strict: bool = False,
 ) -> Picks:
     """Return up to MAX_WAYPOINTS waypoints, in travel order.
 
@@ -141,6 +142,12 @@ def pick_waypoints(
     origin, the waypoints and the destination and returns the route Google
     would actually drive along with its duration. Spans whose waypoint
     fails validation are nudged to the middle of the span and rechecked.
+
+    strict keeps every divergence span rather than only those near a
+    camera, which pins Google to our route instead of letting it rejoin
+    its own. It avoids more and costs more, sometimes a great deal more,
+    because the two engines disagree about good roads for reasons that
+    have nothing to do with cameras.
     """
     if not camera_points:
         # Nothing to dodge, so nothing to steer around. Google's own route
@@ -148,7 +155,8 @@ def pick_waypoints(
         return Picks([], None)
 
     spans = find_divergence_spans(our_route, baseline_route, camera_points)
-    spans = [s for s in spans if s.nearest_camera_m <= SPAN_CAMERA_RADIUS_M]
+    if not strict:
+        spans = [s for s in spans if s.nearest_camera_m <= SPAN_CAMERA_RADIUS_M]
     if not spans:
         return Picks([], None)
 

@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 from app import cameras as camera_source
 from app import google, routing
 from app.valhalla import RoutingError
-from app.geo import encode_polyline
+from app.geo import encode_polyline, haversine_m
 from app.models import Camera
 from app.schemas import CameraResult, PlanResponse, WaypointResult
 from app.waypoints import pick_waypoints
@@ -24,6 +24,14 @@ MAX_VERIFY_RETRIES = 2
 # Valhalla answered "no path could be found".
 EXCLUSION_EXPAND_STEP_M = 15.0
 
+# A camera this close to where the trip starts or ends cannot be avoided:
+# the driver has to be there. Excluding one makes its endpoint unreachable
+# and Valhalla answers "no path", which used to lose the avoidance for
+# every other camera on the trip as well. Measured case: a reader 13m from
+# George Mason University took a second, entirely avoidable camera down
+# with it.
+ENDPOINT_CAMERA_M = 60.0
+
 DEEP_LINK_BASE = "https://www.google.com/maps/dir/"
 
 
@@ -32,6 +40,7 @@ def plan_route(
     destination: tuple[float, float],
     origin_place_id: str | None = None,
     destination_place_id: str | None = None,
+    strict: bool = False,
 ) -> PlanResponse:
     cameras = camera_source.in_bbox(origin, destination)
 
@@ -61,6 +70,7 @@ def plan_route(
         baseline_route,
         [(c.lat, c.lng) for c in cameras if c.id in baseline_ids],
         google.directions,
+        strict,
     )
     picks = [(w.lat, w.lng) for w in picked.waypoints]
 
@@ -110,6 +120,24 @@ def plan_route(
     )
 
 
+def _cameras_at_the_ends(
+    cameras: list[Camera],
+    origin: tuple[float, float],
+    destination: tuple[float, float],
+) -> set[int]:
+    """Cameras watching the start or the end of the trip.
+
+    There is no route that reaches a destination while avoiding a camera
+    pointed at it, so asking for one only makes the request unanswerable.
+    """
+    return {
+        c.id
+        for c in cameras
+        if haversine_m((c.lat, c.lng), origin) <= ENDPOINT_CAMERA_M
+        or haversine_m((c.lat, c.lng), destination) <= ENDPOINT_CAMERA_M
+    }
+
+
 def _route_avoiding(
     origin: tuple[float, float],
     destination: tuple[float, float],
@@ -145,9 +173,15 @@ def _route_avoiding(
         try:
             route, _ = routing.avoidance_route(origin, destination, avoid, expand_m)
         except RoutingError:
-            # Widening the exclusions can seal the network. Keep whatever
-            # the last attempt managed rather than failing the trip.
-            break
+            # The exclusions have sealed the network. Rather than abandon
+            # avoidance for the whole trip, drop the one nearest an
+            # endpoint - the likeliest culprit, since a dead zone over the
+            # origin or destination makes it unreachable - and try again.
+            culprit = _nearest_to_an_end(avoid, origin, destination)
+            if culprit is None:
+                break
+            excluded.discard(culprit)
+            continue
 
         unavoidable_ids = camera_source.seen_by(route, cameras)
         best = (route, unavoidable_ids)
@@ -157,10 +191,27 @@ def _route_avoiding(
         expand_m += EXCLUSION_EXPAND_STEP_M
 
     if best is None:
+        # Nothing routed at all.
         # Not even the first attempt routed. Report the plain route, with
         # every camera on it called unavoidable, because it is.
         return fallback, camera_source.seen_by(fallback, cameras)
     return best
+
+
+def _nearest_to_an_end(
+    cameras: list[Camera],
+    origin: tuple[float, float],
+    destination: tuple[float, float],
+) -> int | None:
+    if not cameras:
+        return None
+    return min(
+        cameras,
+        key=lambda c: min(
+            haversine_m((c.lat, c.lng), origin),
+            haversine_m((c.lat, c.lng), destination),
+        ),
+    ).id
 
 
 def build_deep_link(

@@ -21,7 +21,7 @@ import SearchScreen from "./src/screens/SearchScreen";
 
 export type RootStackParamList = {
   Search: undefined;
-  Plan: { origin: Place; destination: Place };
+  Plan: { origin: Place; destination: Place; strict: boolean };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

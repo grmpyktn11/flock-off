@@ -16,7 +16,7 @@ import { simulateDrive } from "../lib/simulate";
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
 
 export default function PlanScreen({ route }: Props) {
-  const { origin, destination } = route.params;
+  const { origin, destination, strict } = route.params;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [error, setError] = useState("");
   const [simulating, setSimulating] = useState(false);
@@ -25,7 +25,7 @@ export default function PlanScreen({ route }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    planRoute(origin, destination)
+    planRoute(origin, destination, strict)
       .then((result) => {
         if (!cancelled) {
           setPlan(result);
@@ -44,7 +44,7 @@ export default function PlanScreen({ route }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [origin, destination]);
+  }, [origin, destination, strict]);
 
   async function startNavigation() {
     // Development only. Replays the planned route through the same handler

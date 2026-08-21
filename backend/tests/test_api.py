@@ -267,3 +267,46 @@ def test_waypoints_carry_no_place_ids():
     body = client.post("/plan", json=TRIP).json()
     assert body["waypoints"], "this trip is supposed to need waypoints"
     assert "waypoint_place_ids" not in body["deep_link"]
+
+
+def test_a_camera_at_the_destination_does_not_lose_the_others(monkeypatch):
+    """Measured on a real trip: a reader 13m from George Mason University.
+
+    Excluding it makes the destination unreachable, Valhalla answers "no
+    path", and the plan used to fall back to the plain route - losing the
+    avoidance for a second camera more than a kilometre away that had
+    nothing to do with it.
+    """
+    from app import planner
+    from app.models import Camera
+
+    origin, destination = (38.90, -77.40), (38.86, -77.32)
+    at_the_end = Camera(id=99, osm_id=99, type="alpr", lat=destination[0],
+                        lng=destination[1], facing_deg=None)
+    down_the_road = Camera(id=98, osm_id=98, type="alpr", lat=38.88, lng=-77.36,
+                           facing_deg=None)
+
+    stuck = planner._cameras_at_the_ends([at_the_end, down_the_road], origin, destination)
+    assert stuck == {99}, "only the camera at the endpoint is unavoidable by position"
+
+
+def test_strict_keeps_spans_a_normal_plan_would_drop():
+    """Strict pins Google to our route instead of letting it rejoin its own.
+
+    It avoids more and costs more. Measured across five Fairfax trips: two
+    extra cameras avoided on one, at 23 minutes; one extra on another, at
+    1.4 minutes. Whether that is worth it is the driver's call, which is
+    why it is a setting.
+    """
+    from app.geo import resample
+    from app.waypoints import pick_waypoints
+
+    baseline = resample([(38.9696, -77.3861), (38.8462, -77.3064)], 100.0)
+    ours = [
+        (lat, lng + 0.004) if 10 <= i < 20 else (lat, lng)
+        for i, (lat, lng) in enumerate(baseline)
+    ]
+    far_from_any_camera = [(38.5, -77.0)]
+
+    assert pick_waypoints(ours, baseline, far_from_any_camera).waypoints == []
+    assert pick_waypoints(ours, baseline, far_from_any_camera, strict=True).waypoints
