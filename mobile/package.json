@@ -37,7 +37,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "dev": "expo start --dev-client"
   },
   "private": true,
   "overrides": {
