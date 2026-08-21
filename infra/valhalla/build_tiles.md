@@ -75,11 +75,7 @@ partial output before rebuilding, or the container reuses it:
 
     docker stop valhalla-dmv; docker rm valhalla-dmv
     Remove-Item -Recurse -Force C:/valhalla/dmv/custom_files/valhalla_tiles
-    Remove-Item -Force C:
-alhalla\dmv\custom_files
-ile_hashes.txt, C:
-alhalla\dmv\custom_files
-alhalla.json
+    Remove-Item -Force C:/valhalla/dmv/custom_files/file_hashes.txt, C:/valhalla/dmv/custom_files/valhalla.json
 
 ## Why clipping and merging is not optional
 
