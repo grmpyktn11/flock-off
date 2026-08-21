@@ -113,6 +113,19 @@ export async function planRoute(
   };
 }
 
+export async function replanRoute(
+  current: { lat: number; lng: number },
+  destination: Place
+): Promise<Plan> {
+  const from: Place = {
+    placeId: "mock-current-position",
+    name: "Current position",
+    address: "",
+    ...current,
+  };
+  return planRoute(from, destination);
+}
+
 // The real deep link is built by the backend after it picks waypoints. It is
 // rebuilt here so the mock returns a link that actually opens Google Maps.
 function buildDeepLinkUrl(
