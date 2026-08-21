@@ -22,7 +22,16 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
     baseline_route, baseline_eta = mock_data.google_baseline_route(origin, destination)
     route, route_eta, unavoidable = _route_avoiding(origin, destination, cameras)
 
-    avoided = [c for c in cameras if c not in unavoidable]
+    # A camera is only avoided if the normal route would have driven into
+    # its dead zone and ours does not. The bounding box also returns
+    # cameras kilometers off the trip, and counting those as avoided would
+    # claim credit for every camera in the county.
+    avoided = [
+        c for c in cameras
+        if _sees(c, baseline_route) and c not in unavoidable
+    ]
+    reported = [c for c in cameras if c in avoided or c in unavoidable]
+
     waypoints = pick_waypoints(
         route,
         baseline_route,
@@ -44,9 +53,9 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
                 lat=c.lat,
                 lng=c.lng,
                 facing_deg=c.facing_deg,
-                avoided=c not in unavoidable,
+                avoided=c in avoided,
             )
-            for c in cameras
+            for c in reported
         ],
         avoided_count=len(avoided),
         unavoidable_count=len(unavoidable),
@@ -54,6 +63,11 @@ def plan_route(origin: tuple[float, float], destination: tuple[float, float]) ->
         route_eta_seconds=route_eta,
         eta_delta_seconds=route_eta - baseline_eta,
     )
+
+
+def _sees(camera: mock_data.Camera, route: list[tuple[float, float]]) -> bool:
+    """True if the route passes through this camera's dead zone."""
+    return not mock_data.camera_is_avoided(camera, route)
 
 
 def _route_avoiding(
@@ -69,7 +83,7 @@ def _route_avoiding(
     expand_m = 0.0
     for attempt in range(MAX_VERIFY_RETRIES + 1):
         route, eta = mock_data.valhalla_route(origin, destination, cameras, expand_m)
-        unavoidable = [c for c in cameras if not mock_data.camera_is_avoided(c, route)]
+        unavoidable = [c for c in cameras if _sees(c, route)]
         if not unavoidable or attempt == MAX_VERIFY_RETRIES:
             return route, eta, unavoidable
         expand_m += EXCLUSION_EXPAND_STEP_M

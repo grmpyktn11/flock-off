@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.geo import decode_polyline, point_to_polyline_m
 from app.main import app
+from app import mock_data
 from app.mock_data import DEAD_ZONE_RADIUS_M
 from app.waypoints import MAX_WAYPOINTS
 
@@ -59,6 +60,44 @@ def test_replan_from_a_midpoint_matches_a_plan_from_the_same_point():
         "/plan", json={"origin": midpoint, "destination": TRIP["destination"]}
     ).json()
     assert replanned == planned
+
+
+def test_plan_only_reports_cameras_that_saw_one_of_the_two_routes():
+    """Cameras far off the trip are scenery, not avoidance wins.
+
+    The bounding box is deliberately generous - a real Fairfax trip pulls
+    a few hundred cameras - so without this the avoided count grows with
+    the size of the box rather than with the work the route actually did.
+    """
+    origin = (TRIP["origin"]["lat"], TRIP["origin"]["lng"])
+    destination = (TRIP["destination"]["lat"], TRIP["destination"]["lng"])
+    baseline, _ = mock_data.google_baseline_route(origin, destination)
+
+    body = client.post("/plan", json=TRIP).json()
+    ours = decode_polyline(body["route_polyline"])
+    assert body["cameras"], "this trip is supposed to have cameras on it"
+
+    for camera in body["cameras"]:
+        point = (camera["lat"], camera["lng"])
+        on_baseline = point_to_polyline_m(point, baseline) <= DEAD_ZONE_RADIUS_M
+        on_ours = point_to_polyline_m(point, ours) <= DEAD_ZONE_RADIUS_M
+        assert on_baseline or on_ours
+        assert camera["avoided"] == (on_baseline and not on_ours)
+
+    in_bbox = mock_data.cameras_in_bbox(origin, destination)
+    assert len(body["cameras"]) < len(in_bbox), "bbox cameras should be filtered down"
+
+
+def test_plan_of_a_trip_with_no_cameras_is_a_plain_google_route():
+    quiet = {
+        "origin": {"lat": 38.9470, "lng": -77.3930},
+        "destination": {"lat": 38.8611, "lng": -77.3760},
+    }
+    body = client.post("/plan", json=quiet).json()
+    assert body["cameras"] == []
+    assert body["avoided_count"] == 0
+    assert body["waypoints"] == []
+    assert "waypoints=" not in body["deep_link"]
 
 
 def test_plan_rejects_an_impossible_coordinate():

@@ -63,6 +63,13 @@ PLACES: list[dict] = [
      "address": "1 Saarinen Cir, Dulles, VA", "lat": 38.9531, "lng": -77.4565},
     {"place_id": "p_vienna_metro", "name": "Vienna Metro Station",
      "address": "9550 Saintsbury Dr, Fairfax, VA", "lat": 38.8776, "lng": -77.2723},
+    # These two bracket the sample camera corridor above. Without a pair
+    # that actually crosses the cameras, a demo driven from the search
+    # screen plans a trip with nothing to avoid and looks broken.
+    {"place_id": "p_floris", "name": "Floris",
+     "address": "Floris, Herndon, VA", "lat": 38.9696, "lng": -77.3861},
+    {"place_id": "p_burke_centre", "name": "Burke Centre",
+     "address": "Burke Centre, Burke, VA", "lat": 38.8462, "lng": -77.3064},
 ]
 
 
