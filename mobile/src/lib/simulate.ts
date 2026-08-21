@@ -72,7 +72,7 @@ export type SimulationOptions = {
   veerMeters?: number;
   /** Start veering once this fraction of the route is behind us. */
   veerAfterFraction?: number;
-  onTick: (position: LatLng, speedMps: number) => void | Promise<void>;
+  onTick: (position: LatLng, speedMps: number) => unknown;
   onFinish?: () => void;
 };
 

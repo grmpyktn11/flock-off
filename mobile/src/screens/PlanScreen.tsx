@@ -9,7 +9,7 @@ import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
 import { decodePolyline } from "../lib/polyline";
 import { startTrip } from "../lib/tripStore";
-import { handleLocation, startTripService } from "../lib/tripService";
+import { TickResult, handleLocation, startTripService } from "../lib/tripService";
 import { simulateDrive } from "../lib/simulate";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
@@ -19,6 +19,7 @@ export default function PlanScreen({ route }: Props) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [error, setError] = useState("");
   const [simulating, setSimulating] = useState(false);
+  const [tick, setTick] = useState<TickResult | null>(null);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -55,12 +56,22 @@ export default function PlanScreen({ route }: Props) {
     const route = decodePolyline(plan.routePolyline);
     await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
     setSimulating(true);
+    setTick(null);
     simulateDrive({
       route,
       veerMeters,
       speedMps: 25,
       tickMs: 400,
-      onTick: handleLocation,
+      onTick: async (position, speedMps) => {
+        const result = await handleLocation(position, speedMps);
+        // Announcements and prompts are worth keeping on screen; a plain
+        // tick only updates the distance readout.
+        setTick((previous) =>
+          result.spoke || result.prompted || result.arrived
+            ? result
+            : { ...result, spoke: previous?.spoke, prompted: previous?.prompted }
+        );
+      },
       onFinish: () => setSimulating(false),
     });
   }
@@ -100,12 +111,22 @@ export default function PlanScreen({ route }: Props) {
     const route = decodePolyline(plan.routePolyline);
     await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
     setSimulating(true);
+    setTick(null);
     simulateDrive({
       route,
       veerMeters,
       speedMps: 25,
       tickMs: 400,
-      onTick: handleLocation,
+      onTick: async (position, speedMps) => {
+        const result = await handleLocation(position, speedMps);
+        // Announcements and prompts are worth keeping on screen; a plain
+        // tick only updates the distance readout.
+        setTick((previous) =>
+          result.spoke || result.prompted || result.arrived
+            ? result
+            : { ...result, spoke: previous?.spoke, prompted: previous?.prompted }
+        );
+      },
       onFinish: () => setSimulating(false),
     });
   }
@@ -159,6 +180,21 @@ export default function PlanScreen({ route }: Props) {
         <Button mode="contained" icon="navigation" onPress={startNavigation}>
           Start in Google Maps
         </Button>
+        {__DEV__ && tick !== null ? (
+          <View className="mt-2 rounded border border-gray-200 p-2">
+            <Text className="text-xs text-gray-600">
+              {tick.arrived
+                ? "Arrived, trip ended"
+                : `${Math.round(tick.offRouteMeters)} m off route`}
+            </Text>
+            {tick.spoke ? (
+              <Text className="mt-1 text-xs text-gray-900">spoke: {tick.spoke}</Text>
+            ) : null}
+            {tick.prompted ? (
+              <Text className="mt-1 text-xs text-gray-900">re-plan prompt sent</Text>
+            ) : null}
+          </View>
+        ) : null}
         {__DEV__ ? (
           <View className="mt-2 flex-row">
             <View className="flex-1">

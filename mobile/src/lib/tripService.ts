@@ -12,6 +12,7 @@ import * as TaskManager from "expo-task-manager";
 
 import { replanRoute } from "../api";
 import { nextAnnouncement } from "./alerts";
+import { distanceToRouteMeters, haversineMeters } from "./geo";
 import { onLocation, isWorthPrompting, recordPromptShown } from "./drift";
 import { promptToReplan } from "./notify";
 import { decodePolyline, LatLng } from "./polyline";
@@ -36,20 +37,37 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }: any) => {
   );
 });
 
-/** One GPS tick. Exported so it can be driven directly in a test. */
-export async function handleLocation(position: LatLng, speedMps: number): Promise<void> {
-  const trip = await loadTrip();
-  if (!trip) return;
+/** What a tick did, for the simulator to display. Ignored in the car. */
+export type TickResult = {
+  offRouteMeters: number;
+  spoke?: string;
+  prompted?: boolean;
+  arrived?: boolean;
+};
 
-  if (await arrivedAt(trip, position)) return;
+/** One GPS tick. Exported so it can be driven directly in a test. */
+export async function handleLocation(
+  position: LatLng,
+  speedMps: number
+): Promise<TickResult> {
+  const trip = await loadTrip();
+  if (!trip) return { offRouteMeters: 0 };
+
+  const offRouteMeters = distanceToRouteMeters(position, trip.route);
+  if (await arrivedAt(trip, position)) {
+    return { offRouteMeters, arrived: true };
+  }
+
   const spoke = await announceCameras(trip, position, speedMps);
   // One thing at a time in a moving car: a spoken warning and a re-plan
   // prompt in the same tick would collide.
-  if (!spoke) await checkDrift(trip, position);
+  if (spoke) return { offRouteMeters, spoke };
+
+  const prompted = await checkDrift(trip, position);
+  return { offRouteMeters, prompted };
 }
 
 async function arrivedAt(trip: ActiveTrip, position: LatLng): Promise<boolean> {
-  const { haversineMeters } = await import("./geo");
   const toDestination = haversineMeters(position, {
     lat: trip.destination.lat,
     lng: trip.destination.lng,
@@ -63,28 +81,28 @@ async function announceCameras(
   trip: ActiveTrip,
   position: LatLng,
   speedMps: number
-): Promise<boolean> {
+): Promise<string | undefined> {
   const announcement = nextAnnouncement(
     position,
     speedMps,
     trip.unavoidable,
     new Set(trip.announcedCameraIds)
   );
-  if (!announcement) return false;
+  if (!announcement) return undefined;
 
   Speech.speak(announcement.text);
   await save({
     ...trip,
     announcedCameraIds: [...trip.announcedCameraIds, announcement.camera.id],
   });
-  return true;
+  return announcement.text;
 }
 
-async function checkDrift(trip: ActiveTrip, position: LatLng): Promise<void> {
+async function checkDrift(trip: ActiveTrip, position: LatLng): Promise<boolean> {
   const tick = onLocation(trip.drift, position, trip.route, Date.now());
   if (!tick.shouldCheck) {
     await save({ ...trip, drift: tick.state });
-    return;
+    return false;
   }
 
   // Off route for long enough to ask. Whether the driver hears about it
@@ -103,17 +121,29 @@ async function checkDrift(trip: ActiveTrip, position: LatLng): Promise<void> {
         unavoidable: plan.cameras.filter((c) => !c.avoided),
         pendingDeepLink: plan.deepLinkUrl,
       });
-      return;
+      return true;
     }
   } catch {
     // No signal, or the backend is down. The cooldown in the drift state
     // means this will not hammer a dead server.
   }
   await save({ ...trip, drift });
+  return false;
 }
 
 /** Ask for permissions and start the service. Returns false if refused. */
 export async function startTripService(): Promise<boolean> {
+  try {
+    return await startLocationUpdates();
+  } catch {
+    // Expo Go has no background location and throws rather than
+    // declining. Nothing here is worth failing the trip over: the driver
+    // still gets the route, just not the warnings.
+    return false;
+  }
+}
+
+async function startLocationUpdates(): Promise<boolean> {
   const foreground = await Location.requestForegroundPermissionsAsync();
   if (!foreground.granted) return false;
   const background = await Location.requestBackgroundPermissionsAsync();
