@@ -1,13 +1,14 @@
 """FastAPI app: the three endpoints from the spec.
 
-Cameras, Valhalla and the Google APIs are mocked in app.mock_data so this
-service can be built and tested on its own.
+Each data source falls back to app.mock_data when it is not configured,
+so this service runs with no infrastructure at all and each real one can
+be switched on independently.
 """
 
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
-from app import mock_data
+from app import google
 from app.planner import plan_route
 from app.schemas import PlanRequest, PlanResponse, ReplanRequest, SearchResponse
 from app.valhalla import RoutingError
@@ -41,9 +42,16 @@ def search(
     q: str = Query(min_length=1),
     lat: float | None = None,
     lng: float | None = None,
+    session_token: str | None = None,
 ) -> SearchResponse:
-    """Places Autocomplete proxy. lat/lng bias results toward the driver."""
-    return SearchResponse(results=mock_data.search_places(q, lat, lng))
+    """Places Autocomplete proxy. lat/lng bias results toward the driver.
+
+    session_token groups a burst of keystrokes and the Place Details call
+    that follows into one billable session, which is how Google expects
+    autocomplete to be used. The app generates one per search and drops it
+    once a place is chosen.
+    """
+    return SearchResponse(results=google.search_places(q, lat, lng, session_token))
 
 
 @app.post("/plan", response_model=PlanResponse)

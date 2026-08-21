@@ -42,6 +42,11 @@ USE_MOCK_ROUTING = VALHALLA_URL == ""
 # but nothing here should take seconds.
 VALHALLA_TIMEOUT_S = 20
 
+# Same rule again: no key means use the mock Google.
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+USE_MOCK_GOOGLE = GOOGLE_API_KEY == ""
+GOOGLE_TIMEOUT_S = 10
+
 # Cameras further than this from the trip's bounding box are not worth
 # fetching. Wide enough to cover a real detour.
 BBOX_PADDING_M = 3000.0

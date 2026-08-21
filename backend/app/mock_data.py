@@ -106,6 +106,15 @@ def google_directions(
     return route
 
 
+def google_route_eta(
+    origin: tuple[float, float],
+    waypoints: list[tuple[float, float]],
+    destination: tuple[float, float],
+) -> int:
+    """Stand-in for the Routes API duration, waypoints included."""
+    return _eta_seconds(google_directions(origin, waypoints, destination))
+
+
 def google_baseline_route(
     origin: tuple[float, float], destination: tuple[float, float]
 ) -> tuple[list[tuple[float, float]], int]:

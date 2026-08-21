@@ -100,6 +100,10 @@ def test_plan_of_a_trip_with_no_cameras_is_a_plain_google_route():
     assert body["avoided_count"] == 0
     assert body["waypoints"] == []
     assert "waypoints=" not in body["deep_link"]
+    # No detour means no cost. Both ETAs price the same Google route, so
+    # this is exactly zero rather than merely small.
+    assert body["eta_delta_seconds"] == 0
+    assert body["route_eta_seconds"] == body["baseline_eta_seconds"]
 
 
 def test_plan_rejects_an_impossible_coordinate():

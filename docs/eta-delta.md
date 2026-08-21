@@ -65,7 +65,9 @@ engine, by speed model, and by whether traffic exists. A delta built from
 them mixes the cost of avoiding cameras with the gap between two
 routing products.
 
-## What to do instead
+## What was done
+
+Implemented 2026-08-21. Both ETAs now come from `app/google.py`:
 
 Get both ETAs from the same engine, and make it the engine that actually
 drives the trip:
@@ -79,12 +81,20 @@ drives the trip:
    it is the number the driver will actually experience, because Google
    is doing the navigating.
 
-Step 3 costs nothing extra. The waypoint picker already routes its picks
-through Google to validate them, so the ETA comes back in a call that is
-being made regardless.
+Valhalla's duration is no longer read anywhere. `_route_avoiding` returns
+geometry only, which sidesteps finding 1 entirely: the suboptimal
+baseline stops mattering because nothing shows it to anyone.
 
-This also sidesteps finding 1 entirely: Valhalla's ETA stops appearing in
-anything shown to the user, and its suboptimal baseline stops mattering.
+The cost is one extra Routes call per plan. The spec already calls for
+Google's baseline, so the addition is pricing our own route; that is the
+whole point, and there is no cheaper way to learn what Google thinks our
+detour costs.
+
+With no key configured the mock answers and the numbers are placeholders,
+but the structure is right and one invariant is now testable and tested:
+a trip with no waypoints has a delta of exactly zero, because both ETAs
+price the same route. Under the old scheme that case could report a
+non-zero delta purely from the engine mismatch.
 
 ## Reproducing
 
