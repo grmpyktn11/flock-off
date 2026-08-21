@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.geo import decode_polyline, point_to_polyline_m
@@ -129,3 +130,28 @@ def test_a_trip_still_plans_when_avoidance_cannot_route(monkeypatch):
     assert body["avoided_count"] == 0, "nothing was avoided, because nothing routed"
     assert body["unavoidable_count"] >= 1
     assert all(c["avoided"] is False for c in body["cameras"])
+
+
+def test_plan_answers_503_when_the_routing_engine_is_down():
+    """A dependency being unreachable is not a bug in this service.
+
+    The planner absorbs a routing failure during avoidance by falling back
+    to the plain route, but a failed baseline leaves nothing to hand the
+    driver. Answer 503 so the app can say so and retry, rather than 500
+    with a stack trace.
+    """
+    from app import planner
+    from app.valhalla import RoutingError
+
+    def unreachable(*args, **kwargs):
+        raise RoutingError("Valhalla did not answer")
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(planner.routing, "baseline_route", unreachable)
+    try:
+        response = client.post("/plan", json=TRIP)
+    finally:
+        monkeypatch.undo()
+
+    assert response.status_code == 503
+    assert "unavailable" in response.json()["detail"].lower()

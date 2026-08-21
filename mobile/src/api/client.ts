@@ -85,10 +85,7 @@ async function request(path: string, json?: unknown): Promise<any> {
   }
 
   if (!response.ok) {
-    throw new ApiError(
-      `The server answered ${response.status}.`,
-      response.status >= 500
-    );
+    throw new ApiError(await failureMessage(response), response.status >= 500);
   }
 
   try {
@@ -96,6 +93,24 @@ async function request(path: string, json?: unknown): Promise<any> {
   } catch {
     throw new ApiError("The server sent a response we could not read.", false);
   }
+}
+
+/**
+ * The backend's own words where it has any.
+ *
+ * It answers 503 with a detail explaining that routing is down, which is
+ * more use to the driver than a status code.
+ */
+async function failureMessage(response: Response): Promise<string> {
+  try {
+    const body = await response.json();
+    if (typeof body?.detail === "string" && body.detail.length > 0) {
+      return body.detail;
+    }
+  } catch {
+    // No JSON body, or not the shape we expected. Fall through.
+  }
+  return `The server answered ${response.status}.`;
 }
 
 function toPlace(raw: any): Place {
