@@ -69,13 +69,25 @@ a deep link with waypoints and drives the route we hand it.
 Checks 1 and 2 above are answered. Checks 3 and 4 are not, and cannot be
 answered by tapping a link:
 
-- **Reroute survival is still unknown.** Whether Google keeps the
-  waypoint after a missed turn or a traffic reroute needs an actual
-  drive down one of these corridors. Live rerouting is deferred for now
-  precisely because of this, so nothing is blocked on it - but it is the
-  first thing to answer if that work is picked up, because it decides
-  whether re-planning is a rare fallback or the main event.
+- **Reroute survival is assumed, not measured.** khalid's call, 2026-08-21:
+  Google keeps the waypoints through a recalculation. That is consistent
+  with deep link waypoints being stops rather than routing hints - a
+  reroute recalculates the path to the current stop rather than skipping
+  it. Re-planning is therefore built as a rare fallback, not as the main
+  loop.
+
+  Worth knowing which way this was decided, because if it turns out
+  wrong the failure is silent: the plan screen would keep reporting
+  cameras as avoided while the driver passes them. A drive down one of
+  these corridors, missing a turn on purpose, still settles it cheaply.
 - **Whether the waypoint presents as a stop the driver must acknowledge**
-  was not recorded. If Google treats it as a destination rather than a
-  pass-through, the app has to warn the user about it.
+  was not recorded, and it is now the more likely of the two to bite.
+  Waypoints surviving a reroute implies Google is treating them as stops,
+  and stops appear in the UI: "Stop 1 of 2" on screen, possibly an
+  arrival prompt, in the middle of a road nobody is stopping at.
+
+  The waypoint picker allows up to 9, which would be 9 phantom stops.
+  Real trips measured so far need 0 to 4, so the cap is rarely reached -
+  but if the UI does announce each one, the picker should prefer fewer
+  waypoints rather than the most robust set.
 all woorks 
