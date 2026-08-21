@@ -43,25 +43,22 @@ backend yet.
 - The response contract: the backend keeps snake_case and seconds, and
   the app maps in `mobile/src/api/`.
 
-### Deferred: live rerouting
+### In scope but not built: drive-time alerts
 
-The spec's per-trip flow has a foreground service, background GPS,
-proximity alerts and drift detection with a one-tap re-plan. None of the
-client side is built, and it is deliberately not being built yet.
+The spec's per-trip flow keeps a foreground service running with
+background GPS, and speaks a warning through the car audio when the
+driver comes within a speed-adjusted distance of a camera the route could
+not avoid. That is still the plan, and it is what the plan screen means
+when it says "you will get an audio alert near each one".
 
-`POST /replan` exists and works - it is a fresh plan from the driver's
-current position - so the backend is ready whenever the client is.
+It needs no network and no backend: the unavoidable camera list and the
+route polyline both arrive in the plan response, and the check is a
+haversine distance on each GPS tick.
 
-It is deferred because the thing that decides its shape is unanswered:
-whether Google keeps the waypoints after a missed turn or a traffic
-reroute. If it drops them reliably, drift fires constantly and re-planning
-becomes the main event rather than a fallback, which is a different app.
-Answering it needs a real drive, not a tapped link.
+### Deferred: re-planning after a missed turn
 
-When it is built, gate the prompt on `avoided_count`: if a re-plan from
-the current position avoids no cameras, Google's path is already fine and
-the driver should not be interrupted. The pipeline computes that number
-already.
+Drift detection and the one-tap re-plan are deferred. See
+[docs/todo.md](docs/todo.md).
 
 ## Running the pieces
 
