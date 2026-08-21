@@ -46,6 +46,8 @@ B. With one waypoint on Locust Lane.
 
 1. Does B route differently from A at all? If the two look identical,
    Google dropped the waypoint and the premise fails outright.
+
+   yea
 2. Does B keep the detour after you press Start? A link can preview
    correctly and then be discarded once navigation begins.
 3. Does B survive a reroute? Miss a turn deliberately, or let Google
@@ -59,5 +61,20 @@ B. With one waypoint on Locust Lane.
 
 ## Result
 
-Not yet run. Record the answer here, with the date and the Google Maps
-version, once someone has tapped through it.
+**Passes.** Confirmed by khalid on 2026-08-21, tapping both cases on an
+Android phone. The waypoint links route differently from the baseline and
+hold the detour. The project's core premise is sound: Google Maps accepts
+a deep link with waypoints and drives the route we hand it.
+
+Checks 1 and 2 above are answered. Checks 3 and 4 are not, and cannot be
+answered by tapping a link:
+
+- **Reroute survival is still unknown.** Whether Google keeps the
+  waypoint after a missed turn or a traffic reroute needs an actual
+  drive down one of these corridors. This decides whether `/replan` is a
+  rare fallback or the main event, so it is worth an hour in the car
+  before the drive-time features are designed.
+- **Whether the waypoint presents as a stop the driver must acknowledge**
+  was not recorded. If Google treats it as a destination rather than a
+  pass-through, the app has to warn the user about it.
+all woorks 
