@@ -5,8 +5,7 @@ import { ActivityIndicator, Button, Divider, List, Snackbar } from "react-native
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
-import { planRoute } from "../api/mockBackend";
-import { Camera, Plan } from "../api/types";
+import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
@@ -25,9 +24,13 @@ export default function PlanScreen({ route }: Props) {
           setPlan(result);
         }
       })
-      .catch(() => {
+      .catch((cause) => {
         if (!cancelled) {
-          setError("Could not plan a route. Try again.");
+          setError(
+            cause instanceof ApiError
+              ? cause.message
+              : "Could not plan a route. Try again."
+          );
         }
       });
 
@@ -68,10 +71,10 @@ export default function PlanScreen({ route }: Props) {
 
         <View className="mt-4 rounded-lg border border-gray-200 p-4">
           <Text className="text-base text-gray-900">
-            {plan.avoidanceEtaMinutes} min, {formatDelta(plan.etaDeltaMinutes)} than the
+            {minutes(plan.routeEtaSeconds)} min, {formatDelta(plan.etaDeltaSeconds)} the
             fastest route
           </Text>
-          <Text className="mt-1 text-gray-600">{destination.description}</Text>
+          <Text className="mt-1 text-gray-600">{destination.name}</Text>
         </View>
 
         <Text className="mb-1 mt-6 text-gray-600">
@@ -105,11 +108,20 @@ export default function PlanScreen({ route }: Props) {
   );
 }
 
-function formatDelta(minutes: number): string {
-  if (minutes <= 0) {
-    return "no slower";
+function minutes(seconds: number): number {
+  return Math.round(seconds / 60);
+}
+
+// The delta is the number the user is being asked to accept, so a detour
+// that costs under a minute says so rather than rounding to "0 min slower".
+function formatDelta(seconds: number): string {
+  if (seconds <= 0) {
+    return "no slower than";
   }
-  return `${minutes} min slower`;
+  if (seconds < 60) {
+    return "under a minute slower than";
+  }
+  return `${minutes(seconds)} min slower than`;
 }
 
 function cameraLabel(camera: Camera): string {

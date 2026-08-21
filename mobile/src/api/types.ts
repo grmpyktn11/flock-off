@@ -1,9 +1,14 @@
-// Shapes mirror the backend contract in final-spec.md. The app is built
-// against mocks until the real FastAPI service exists.
+// The backend contract. These mirror app/schemas.py on the FastAPI side,
+// converted from snake_case to camelCase and nothing else.
+//
+// ETAs stay in seconds, the unit the backend sends. Rounding to whole
+// minutes here would throw away precision in the one number the user is
+// being asked to accept, so the screens round only at the point of display.
 
 export type Place = {
   placeId: string;
-  description: string;
+  name: string;
+  address: string;
   lat: number;
   lng: number;
 };
@@ -11,25 +16,35 @@ export type Place = {
 export type CameraType = "alpr" | "speed_camera";
 
 export type Camera = {
-  id: string;
+  id: number;
   type: CameraType;
   lat: number;
   lng: number;
+  facingDeg: number | null;
   // False means the route still passes this camera and the driver gets an
   // audio alert while driving.
   avoided: boolean;
 };
 
-// Response body of POST /plan.
+export type Waypoint = {
+  lat: number;
+  lng: number;
+  nearestCameraM: number;
+};
+
+// Response body of POST /plan. Origin and destination are not echoed back;
+// the caller already has them.
 export type Plan = {
   deepLinkUrl: string;
-  origin: Place;
-  destination: Place;
+  routePolyline: string;
+  waypoints: Waypoint[];
+  // Only cameras one of the two routes actually drove into. Cameras merely
+  // near the trip are left out, so avoidedCount means work done rather than
+  // how big the search box was.
   cameras: Camera[];
   avoidedCount: number;
   unavoidableCount: number;
-  baselineEtaMinutes: number;
-  avoidanceEtaMinutes: number;
-  etaDeltaMinutes: number;
-  routePolyline: string;
+  baselineEtaSeconds: number;
+  routeEtaSeconds: number;
+  etaDeltaSeconds: number;
 };

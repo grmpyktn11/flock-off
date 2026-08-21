@@ -5,8 +5,7 @@ import { ActivityIndicator, Button, Divider, List, TextInput } from "react-nativ
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
-import { searchPlaces } from "../api/mockBackend";
-import { Place } from "../api/types";
+import { Place, searchPlaces } from "../api";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Search">;
 
@@ -27,7 +26,7 @@ export default function SearchScreen({ navigation }: Props) {
 
   useEffect(() => {
     // Nothing to look up when the field already holds a chosen place.
-    if (selected !== null && selected.description === query) {
+    if (selected !== null && selected.name === query) {
       setResults([]);
       setSearching(false);
       return;
@@ -37,12 +36,21 @@ export default function SearchScreen({ navigation }: Props) {
     let cancelled = false;
     setSearching(query.trim().length > 0);
     const timer = setTimeout(() => {
-      searchPlaces(query).then((places) => {
-        if (!cancelled) {
-          setResults(places);
-          setSearching(false);
-        }
-      });
+      searchPlaces(query)
+        .then((places) => {
+          if (!cancelled) {
+            setResults(places);
+            setSearching(false);
+          }
+        })
+        .catch(() => {
+          // A failed lookup should not wedge the spinner on. The user can
+          // keep typing, and the next keystroke tries again.
+          if (!cancelled) {
+            setResults([]);
+            setSearching(false);
+          }
+        });
     }, 250);
 
     return () => {
@@ -54,10 +62,10 @@ export default function SearchScreen({ navigation }: Props) {
   function selectPlace(place: Place) {
     if (activeField === "origin") {
       setOrigin(place);
-      setOriginQuery(place.description);
+      setOriginQuery(place.name);
     } else {
       setDestination(place);
-      setDestinationQuery(place.description);
+      setDestinationQuery(place.name);
     }
     setResults([]);
   }
@@ -105,7 +113,8 @@ export default function SearchScreen({ navigation }: Props) {
             ItemSeparatorComponent={Divider}
             renderItem={({ item }) => (
               <List.Item
-                title={item.description}
+                title={item.name}
+                description={item.address}
                 left={(props) => <List.Icon {...props} icon="map-marker-outline" />}
                 onPress={() => selectPlace(item)}
               />

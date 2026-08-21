@@ -34,3 +34,11 @@ CREATE INDEX IF NOT EXISTS cameras_active_idx    ON cameras (active);
 --     dead_zone  = EXCLUDED.dead_zone,
 --     last_seen  = now(),
 --     active     = TRUE;
+
+-- The ingestion job and the backend both connect as postgres over a direct
+-- connection, which bypasses RLS. Nothing should reach this table through
+-- Supabase's PostgREST layer using the anon key that ships inside the app
+-- bundle, so enable RLS and add no policies: every anon and authenticated
+-- request is denied. Supabase's linter reports this as an INFO notice
+-- ("RLS enabled, no policies"), which is the intended state here.
+ALTER TABLE cameras ENABLE ROW LEVEL SECURITY;
