@@ -3,10 +3,18 @@
 FastAPI backend for the camera-avoiding navigation app. Implements the
 three endpoints from `final-spec.md`.
 
-Cameras come from PostGIS when `DATABASE_URL` is set. Valhalla, Google
-Directions and Google Places are still mocked in `app/mock_data.py` with
-sample data for the Fairfax / Herndon area, so this service builds and
-tests on its own.
+Each source is real when its credential is configured and mocked
+otherwise, so the service runs with no infrastructure at all and each one
+can be switched on independently:
+
+| source | switched on by | falls back to |
+|---|---|---|
+| cameras | `DATABASE_URL` | `app/mock_data.py` |
+| avoidance routing | `VALHALLA_URL` | `app/mock_data.py` |
+| baseline, ETAs, autocomplete | `GOOGLE_API_KEY` | `app/mock_data.py` |
+
+The test suite pins all three to the mocks, so a populated `.env` cannot
+make it assert against live services - or spend money.
 
 ## Run
 
@@ -36,8 +44,14 @@ If a globally installed pytest plugin breaks collection, run
 
 ## Endpoints
 
-- `GET /search?q=&lat=&lng=` - Places Autocomplete proxy, lat/lng bias the
-  results toward the driver.
+- `GET /search?q=&lat=&lng=&session_token=` - Places Autocomplete proxy,
+  lat/lng bias the results toward the driver. Returns suggestions with no
+  coordinates: resolving a location costs a Place Details call each, and
+  doing that per suggestion per keystroke would be the most expensive
+  possible way to run autocomplete.
+- `GET /place?place_id=&session_token=` - resolves the chosen suggestion
+  to coordinates. Passing back the search's `session_token` closes the
+  Google session so the whole burst bills as one.
 - `POST /plan` - `{"origin": {"lat", "lng"}, "destination": {"lat", "lng"}}`
 - `POST /replan` - `{"current": {"lat", "lng"}, "destination": {"lat", "lng"}}`
 

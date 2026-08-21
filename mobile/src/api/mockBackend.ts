@@ -2,7 +2,7 @@
 // unset. Fake data for the Fairfax / Herndon test region so the app can be
 // built and demoed without the backend running.
 
-import { Camera, Place, Plan } from "./types";
+import { Camera, Place, PlaceSuggestion, Plan } from "./types";
 
 const PLACES: Place[] = [
   {
@@ -65,10 +65,23 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export async function placeDetails(
+  placeId: string,
+  _sessionToken?: string
+): Promise<Place> {
+  await delay(120);
+  const place = PLACES.find((p) => p.placeId === placeId);
+  if (!place) {
+    throw new Error(`unknown place ${placeId}`);
+  }
+  return place;
+}
+
 export async function searchPlaces(
   query: string,
-  near?: { lat: number; lng: number }
-): Promise<Place[]> {
+  near?: { lat: number; lng: number },
+  _sessionToken?: string
+): Promise<PlaceSuggestion[]> {
   await delay(250);
   const trimmed = query.trim().toLowerCase();
   if (trimmed.length === 0) {
@@ -86,7 +99,8 @@ export async function searchPlaces(
         Math.hypot(b.lat - near.lat, b.lng - near.lng)
     );
   }
-  return matches;
+  // The real Autocomplete returns no coordinates, so neither does this.
+  return matches.map(({ placeId, name, address }) => ({ placeId, name, address }));
 }
 
 export async function planRoute(

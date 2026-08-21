@@ -1,11 +1,12 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlatList, Text, View } from "react-native";
 import { ActivityIndicator, Button, Divider, List, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
-import { Place, searchPlaces } from "../api";
+import { Place, PlaceSuggestion, placeDetails, searchPlaces } from "../api";
+import { newSessionToken } from "../lib/session";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Search">;
 
@@ -17,8 +18,12 @@ export default function SearchScreen({ navigation }: Props) {
   const [originQuery, setOriginQuery] = useState("");
   const [destinationQuery, setDestinationQuery] = useState("");
   const [activeField, setActiveField] = useState<Field>("origin");
-  const [results, setResults] = useState<Place[]>([]);
+  const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  // One Google billing session per search burst, closed by the details
+  // call when a place is picked.
+  const sessionToken = useRef(newSessionToken());
   const insets = useSafeAreaInsets();
 
   const query = activeField === "origin" ? originQuery : destinationQuery;
@@ -36,7 +41,7 @@ export default function SearchScreen({ navigation }: Props) {
     let cancelled = false;
     setSearching(query.trim().length > 0);
     const timer = setTimeout(() => {
-      searchPlaces(query)
+      searchPlaces(query, undefined, sessionToken.current)
         .then((places) => {
           if (!cancelled) {
             setResults(places);
@@ -59,15 +64,28 @@ export default function SearchScreen({ navigation }: Props) {
     };
   }, [query, selected]);
 
-  function selectPlace(place: Place) {
-    if (activeField === "origin") {
-      setOrigin(place);
-      setOriginQuery(place.name);
-    } else {
-      setDestination(place);
-      setDestinationQuery(place.name);
-    }
+  async function selectPlace(suggestion: PlaceSuggestion) {
+    // Autocomplete gives no coordinates, so the chosen one is resolved
+    // now. Reusing the search's token closes the billing session; the
+    // next search starts a fresh one.
     setResults([]);
+    setResolving(true);
+    try {
+      const place = await placeDetails(suggestion.placeId, sessionToken.current);
+      sessionToken.current = newSessionToken();
+      if (activeField === "origin") {
+        setOrigin(place);
+        setOriginQuery(place.name);
+      } else {
+        setDestination(place);
+        setDestinationQuery(place.name);
+      }
+    } catch {
+      // Leave the field as the driver typed it so they can pick again.
+      setResults([suggestion]);
+    } finally {
+      setResolving(false);
+    }
   }
 
   function editField(field: Field, text: string) {
@@ -101,7 +119,7 @@ export default function SearchScreen({ navigation }: Props) {
       />
 
       <View className="mt-4 flex-1">
-        {searching ? (
+        {searching || resolving ? (
           <View className="mt-6">
             <ActivityIndicator />
           </View>

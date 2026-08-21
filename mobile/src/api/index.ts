@@ -10,6 +10,7 @@ const backend = USE_MOCK_BACKEND ? mock : client;
 export const searchPlaces = backend.searchPlaces;
 export const planRoute = backend.planRoute;
 export const replanRoute = backend.replanRoute;
+export const placeDetails = backend.placeDetails;
 
 export { ApiError } from "./client";
 export * from "./types";

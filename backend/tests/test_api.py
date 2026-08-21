@@ -23,6 +23,28 @@ def test_search_matches_by_name_and_biases_by_location():
     assert names == ["Vienna Metro Station", "Herndon Metro Station"]
 
 
+def test_search_returns_no_coordinates():
+    """Resolving a location costs a Place Details call each.
+
+    Doing that for every suggestion on every keystroke would be the most
+    expensive possible way to run autocomplete, so search returns names
+    only and the chosen one is resolved through /place.
+    """
+    results = client.get("/search", params={"q": "metro"}).json()["results"]
+    assert results
+    assert all("lat" not in r and "lng" not in r for r in results)
+
+
+def test_place_resolves_a_suggestion_to_coordinates():
+    suggestion = client.get("/search", params={"q": "Vienna"}).json()["results"][0]
+    body = client.get(
+        "/place", params={"place_id": suggestion["place_id"], "session_token": "s1"}
+    ).json()
+    assert body["place_id"] == suggestion["place_id"]
+    assert 38 < body["lat"] < 40
+    assert -78 < body["lng"] < -76
+
+
 def test_search_requires_a_query():
     assert client.get("/search", params={"q": ""}).status_code == 422
 

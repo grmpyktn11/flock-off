@@ -10,7 +10,13 @@ from fastapi.responses import JSONResponse
 
 from app import google
 from app.planner import plan_route
-from app.schemas import PlanRequest, PlanResponse, ReplanRequest, SearchResponse
+from app.schemas import (
+    PlaceDetail,
+    PlanRequest,
+    PlanResponse,
+    ReplanRequest,
+    SearchResponse,
+)
 from app.google import GoogleError
 from app.valhalla import RoutingError
 
@@ -57,6 +63,17 @@ def search(
     once a place is chosen.
     """
     return SearchResponse(results=google.search_places(q, lat, lng, session_token))
+
+
+@app.get("/place", response_model=PlaceDetail)
+def place(place_id: str = Query(min_length=1), session_token: str | None = None) -> PlaceDetail:
+    """Resolve one suggestion to coordinates, once the driver has chosen it.
+
+    Passing back the same session_token used for the search closes the
+    session, so Google bills the whole keystroke burst plus this call as
+    one rather than per request.
+    """
+    return PlaceDetail(**google.place_details(place_id, session_token))
 
 
 @app.post("/plan", response_model=PlanResponse)

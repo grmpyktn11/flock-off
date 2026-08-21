@@ -5,10 +5,16 @@
 // minutes here would throw away precision in the one number the user is
 // being asked to accept, so the screens round only at the point of display.
 
-export type Place = {
+// An autocomplete suggestion. No coordinates: resolving one costs Google
+// a Place Details call, so only the suggestion the driver picks gets
+// resolved, through placeDetails().
+export type PlaceSuggestion = {
   placeId: string;
   name: string;
   address: string;
+};
+
+export type Place = PlaceSuggestion & {
   lat: number;
   lng: number;
 };

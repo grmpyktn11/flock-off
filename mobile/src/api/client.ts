@@ -3,7 +3,7 @@
 // which one they are talking to.
 
 import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "./config";
-import { Camera, CameraType, Place, Plan, Waypoint } from "./types";
+import { Camera, CameraType, Place, PlaceSuggestion, Plan, Waypoint } from "./types";
 
 export class ApiError extends Error {
   // True when retrying might work: a timeout, a dropped connection, or a
@@ -19,8 +19,9 @@ export class ApiError extends Error {
 
 export async function searchPlaces(
   query: string,
-  near?: { lat: number; lng: number }
-): Promise<Place[]> {
+  near?: { lat: number; lng: number },
+  sessionToken?: string
+): Promise<PlaceSuggestion[]> {
   const trimmed = query.trim();
   if (trimmed.length === 0) {
     return [];
@@ -31,9 +32,30 @@ export async function searchPlaces(
     params.set("lat", String(near.lat));
     params.set("lng", String(near.lng));
   }
+  if (sessionToken) {
+    params.set("session_token", sessionToken);
+  }
 
   const body = await request(`/search?${params.toString()}`);
-  return (body.results as unknown[]).map(toPlace);
+  return (body.results as unknown[]).map(toSuggestion);
+}
+
+/**
+ * Resolve a chosen suggestion to coordinates.
+ *
+ * Passing the same token the search used closes Google's session, so the
+ * whole keystroke burst plus this call bills as one instead of per
+ * request. Call it once, when the driver picks a place.
+ */
+export async function placeDetails(
+  placeId: string,
+  sessionToken?: string
+): Promise<Place> {
+  const params = new URLSearchParams({ place_id: placeId });
+  if (sessionToken) {
+    params.set("session_token", sessionToken);
+  }
+  return toPlace(await request(`/place?${params.toString()}`));
 }
 
 export async function planRoute(
@@ -113,14 +135,12 @@ async function failureMessage(response: Response): Promise<string> {
   return `The server answered ${response.status}.`;
 }
 
+function toSuggestion(raw: any): PlaceSuggestion {
+  return { placeId: raw.place_id, name: raw.name, address: raw.address };
+}
+
 function toPlace(raw: any): Place {
-  return {
-    placeId: raw.place_id,
-    name: raw.name,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-  };
+  return { ...toSuggestion(raw), lat: raw.lat, lng: raw.lng };
 }
 
 function toCamera(raw: any): Camera {

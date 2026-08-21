@@ -14,6 +14,12 @@ from app import config, mock_data
 from app.geo import decode_polyline
 
 ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
+AUTOCOMPLETE_URL = "https://places.googleapis.com/v1/places:autocomplete"
+DETAILS_URL = "https://places.googleapis.com/v1/places"
+
+# Autocomplete is biased toward this radius around the driver when we know
+# where they are. Wide enough to cover a metro area.
+PLACES_BIAS_RADIUS_M = 50000.0
 
 # Billing follows the field mask, so each call asks for the least it can.
 # The ETA lookup needs no geometry at all.
@@ -61,15 +67,104 @@ def directions(
 def search_places(
     query: str, lat: float | None, lng: float | None, session_token: str | None = None
 ) -> list[dict]:
-    """Places Autocomplete.
+    """Places Autocomplete. Suggestions only, with no coordinates.
 
-    session_token groups a burst of keystrokes and the Place Details call
-    that follows into one billable session. The app generates one per
-    search and drops it once a place is chosen.
+    Autocomplete does not return locations, by design: resolving one costs
+    a Place Details call, and doing that for every suggestion on every
+    keystroke would be enormously expensive. The driver picks one and only
+    that one gets resolved, through place_details below.
+
+    session_token groups a burst of keystrokes and the Details call that
+    follows into a single billable session. The app makes one per search
+    and drops it once a place is chosen.
     """
     if config.USE_MOCK_GOOGLE:
-        return mock_data.search_places(query, lat, lng)
-    raise NotImplementedError("Places API (New) call lands with the key")
+        return [
+            {k: v for k, v in place.items() if k not in ("lat", "lng")}
+            for place in mock_data.search_places(query, lat, lng)
+        ]
+
+    body: dict = {"input": query}
+    if session_token:
+        body["sessionToken"] = session_token
+    if lat is not None and lng is not None:
+        body["locationBias"] = {
+            "circle": {
+                "center": {"latitude": lat, "longitude": lng},
+                "radius": PLACES_BIAS_RADIUS_M,
+            }
+        }
+
+    payload = _places_call(
+        "POST",
+        AUTOCOMPLETE_URL,
+        "suggestions.placePrediction.placeId"
+        ",suggestions.placePrediction.structuredFormat",
+        json=body,
+    )
+    return [
+        _suggestion(s["placePrediction"])
+        for s in payload.get("suggestions", [])
+        if "placePrediction" in s
+    ]
+
+
+def place_details(place_id: str, session_token: str | None = None) -> dict:
+    """Resolve one chosen suggestion to coordinates.
+
+    This is the call the session token exists for: made once, after a
+    burst of autocomplete requests, it closes the session so Google bills
+    the burst as one.
+    """
+    if config.USE_MOCK_GOOGLE:
+        for place in mock_data.PLACES:
+            if place["place_id"] == place_id:
+                return dict(place)
+        raise GoogleError(f"unknown place {place_id}")
+
+    url = f"{DETAILS_URL}/{place_id}"
+    params = {"sessionToken": session_token} if session_token else None
+    payload = _places_call(
+        "GET", url, "id,displayName,formattedAddress,location", params=params
+    )
+    location = payload.get("location", {})
+    return {
+        "place_id": payload.get("id", place_id),
+        "name": payload.get("displayName", {}).get("text", ""),
+        "address": payload.get("formattedAddress", ""),
+        "lat": location["latitude"],
+        "lng": location["longitude"],
+    }
+
+
+def _suggestion(prediction: dict) -> dict:
+    fmt = prediction.get("structuredFormat", {})
+    return {
+        "place_id": prediction["placeId"],
+        "name": fmt.get("mainText", {}).get("text", ""),
+        "address": fmt.get("secondaryText", {}).get("text", ""),
+    }
+
+
+def _places_call(method: str, url: str, field_mask: str, **kwargs) -> dict:
+    try:
+        response = requests.request(
+            method,
+            url,
+            headers={
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": config.GOOGLE_API_KEY,
+                "X-Goog-FieldMask": field_mask,
+            },
+            timeout=config.GOOGLE_TIMEOUT_S,
+            **kwargs,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as cause:
+        raise GoogleError(f"Places API did not answer: {cause}") from cause
+    except (KeyError, ValueError) as cause:
+        raise GoogleError(f"Places API sent something unexpected: {cause}") from cause
 
 
 def _compute_route(

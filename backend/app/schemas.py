@@ -20,16 +20,25 @@ class ReplanRequest(BaseModel):
     destination: Point
 
 
-class PlaceResult(BaseModel):
+class PlaceSuggestion(BaseModel):
+    """One autocomplete suggestion. No coordinates.
+
+    Resolving a location costs a Place Details call, so only the
+    suggestion the driver actually picks gets one. See GET /place.
+    """
+
     place_id: str
     name: str
     address: str
-    lat: float
-    lng: float
 
 
 class SearchResponse(BaseModel):
-    results: list[PlaceResult]
+    results: list[PlaceSuggestion]
+
+
+class PlaceDetail(PlaceSuggestion):
+    lat: float
+    lng: float
 
 
 class CameraResult(BaseModel):
