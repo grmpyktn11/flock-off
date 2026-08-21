@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.geo import decode_polyline, point_to_polyline_m
 from app.main import app
+from app import cameras as camera_source
 from app import mock_data
 from app.mock_data import DEAD_ZONE_RADIUS_M
 from app.waypoints import MAX_WAYPOINTS
@@ -84,7 +85,7 @@ def test_plan_only_reports_cameras_that_saw_one_of_the_two_routes():
         assert on_baseline or on_ours
         assert camera["avoided"] == (on_baseline and not on_ours)
 
-    in_bbox = mock_data.cameras_in_bbox(origin, destination)
+    in_bbox = camera_source.in_bbox(origin, destination)
     assert len(body["cameras"]) < len(in_bbox), "bbox cameras should be filtered down"
 
 

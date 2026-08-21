@@ -3,21 +3,33 @@
 FastAPI backend for the camera-avoiding navigation app. Implements the
 three endpoints from `final-spec.md`.
 
-The cameras table, Valhalla, Google Directions and Google Places are all
-mocked in `app/mock_data.py` with sample data for the Fairfax / Herndon
-area, so this service builds and tests on its own. Wiring up the real
-services means replacing that one module.
+Cameras come from PostGIS when `DATABASE_URL` is set. Valhalla, Google
+Directions and Google Places are still mocked in `app/mock_data.py` with
+sample data for the Fairfax / Herndon area, so this service builds and
+tests on its own.
 
 ## Run
 
     pip install -r requirements.txt
     uvicorn app.main:app --reload
 
+With no `DATABASE_URL` the service uses mock cameras and needs no
+infrastructure. Set it in the repo root `.env` to use the real table:
+
+    DATABASE_URL=postgresql://...
+
+Use Supabase's session pooler rather than the transaction pooler. psycopg
+prepares statements and the transaction pooler does not support them.
+
 Interactive docs at http://127.0.0.1:8000/docs
 
 ## Test
 
     pytest
+
+The suite is pinned to the mock camera source, so a `.env` on the machine
+does not change what it asserts. `tests/test_postgis.py` is the exception:
+it talks to the real database and skips when `DATABASE_URL` is unset.
 
 If a globally installed pytest plugin breaks collection, run
 `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest`.
@@ -30,9 +42,13 @@ If a globally installed pytest plugin breaks collection, run
 - `POST /replan` - `{"current": {"lat", "lng"}, "destination": {"lat", "lng"}}`
 
 Both planning endpoints return the Google Maps deep link, the chosen
-waypoints, every camera in the trip's bounding box with an `avoided` flag,
-avoided/unavoidable counts, the two ETAs and their delta, and our route as
-an encoded polyline for the app's drift detection.
+waypoints, the cameras one of the two routes actually drove into with an
+`avoided` flag, avoided/unavoidable counts, the two ETAs and their delta,
+and our route as an encoded polyline for the app's drift detection.
+
+Cameras merely near the trip are left out. The bounding box returns a few
+hundred for a Fairfax-sized box, and reporting those would make
+`avoided_count` a measure of the search box rather than of any work done.
 
 ## Layout
 
@@ -41,7 +57,25 @@ an encoded polyline for the app's drift detection.
   avoidance route, verification retries, waypoints, deep link
 - `app/waypoints.py` - the waypoint picker (spec step 6)
 - `app/geo.py` - polyline codec, haversine, point-to-segment, resampling
-- `app/mock_data.py` - everything that is a stand-in for a real service
+- `app/cameras.py` - camera lookups, dispatching to PostGIS or the mock
+- `app/db.py` - the two SQL queries against the cameras table
+- `app/models.py` - the `Camera` type both sources build
+- `app/config.py` - reads the repo root `.env`, picks the camera source
+- `app/mock_data.py` - everything that is still a stand-in
+
+## What the dead zone check can and cannot tell you yet
+
+Against PostGIS, verification is `ST_Intersects` on the stored dead zone,
+which is directional: a camera pointed away from the driver does not see
+them. That is a real improvement on the mock's radius, which flags any
+camera near the line regardless of where it is facing.
+
+It does not yet produce meaningful counts, because the routes are still
+mocked. A dead zone is a 75ft slice of road buffered to road width, about
+23m by 7m, and the mock router draws straight lines between two points.
+A straight line does not lie on the road, so it misses the polygons and
+every trip reports zero cameras. The SQL is verified directly instead, in
+`tests/test_postgis.py`. Real counts arrive with Valhalla, not before.
 
 ## Waypoint picker
 

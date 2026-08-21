@@ -9,9 +9,9 @@ Sample area is Fairfax / Herndon, Virginia.
 """
 
 import math
-from dataclasses import dataclass
 
 from app.geo import EARTH_RADIUS_M, haversine_m, point_to_polyline_m, resample
+from app.models import Camera
 
 # A route is treated as seen by a camera if it passes within this many
 # meters of it. The real check is ST_DWithin against the stored dead zone.
@@ -23,16 +23,6 @@ DETOUR_OFFSET_M = 250.0
 DETOUR_REACH_M = 600.0
 
 AVERAGE_SPEED_MPS = 13.4  # roughly 30 mph on suburban arterials
-
-
-@dataclass
-class Camera:
-    id: int
-    osm_id: int
-    type: str
-    lat: float
-    lng: float
-    facing_deg: float | None
 
 
 # Sample rows from the cameras table.
@@ -196,6 +186,17 @@ def _eta_seconds(route: list[tuple[float, float]]) -> int:
     return round(length / AVERAGE_SPEED_MPS)
 
 
-def camera_is_avoided(camera: Camera, route: list[tuple[float, float]]) -> bool:
-    """Stand-in for the ST_DWithin verification against the dead zone."""
-    return point_to_polyline_m((camera.lat, camera.lng), route) > DEAD_ZONE_RADIUS_M
+def ids_seeing_route(
+    cameras: list[Camera], route: list[tuple[float, float]]
+) -> set[int]:
+    """Stand-in for ST_Intersects against the stored dead zone.
+
+    A circle around the camera point, so it is directionally blind: it
+    flags cameras facing away from the driver that the real dead zone
+    would not. Counts from this are pessimistic on purpose.
+    """
+    return {
+        c.id
+        for c in cameras
+        if point_to_polyline_m((c.lat, c.lng), route) <= DEAD_ZONE_RADIUS_M
+    }
