@@ -22,8 +22,8 @@ commands with `MSYS_NO_PATHCONV=1` or it rewrites container paths like
 
 ### 1. Download
 
-    New-Item -ItemType Directory -Force C:alhalla\dmv\src, C:alhalla\dmv\custom_files
-    cd C:alhalla\dmv\src
+    New-Item -ItemType Directory -Force C:/valhalla/dmv/src, C:/valhalla/dmv/custom_files
+    cd C:/valhalla/dmv/src
     curl.exe -L -O https://download.geofabrik.de/north-america/us/district-of-columbia-latest.osm.pbf
     curl.exe -L -O https://download.geofabrik.de/north-america/us/maryland-latest.osm.pbf
     curl.exe -L -O https://download.geofabrik.de/north-america/us/virginia-latest.osm.pbf
@@ -46,7 +46,8 @@ take well under a minute.
 Copy the one merged file into `custom_files`, and make sure nothing else
 `.pbf` is in there - the container builds from everything it finds:
 
-    Copy-Item C:alhalla\dmv\src\dmv.pbf C:alhalla\dmv\custom_files
+    Copy-Item C:/valhalla/dmv/src/dmv.pbf C:/valhalla/dmv/custom_files/
+
 ### 3. Build the tiles
 
 No `tile_urls`: the container builds from the `.pbf` already present.
@@ -73,8 +74,12 @@ symptom is `valhalla_tiles/` climbing past a gigabyte while
 partial output before rebuilding, or the container reuses it:
 
     docker stop valhalla-dmv; docker rm valhalla-dmv
-    Remove-Item -Recurse -Force C:alhalla\dmv\custom_filesalhalla_tiles
-    Remove-Item -Force C:alhalla\dmv\custom_filesile_hashes.txt, C:alhalla\dmv\custom_filesalhalla.json
+    Remove-Item -Recurse -Force C:/valhalla/dmv/custom_files/valhalla_tiles
+    Remove-Item -Force C:
+alhalla\dmv\custom_files
+ile_hashes.txt, C:
+alhalla\dmv\custom_files
+alhalla.json
 
 ## Why clipping and merging is not optional
 
