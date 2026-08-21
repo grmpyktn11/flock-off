@@ -25,7 +25,12 @@
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -43,13 +48,14 @@
       "expo-notifications",
       "expo-task-manager"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "bae497a8-cb45-47f9-a2b3-64cb3dd628f8"
-      }
-    },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "owner": "grumpykitten11",
+    "extra": {
+      "eas": {
+        "projectId": "60a300c8-4ecd-4315-a5b3-ae27f47cfc5f"
+      }
     }
   }
 }
