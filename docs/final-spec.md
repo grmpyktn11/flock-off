@@ -1,5 +1,25 @@
 # Camera-Avoiding Navigation - Final Spec
 
+> **This is the original design, kept as written.** Building it turned up
+> four places where reality differed. Read these before implementing
+> anything from the pipeline below:
+>
+> - **The ETA comparison here is wrong** and would report avoiding cameras
+>   as a time *saving*. Both ETAs must come from Google.
+>   [eta-delta.md](eta-delta.md).
+> - **Waypoints only go near cameras.** Valhalla and Google pick
+>   genuinely different roads, so a waypoint at every divergence steers
+>   Google off its route for reasons unrelated to cameras - measured at 23
+>   minutes on one trip. Also in [eta-delta.md](eta-delta.md).
+> - **Autocomplete returns no coordinates.** `/search` gives suggestions
+>   and `/place` resolves the chosen one, because resolving all of them
+>   per keystroke is the most expensive way to run a search box.
+> - **Places API and Directions API are Legacy.** Use Places API (New)
+>   and Routes API.
+>
+> Region geography has also moved out of the code into `regions.json`;
+> see [adding-a-region.md](adding-a-region.md).
+
 ## What this is
 
 An Android app (iOS/CarPlay planned for later) that plans driving routes
