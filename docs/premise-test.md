@@ -71,9 +71,10 @@ answered by tapping a link:
 
 - **Reroute survival is still unknown.** Whether Google keeps the
   waypoint after a missed turn or a traffic reroute needs an actual
-  drive down one of these corridors. This decides whether `/replan` is a
-  rare fallback or the main event, so it is worth an hour in the car
-  before the drive-time features are designed.
+  drive down one of these corridors. Live rerouting is deferred for now
+  precisely because of this, so nothing is blocked on it - but it is the
+  first thing to answer if that work is picked up, because it decides
+  whether re-planning is a rare fallback or the main event.
 - **Whether the waypoint presents as a stop the driver must acknowledge**
   was not recorded. If Google treats it as a destination rather than a
   pass-through, the app has to warn the user about it.

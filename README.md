@@ -18,24 +18,50 @@ The full design is in [docs/final-spec.md](docs/final-spec.md).
 
 ## Status
 
-The three pieces were built in parallel worktrees against mocks and have
-not been integrated. Each is verified standalone; nothing is wired
-end to end yet. Read the handoffs before changing anything - they carry
-the decisions and the known gaps.
+`/plan` runs end to end on real data: live cameras from PostGIS, real dead
+zone geometry, real routing from Valhalla, real waypoints in the deep
+link. Measured across seven Fairfax corridors, avoiding between 0 and 5
+cameras per trip.
 
-Two open items gate real integration work:
+Still mocked: Google Places autocomplete and the Google baseline route.
+Both need an API key. Until then the baseline comes from Valhalla, which
+follows real roads and so gets the camera comparison right, but its ETA is
+a placeholder - see [docs/eta-delta.md](docs/eta-delta.md).
 
-1. The waypoint picker has never produced a waypoint. A live `/plan` call
-   returned six avoided cameras, zero waypoints, and a deep link with no
-   `waypoints=` parameter - an ordinary Google route that avoids nothing.
-2. Nobody has confirmed a Google Maps deep link actually holds its
-   waypoints around a known camera. That handoff is the premise of the
-   project.
+The app talks to the backend over HTTP when `EXPO_PUBLIC_API_URL` is set
+and falls back to its mock otherwise. It has not been pointed at the real
+backend yet.
 
-The app/backend response contract also disagrees: the app expects
-camelCase and minutes, the backend emits snake_case and seconds. The
-agreed resolution is that the backend keeps snake_case and seconds and
-the app maps in `mobile/src/api/`.
+### Settled
+
+- A Google Maps deep link does hold its waypoints. That was the premise
+  of the whole project and it checks out. See
+  [docs/premise-test.md](docs/premise-test.md).
+- The waypoint picker works. The earlier report that it never produced a
+  waypoint was a trip with no camera near the route plus a bug in what
+  counted as avoided.
+- The response contract: the backend keeps snake_case and seconds, and
+  the app maps in `mobile/src/api/`.
+
+### Deferred: live rerouting
+
+The spec's per-trip flow has a foreground service, background GPS,
+proximity alerts and drift detection with a one-tap re-plan. None of the
+client side is built, and it is deliberately not being built yet.
+
+`POST /replan` exists and works - it is a fresh plan from the driver's
+current position - so the backend is ready whenever the client is.
+
+It is deferred because the thing that decides its shape is unanswered:
+whether Google keeps the waypoints after a missed turn or a traffic
+reroute. If it drops them reliably, drift fires constantly and re-planning
+becomes the main event rather than a fallback, which is a different app.
+Answering it needs a real drive, not a tapped link.
+
+When it is built, gate the prompt on `avoided_count`: if a re-plan from
+the current position avoids no cameras, Google's path is already fine and
+the driver should not be interrupted. The pipeline computes that number
+already.
 
 ## Running the pieces
 

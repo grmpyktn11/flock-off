@@ -47,19 +47,6 @@ export async function planRoute(
   return toPlan(body);
 }
 
-// Same pipeline as planRoute, started from wherever the driver is now.
-// Used when drift detection sees us leave the planned route.
-export async function replanRoute(
-  current: { lat: number; lng: number },
-  destination: Place
-): Promise<Plan> {
-  const body = await request("/replan", {
-    current,
-    destination: { lat: destination.lat, lng: destination.lng },
-  });
-  return toPlan(body);
-}
-
 async function request(path: string, json?: unknown): Promise<any> {
   // React Native has no default request timeout, so a server that accepts
   // the connection and then stalls would hang the screen forever.
