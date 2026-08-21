@@ -132,23 +132,49 @@ async function checkDrift(trip: ActiveTrip, position: LatLng): Promise<boolean> 
 }
 
 /** Ask for permissions and start the service. Returns false if refused. */
+/** Whether we can already watch the drive. Asks the user nothing. */
+export async function canWatchDrive(): Promise<boolean> {
+  try {
+    const foreground = await Location.getForegroundPermissionsAsync();
+    const background = await Location.getBackgroundPermissionsAsync();
+    return foreground.granted && background.granted;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ask for what the warnings need.
+ *
+ * Deliberately separate from starting a trip. On Android 11 and up the
+ * background request does not show a dialog - it sends the user to the
+ * system settings page to choose "Allow all the time" themselves. Doing
+ * that during the handover hijacks it: the driver taps Start in Google
+ * Maps and lands in Settings instead.
+ */
+export async function requestDrivePermissions(): Promise<boolean> {
+  try {
+    const foreground = await Location.requestForegroundPermissionsAsync();
+    if (!foreground.granted) return false;
+    const background = await Location.requestBackgroundPermissionsAsync();
+    return background.granted;
+  } catch {
+    // Expo Go has no background location and throws rather than declining.
+    return false;
+  }
+}
+
+/** Start watching. Does nothing if permission is missing. */
 export async function startTripService(): Promise<boolean> {
   try {
+    if (!(await canWatchDrive())) return false;
     return await startLocationUpdates();
   } catch {
-    // Expo Go has no background location and throws rather than
-    // declining. Nothing here is worth failing the trip over: the driver
-    // still gets the route, just not the warnings.
     return false;
   }
 }
 
 async function startLocationUpdates(): Promise<boolean> {
-  const foreground = await Location.requestForegroundPermissionsAsync();
-  if (!foreground.granted) return false;
-  const background = await Location.requestBackgroundPermissionsAsync();
-  if (!background.granted) return false;
-
   await Location.startLocationUpdatesAsync(LOCATION_TASK, {
     accuracy: Location.Accuracy.High,
     timeInterval: TICK_MS,

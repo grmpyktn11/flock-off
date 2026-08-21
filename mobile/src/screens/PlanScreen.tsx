@@ -10,7 +10,13 @@ import { openInGoogleMaps } from "../lib/googleMaps";
 import { haversineMeters } from "../lib/geo";
 import { decodePolyline } from "../lib/polyline";
 import { startTrip } from "../lib/tripStore";
-import { TickResult, handleLocation, startTripService } from "../lib/tripService";
+import {
+  TickResult,
+  canWatchDrive,
+  handleLocation,
+  requestDrivePermissions,
+  startTripService,
+} from "../lib/tripService";
 import { simulateDrive } from "../lib/simulate";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
@@ -21,7 +27,12 @@ export default function PlanScreen({ route }: Props) {
   const [error, setError] = useState("");
   const [simulating, setSimulating] = useState(false);
   const [tick, setTick] = useState<TickResult | null>(null);
+  const [canWarn, setCanWarn] = useState(true);
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    canWatchDrive().then(setCanWarn);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +61,14 @@ export default function PlanScreen({ route }: Props) {
     // Development only. Replays the planned route through the same handler
   // the GPS task calls, so warnings, drift and the re-plan prompt all run
   // without leaving the desk. Stripped from release builds.
+  async function enableWarnings() {
+    const granted = await requestDrivePermissions();
+    setCanWarn(granted);
+    if (!granted) {
+      setError("Warnings need location access set to Allow all the time.");
+    }
+  }
+
   async function simulate(veerMeters: number) {
     if (plan === null || simulating) {
       return;
@@ -87,13 +106,11 @@ export default function PlanScreen({ route }: Props) {
     const unavoidable = plan.cameras.filter((camera) => !camera.avoided);
     await startTrip(destination, decodePolyline(plan.routePolyline), unavoidable);
 
-    // Warnings are a bonus, not a precondition. A driver who declines
-    // background location still gets the camera-avoiding route, which is
-    // the main thing they came for.
-    const watching = await startTripService();
-    if (!watching && unavoidable.length > 0) {
-      setError("Location access is off, so you will not get camera warnings.");
-    }
+    // Starts only if permission is already granted. Asking here would
+    // hijack the handover: on Android 11 and up the background request
+    // opens the system settings page instead of showing a dialog, so the
+    // driver taps this button and lands in Settings rather than Maps.
+    await startTripService();
 
     try {
       await openInGoogleMaps(plan.deepLinkUrl);
@@ -105,6 +122,14 @@ export default function PlanScreen({ route }: Props) {
   // Development only. Replays the planned route through the same handler
   // the GPS task calls, so warnings, drift and the re-plan prompt all run
   // without leaving the desk. Stripped from release builds.
+  async function enableWarnings() {
+    const granted = await requestDrivePermissions();
+    setCanWarn(granted);
+    if (!granted) {
+      setError("Warnings need location access set to Allow all the time.");
+    }
+  }
+
   async function simulate(veerMeters: number) {
     if (plan === null || simulating) {
       return;
@@ -166,8 +191,26 @@ export default function PlanScreen({ route }: Props) {
             ? "No cameras on this route."
             : `${unavoidable.length} ${
                 unavoidable.length === 1 ? "camera" : "cameras"
-              } could not be avoided. You will get an audio alert near each one.`}
+              } could not be avoided.${
+                canWarn ? " You will get an audio alert near each one." : ""
+              }`}
         </Text>
+
+        {unavoidable.length > 0 && !canWarn ? (
+          <View className="mt-3 rounded-lg border border-gray-200 p-4">
+            <Text className="text-gray-900">Turn on camera warnings</Text>
+            <Text className="mt-1 text-gray-600">
+              To speak a warning as you approach these cameras, the app needs
+              location access set to Allow all the time. Google Maps will be
+              in front while you drive, so nothing less will do.
+            </Text>
+            <View className="mt-3">
+              <Button mode="outlined" onPress={enableWarnings}>
+                Enable warnings
+              </Button>
+            </View>
+          </View>
+        ) : null}
 
         {unavoidable.map((camera) => (
           <View key={camera.id}>
