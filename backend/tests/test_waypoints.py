@@ -2,6 +2,7 @@ from app.geo import haversine_m, point_to_polyline_m, resample
 from app.waypoints import (
     DIVERGENCE_THRESHOLD_M,
     MAX_WAYPOINTS,
+    MAX_WAYPOINTS_STRICT,
     SPAN_CAMERA_RADIUS_M,
     find_divergence_spans,
     pick_waypoints,
@@ -76,7 +77,7 @@ def test_waypoint_sits_on_its_span_and_off_the_baseline():
     assert point_to_polyline_m((waypoint.lat, waypoint.lng), baseline) > DIVERGENCE_THRESHOLD_M
 
 
-def test_capped_at_nine_waypoints_closest_to_cameras_first():
+def test_capped_closest_to_cameras_first():
     baseline = straight_route()
     ranges = [(i, i + 4) for i in range(5, 125, 10)]  # 12 spans
     ours = bumped_route(ranges)
@@ -89,11 +90,17 @@ def test_capped_at_nine_waypoints_closest_to_cameras_first():
     ]
     picked = pick_waypoints(ours, baseline, cameras).waypoints
 
+    # A normal plan keeps few, because each waypoint is a visible stop in
+    # Google Maps and the ones furthest from a camera earn theirs least.
     assert len(picked) == MAX_WAYPOINTS
-    kept = [(w.lat, w.lng) for w in picked]
-    # The three spans whose cameras are furthest away are the ones dropped.
+    kept = [(p.lat, p.lng) for p in picked]
     for start, _ in ranges[MAX_WAYPOINTS:]:
-        assert not any(haversine_m(p, ours[start]) < 200 for p in kept)
+        assert not any(haversine_m(k, ours[start]) < 200 for k in kept)
+
+    # Avoiding at any cost spends the whole budget Google allows.
+    strict = pick_waypoints(ours, baseline, cameras, strict=True).waypoints
+    assert len(strict) == MAX_WAYPOINTS_STRICT
+    assert MAX_WAYPOINTS_STRICT > MAX_WAYPOINTS
 
 
 def test_waypoints_are_returned_in_travel_order():

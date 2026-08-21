@@ -22,7 +22,17 @@ DIVERGENCE_THRESHOLD_M = 60.0
 # 7.2km away, together adding 23 minutes to avoid two cameras neither span
 # went near.
 SPAN_CAMERA_RADIUS_M = 500.0
-MAX_WAYPOINTS = 9
+# Google Maps deep links take at most nine waypoints, and every one of
+# them shows in the app as a stop the driver appears to be heading for.
+# Confirmed on a real handover: our waypoint arrived in Google's stop list
+# as "Towers Crescent, Fashion Blvd", a road nobody is stopping at.
+#
+# So a normal plan keeps few. Real trips have needed 0 to 4, and each one
+# past that buys less avoidance while adding another phantom stop.
+# "Avoid at any cost" spends the whole budget, because holding the detour
+# is the entire point of asking for it.
+MAX_WAYPOINTS = 4
+MAX_WAYPOINTS_STRICT = 9
 VALIDATION_TOLERANCE_M = 150.0
 MAX_ADJUSTMENTS = 2
 
@@ -136,7 +146,7 @@ def pick_waypoints(
     directions_fn=None,
     strict: bool = False,
 ) -> Picks:
-    """Return up to MAX_WAYPOINTS waypoints, in travel order.
+    """Return the waypoints holding the detour, in travel order.
 
     directions_fn, when given, is used to validate the picks: it takes the
     origin, the waypoints and the destination and returns the route Google
@@ -161,7 +171,8 @@ def pick_waypoints(
         return Picks([], None)
 
     # Closest-to-a-camera first, then keep travel order for the deep link.
-    spans = sorted(spans, key=lambda s: s.nearest_camera_m)[:MAX_WAYPOINTS]
+    cap = MAX_WAYPOINTS_STRICT if strict else MAX_WAYPOINTS
+    spans = sorted(spans, key=lambda s: s.nearest_camera_m)[:cap]
     spans = sorted(spans, key=lambda s: s.start_index)
 
     waypoints = [_anchor(span) for span in spans]
