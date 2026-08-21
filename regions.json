@@ -1,0 +1,64 @@
+{
+  "_comment": [
+    "Every region the project can serve. Adding a city means adding an",
+    "entry here and nothing else: the camera ingestion and the Valhalla",
+    "tile build both read this file, so the geography is written once.",
+    "",
+    "bbox is [south, west, north, east] in degrees, the order Overpass",
+    "expects. It bounds the camera query and clips the routing tiles, so",
+    "cover everywhere a trip might route through, not just the city.",
+    "",
+    "osm_extracts are the Geofabrik downloads the routing tiles are built",
+    "from. List every state or country the bbox touches; they get clipped",
+    "to the bbox and merged, so overlap is fine and being generous is",
+    "cheap. Browse them at https://download.geofabrik.de.",
+    "",
+    "See docs/adding-a-region.md."
+  ],
+
+  "fairfax-herndon": {
+    "description": "The original test area. Small enough to iterate on quickly.",
+    "bbox": [38.78, -77.55, 39.03, -77.13],
+    "osm_extracts": [
+      "https://download.geofabrik.de/north-america/us/virginia-latest.osm.pbf"
+    ]
+  },
+
+  "dmv": {
+    "description": "Northern Virginia, DC and Maryland. The first real serving area.",
+    "bbox": [37.85, -79.5, 39.75, -75.05],
+    "osm_extracts": [
+      "https://download.geofabrik.de/north-america/us/district-of-columbia-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/maryland-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/virginia-latest.osm.pbf"
+    ]
+  },
+
+  "virginia": {
+    "description": "The whole state.",
+    "bbox": [36.54, -83.68, 39.47, -75.24],
+    "osm_extracts": [
+      "https://download.geofabrik.de/north-america/us/virginia-latest.osm.pbf"
+    ]
+  },
+
+  "dc-ny": {
+    "description": "The Washington to New York corridor.",
+    "bbox": [38.0, -79.0, 41.0, -73.0],
+    "osm_extracts": [
+      "https://download.geofabrik.de/north-america/us/district-of-columbia-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/maryland-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/virginia-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/delaware-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/pennsylvania-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/new-jersey-latest.osm.pbf",
+      "https://download.geofabrik.de/north-america/us/new-york-latest.osm.pbf"
+    ]
+  },
+
+  "east-coast": {
+    "description": "Florida to Maine. Measured at 40,546 cameras and about an hour of nightly Overpass, which is more than the free public instance should be asked for. Needs a self-hosted Overpass or Geofabrik extracts filtered with osmium tags-filter, and a tile build far larger than one machine wants.",
+    "bbox": [24.5, -83.5, 47.5, -66.9],
+    "osm_extracts": []
+  }
+}

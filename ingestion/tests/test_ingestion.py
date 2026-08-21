@@ -175,3 +175,43 @@ def test_camera_at_the_end_of_a_road_facing_off_it_still_gets_a_dead_zone():
 
     assert not zone.is_empty
     assert zone.area > 0
+
+
+def test_every_region_is_usable():
+    """regions.json is the one place a new city is added, so it is checked.
+
+    A typo here is not a crash, it is a routing engine quietly built for
+    the wrong patch of ground.
+    """
+    from ingestion import regions
+
+    assert regions.names(), "no regions defined"
+    for name in regions.names():
+        south, west, north, east = regions.bbox(name)
+        assert -90 <= south < north <= 90, f"{name}: bad latitudes"
+        assert -180 <= west < east <= 180, f"{name}: bad longitudes"
+        assert regions.description(name), f"{name}: say what it covers"
+
+
+def test_osmium_bbox_reorders_the_corners():
+    """Overpass wants south,west,north,east and osmium wants left,bottom,
+    right,top. Feeding one order to the other clips the wrong ground."""
+    from ingestion import regions
+
+    south, west, north, east = regions.bbox("dmv")
+    assert regions.osmium_bbox("dmv") == f"{west},{south},{east},{north}"
+
+
+def test_overpass_regions_come_from_the_shared_file():
+    """The tile build reads the same file, so they cannot drift apart."""
+    from ingestion import overpass, regions
+
+    assert overpass.REGIONS == regions.REGIONS
+
+
+def test_a_region_with_extracts_lists_real_looking_downloads():
+    from ingestion import regions
+
+    for url in regions.osm_extracts("dmv"):
+        assert url.startswith("https://download.geofabrik.de/")
+        assert url.endswith(".osm.pbf")

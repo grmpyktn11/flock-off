@@ -55,6 +55,8 @@ Against a real Valhalla 3.5.1 instance built from OSM:
     python -m pytest tests -q
 
 Regions: `fairfax-herndon`, `dmv`, `virginia`, `dc-ny`, `east-coast`.
+(They have since moved from `overpass.py` into `regions.json` at the
+repo root.)
 
 ## Decisions worth knowing
 

@@ -10,54 +10,19 @@ syncing them is pointless.
 
 ## Build
 
-Two stages: clip and merge the extracts yourself, then hand Valhalla one
-file. Do not point `tile_urls` at the three state files - that is the
-path the next section measures at over 55 minutes without finishing.
+    python infra/valhalla/build_tiles.py --region dmv --work C:/valhalla
 
-On Windows use PowerShell and put each `docker run` on a single line.
-PowerShell's line continuation is a backtick, not a backslash; a pasted
-backslash gives `docker: invalid reference format`. In Git Bash, prefix
-commands with `MSYS_NO_PATHCONV=1` or it rewrites container paths like
-`/data` into `C:/Program Files/Git/data`.
-
-### 1. Download
-
-    New-Item -ItemType Directory -Force C:/valhalla/dmv/src, C:/valhalla/dmv/custom_files
-    cd C:/valhalla/dmv/src
-    curl.exe -L -O https://download.geofabrik.de/north-america/us/district-of-columbia-latest.osm.pbf
-    curl.exe -L -O https://download.geofabrik.de/north-america/us/maryland-latest.osm.pbf
-    curl.exe -L -O https://download.geofabrik.de/north-america/us/virginia-latest.osm.pbf
-
-### 2. Clip to the region, then merge
-
-The bounding box is `REGIONS["dmv"]` from `ingestion/ingestion/overpass.py`,
-so the road graph covers the same ground the camera job ingests. osmium
-takes it as left,bottom,right,top:
-
-    docker run --rm -v C:/valhalla/dmv/src:/data stefda/osmium-tool osmium extract -b -79.50,37.85,-75.05,39.75 -o /data/clip-dc.pbf /data/district-of-columbia-latest.osm.pbf --overwrite
-    docker run --rm -v C:/valhalla/dmv/src:/data stefda/osmium-tool osmium extract -b -79.50,37.85,-75.05,39.75 -o /data/clip-md.pbf /data/maryland-latest.osm.pbf --overwrite
-    docker run --rm -v C:/valhalla/dmv/src:/data stefda/osmium-tool osmium extract -b -79.50,37.85,-75.05,39.75 -o /data/clip-va.pbf /data/virginia-latest.osm.pbf --overwrite
-    docker run --rm -v C:/valhalla/dmv/src:/data stefda/osmium-tool osmium merge /data/clip-dc.pbf /data/clip-md.pbf /data/clip-va.pbf -o /data/dmv.pbf --overwrite
-
-Measured: Virginia 407 MB clips to 136 MB, Maryland and DC are already
-inside the box, and the merge lands at 358 MB. The clip and merge together
-take well under a minute.
-
-Copy the one merged file into `custom_files`, and make sure nothing else
-`.pbf` is in there - the container builds from everything it finds:
-
-    Copy-Item C:/valhalla/dmv/src/dmv.pbf C:/valhalla/dmv/custom_files/
-
-### 3. Build the tiles
-
-No `tile_urls`: the container builds from the `.pbf` already present.
-
-    docker run -dt --name valhalla-dmv -p 8003:8002 -v C:/valhalla/dmv/custom_files:/custom_files -e build_elevation=False -e build_admins=True -e build_time_zones=True -e force_rebuild=False -e serve_tiles=True ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+Downloads the region's extracts, clips each to its bounding box, merges
+them, and starts the container. Region geography comes from
+`regions.json`; see [../../docs/adding-a-region.md](../../docs/adding-a-region.md).
 
 Watch it with `docker logs -f valhalla-dmv`. It is done when
 `curl localhost:8003/status` answers. The output is
 `custom_files/valhalla_tiles.tar`; that single file is what ships to the
 server.
+
+Do not point `--work` inside OneDrive. The intermediate files are large
+and syncing them is pointless.
 
 `build_elevation=False` matters. Elevation data is enormous and this
 project does not use it.
@@ -68,7 +33,7 @@ them across rebuilds; delete everything else if you need a clean start.
 
 ### If a build went wrong
 
-A build fed the unclipped state files does not fail, it just grinds - the
+A build fed unclipped state files does not fail, it just grinds - the
 symptom is `valhalla_tiles/` climbing past a gigabyte while
 `Adding complex turn restrictions` sits there. Stop it and clear the
 partial output before rebuilding, or the container reuses it:
@@ -76,6 +41,20 @@ partial output before rebuilding, or the container reuses it:
     docker stop valhalla-dmv; docker rm valhalla-dmv
     Remove-Item -Recurse -Force C:/valhalla/dmv/custom_files/valhalla_tiles
     Remove-Item -Force C:/valhalla/dmv/custom_files/file_hashes.txt, C:/valhalla/dmv/custom_files/valhalla.json
+
+### Doing it by hand
+
+The script runs these; they are here for when something needs unpicking.
+In Git Bash prefix each with `MSYS_NO_PATHCONV=1`, or it rewrites `/data`
+into `C:/Program Files/Git/data`. In PowerShell keep each on one line -
+its continuation character is a backtick, not a backslash.
+
+    docker run --rm -v C:/valhalla/dmv/src:/data stefda/osmium-tool osmium extract -b -79.50,37.85,-75.05,39.75 -o /data/clip-virginia.pbf /data/virginia-latest.osm.pbf --overwrite
+    docker run --rm -v C:/valhalla/dmv/src:/data stefda/osmium-tool osmium merge /data/clip-dc.pbf /data/clip-md.pbf /data/clip-va.pbf -o /data/merged.pbf --overwrite
+    docker run -dt --name valhalla-dmv -p 8003:8002 -v C:/valhalla/dmv/custom_files:/custom_files -e build_elevation=False -e build_admins=True -e build_time_zones=True -e force_rebuild=False -e serve_tiles=True ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+
+Measured on the DMV: Virginia 407 MB clips to 136 MB, the merge lands at
+358 MB, and the build takes 11 minutes on 12 threads for a 595 MB tarball.
 
 ## Why clipping and merging is not optional
 

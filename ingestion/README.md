@@ -43,8 +43,9 @@ Live Overpass, into Postgres (apply `ingestion/schema.sql` first):
 
     python -m ingestion.ingest --region virginia --database-url postgresql://...
 
-Regions are defined in `ingestion/overpass.py`: `fairfax-herndon`,
-`dmv`, `virginia`, `dc-ny`, `east-coast`.
+Regions are defined in `regions.json` at the repo root, which the
+Valhalla tile build reads too. Adding a city is an entry there and no code
+changes; see `docs/adding-a-region.md`.
 
 Drop the GeoJSON onto geojson.io to check the dead zones sit on the
 right side of the right roads.

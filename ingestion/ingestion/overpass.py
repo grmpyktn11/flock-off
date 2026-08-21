@@ -16,21 +16,17 @@ import time
 import requests
 from shapely.geometry import LineString
 
+from ingestion import regions
+
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 # Overpass rejects requests from clients that do not identify themselves.
-HEADERS = {"User-Agent": "nav-ingestion/0.1 (camera-avoiding navigation)"}
+HEADERS = {"User-Agent": "flock-off/0.1 (camera-avoiding navigation)"}
 
 # Named regions as (south, west, north, east), the order Overpass expects.
-REGIONS = {
-    "fairfax-herndon": (38.78, -77.55, 39.03, -77.13),
-    "virginia": (36.54, -83.68, 39.47, -75.24),
-    "dc-ny": (38.00, -79.00, 41.00, -73.00),
-    # NoVa + DC + all of Maryland, out to the western panhandle and the
-    # Eastern Shore. The realistic first serving area.
-    "dmv": (37.85, -79.50, 39.75, -75.05),
-    "east-coast": (24.50, -83.50, 47.50, -66.90),
-}
+# Defined in regions.json at the repo root, which the Valhalla tile build
+# reads too, so a new city is one edit in one place.
+REGIONS = regions.REGIONS
 
 # Roads this far from a camera or nearer are worth pulling. Kept a little
 # tighter than the snapping limit in deadzone.py so we do not drag in the
