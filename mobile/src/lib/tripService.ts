@@ -153,6 +153,27 @@ async function checkDrift(trip: ActiveTrip, position: LatLng): Promise<boolean> 
 }
 
 /** Ask for permissions and start the service. Returns false if refused. */
+/**
+ * Is a trip actually running right now?
+ *
+ * The stored trip and the running service can fall out of step: swiping
+ * the app out of recents kills the service, and Android can kill it under
+ * memory pressure, but neither clears what is on disk. So a trip with no
+ * service behind it is finished, whatever the disk says, and the app
+ * should not offer to stop something that already stopped.
+ */
+export async function reconcileTrip(): Promise<boolean> {
+  const trip = await loadTrip();
+  if (!trip) return false;
+
+  const running = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK);
+  if (!running) {
+    await endTrip();
+    return false;
+  }
+  return true;
+}
+
 /** Whether we can already watch the drive. Asks the user nothing. */
 export async function canWatchDrive(): Promise<boolean> {
   try {
@@ -205,6 +226,12 @@ async function startLocationUpdates(): Promise<boolean> {
       notificationTitle: "Watching for cameras",
       notificationBody: "Tap to open flock-off and stop.",
       notificationColor: "#1f2937",
+      // Swiping the app out of recents ends the trip. Switching away
+      // does not, which is the distinction that matters: during a drive
+      // Google Maps is in front and this app is backgrounded, and the
+      // warnings have to keep coming. Someone clearing it out of recents
+      // is finished.
+      killServiceOnDestroy: true,
     },
   });
   return true;

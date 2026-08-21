@@ -9,11 +9,12 @@ import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
 import { haversineMeters } from "../lib/geo";
 import { decodePolyline } from "../lib/polyline";
-import { loadTrip, startTrip } from "../lib/tripStore";
+import { startTrip } from "../lib/tripStore";
 import {
   TickResult,
   canWatchDrive,
   handleLocation,
+  reconcileTrip,
   requestDrivePermissions,
   startTripService,
   stopTrip,
@@ -34,9 +35,10 @@ export default function PlanScreen({ route }: Props) {
 
   useEffect(() => {
     canWatchDrive().then(setCanWarn);
-    // A trip survives the app being closed, so coming back to this screen
-    // has to reflect one that is already running.
-    loadTrip().then((trip) => setWatching(trip !== null));
+    // A trip survives the app being closed, so coming back here has to
+    // reflect whether one is genuinely still running - not merely whether
+    // one is on disk, which it can be long after the service has gone.
+    reconcileTrip().then(setWatching);
   }, []);
 
   useEffect(() => {
