@@ -2,7 +2,7 @@
 // so swapping between them is a config change and the screens never know
 // which one they are talking to.
 
-import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "./config";
+import { API_BASE_URL, APP_KEY, REQUEST_TIMEOUT_MS } from "./config";
 import { Camera, CameraType, Place, PlaceSuggestion, Plan, Waypoint } from "./types";
 
 export class ApiError extends Error {
@@ -95,11 +95,19 @@ async function request(path: string, json?: unknown): Promise<any> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  const headers: Record<string, string> = {};
+  if (json !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (APP_KEY) {
+    headers["X-App-Key"] = APP_KEY;
+  }
+
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method: json === undefined ? "GET" : "POST",
-      headers: json === undefined ? undefined : { "Content-Type": "application/json" },
+      headers,
       body: json === undefined ? undefined : JSON.stringify(json),
       signal: controller.signal,
     });
@@ -114,7 +122,11 @@ async function request(path: string, json?: unknown): Promise<any> {
   }
 
   if (!response.ok) {
-    throw new ApiError(await failureMessage(response), response.status >= 500);
+    // 429 is the one 4xx worth retrying: it means "later", not "no". The
+    // backend sends Retry-After with it, and a driver who waits a moment
+    // and taps again is doing exactly the right thing.
+    const retryable = response.status >= 500 || response.status === 429;
+    throw new ApiError(await failureMessage(response), retryable);
   }
 
   try {
@@ -158,6 +170,10 @@ function toCamera(raw: any): Camera {
     lng: raw.lng,
     facingDeg: raw.facing_deg ?? null,
     avoided: raw.avoided,
+    operator: raw.operator ?? null,
+    brand: raw.brand ?? null,
+    roadName: raw.road_name ?? null,
+    roadRef: raw.road_ref ?? null,
   };
 }
 

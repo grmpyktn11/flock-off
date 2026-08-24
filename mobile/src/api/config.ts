@@ -8,6 +8,13 @@ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "";
 
 export const USE_MOCK_BACKEND = API_BASE_URL === "";
 
+// Sent as X-App-Key on every request. Not a secret in any real sense - it
+// ships inside this bundle and anyone can unzip an APK - but the backend
+// refuses callers without it, which turns away the scanners that find an
+// open endpoint and go no further. Unset means the backend is running
+// without a key too, which is the local development case.
+export const APP_KEY = process.env.EXPO_PUBLIC_APP_KEY ?? "";
+
 // Long enough for a cold Valhalla call, short enough that a dead server
 // does not leave the user watching a spinner.
 export const REQUEST_TIMEOUT_MS = 15000;

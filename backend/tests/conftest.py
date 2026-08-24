@@ -11,7 +11,7 @@ reaches them costs money every run and fails in CI where no key exists.
 
 import pytest
 
-from app import config
+from app import config, ratelimit
 
 
 @pytest.fixture(autouse=True)
@@ -19,3 +19,8 @@ def use_mock_sources(monkeypatch):
     monkeypatch.setattr(config, "USE_MOCK_CAMERAS", True)
     monkeypatch.setattr(config, "USE_MOCK_ROUTING", True)
     monkeypatch.setattr(config, "USE_MOCK_GOOGLE", True)
+    # Rate limit buckets live in module state, and TestClient presents the
+    # same address every time. Without this the suite shares one allowance
+    # and whichever test happens to run thirtieth gets a 429.
+    monkeypatch.setattr(config, "APP_KEY", "")
+    ratelimit.reset()

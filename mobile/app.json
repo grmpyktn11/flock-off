@@ -25,7 +25,23 @@
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -41,7 +57,17 @@
         }
       ],
       "expo-notifications",
-      "expo-task-manager"
+      "expo-task-manager",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResources": true,
+            "enableMinifyInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "runtimeVersion": {
       "policy": "appVersion"
@@ -51,6 +77,9 @@
       "eas": {
         "projectId": "60a300c8-4ecd-4315-a5b3-ae27f47cfc5f"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/60a300c8-4ecd-4315-a5b3-ae27f47cfc5f"
     }
   }
 }

@@ -5,11 +5,17 @@ so this service runs with no infrastructure at all and each real one can
 be switched on independently.
 """
 
-from fastapi import FastAPI, Query, Request
+import logging
+
+from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 from app import google
+from app.appkey import require_app_key
+from app.google import GoogleError
 from app.planner import plan_route
+from app.ratelimit import SEARCH_LIMIT, limiter, plan_limit, too_many_requests
 from app.schemas import (
     PlaceDetail,
     PlanRequest,
@@ -17,10 +23,34 @@ from app.schemas import (
     ReplanRequest,
     SearchResponse,
 )
-from app.google import GoogleError
 from app.valhalla import RoutingError
 
 app = FastAPI(title="Camera-avoiding navigation backend")
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, too_many_requests)
+
+_access = logging.getLogger("flockoff.access")
+
+
+@app.middleware("http")
+async def count_requests(request: Request, call_next):
+    """Enough to notice abuse, and nothing more.
+
+    Path, status and address. Deliberately not the body: the coordinates
+    in a plan request are the one thing this service is careful not to
+    remember, and an access log is exactly where they would quietly
+    accumulate. What you want from this is a 429 rate climbing, or one
+    address appearing a thousand times an hour - both visible from these
+    three fields.
+
+    systemd captures stdout, so `journalctl -u flock-off -f` is the live
+    view.
+    """
+    response = await call_next(request)
+    client = request.client.host if request.client else "-"
+    _access.info("%s %s %s %s", client, request.method, request.url.path, response.status_code)
+    return response
 
 
 @app.exception_handler(GoogleError)
@@ -48,8 +78,18 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/search", response_model=SearchResponse)
+@app.get(
+    "/search",
+    response_model=SearchResponse,
+    dependencies=[Depends(require_app_key)],
+)
+# `request` is where the limiter reads the caller's address; `response` is
+# where it writes the X-RateLimit-* headers. Both are framework plumbing -
+# neither carries anything this endpoint looks at.
+@limiter.limit(SEARCH_LIMIT)
 def search(
+    request: Request,
+    response: Response,
     q: str = Query(min_length=1),
     lat: float | None = None,
     lng: float | None = None,
@@ -65,8 +105,18 @@ def search(
     return SearchResponse(results=google.search_places(q, lat, lng, session_token))
 
 
-@app.get("/place", response_model=PlaceDetail)
-def place(place_id: str = Query(min_length=1), session_token: str | None = None) -> PlaceDetail:
+@app.get(
+    "/place",
+    response_model=PlaceDetail,
+    dependencies=[Depends(require_app_key)],
+)
+@limiter.limit(SEARCH_LIMIT)
+def place(
+    request: Request,
+    response: Response,
+    place_id: str = Query(min_length=1),
+    session_token: str | None = None,
+) -> PlaceDetail:
     """Resolve one suggestion to coordinates, once the driver has chosen it.
 
     Passing back the same session_token used for the search closes the
@@ -76,23 +126,35 @@ def place(place_id: str = Query(min_length=1), session_token: str | None = None)
     return PlaceDetail(**google.place_details(place_id, session_token))
 
 
-@app.post("/plan", response_model=PlanResponse)
-def plan(request: PlanRequest) -> PlanResponse:
+@app.post(
+    "/plan",
+    response_model=PlanResponse,
+    dependencies=[Depends(require_app_key)],
+)
+@plan_limit()
+def plan(request: Request, response: Response, body: PlanRequest) -> PlanResponse:
+    # `request` and `response` belong to the rate limiter. The plan is in
+    # `body`, which had to be renamed off `request` to make room.
     return plan_route(
-        (request.origin.lat, request.origin.lng),
-        (request.destination.lat, request.destination.lng),
-        request.origin_place_id,
-        request.destination_place_id,
-        request.strict,
+        (body.origin.lat, body.origin.lng),
+        (body.destination.lat, body.destination.lng),
+        body.origin_place_id,
+        body.destination_place_id,
+        body.strict,
     )
 
 
-@app.post("/replan", response_model=PlanResponse)
-def replan(request: ReplanRequest) -> PlanResponse:
+@app.post(
+    "/replan",
+    response_model=PlanResponse,
+    dependencies=[Depends(require_app_key)],
+)
+@plan_limit()
+def replan(request: Request, response: Response, body: ReplanRequest) -> PlanResponse:
     """Same pipeline as /plan, with the driver's current position as origin."""
     return plan_route(
-        (request.current.lat, request.current.lng),
-        (request.destination.lat, request.destination.lng),
+        (body.current.lat, body.current.lng),
+        (body.destination.lat, body.destination.lng),
         None,
-        request.destination_place_id,
+        body.destination_place_id,
     )

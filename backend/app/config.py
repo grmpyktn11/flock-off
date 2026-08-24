@@ -47,6 +47,12 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 USE_MOCK_GOOGLE = GOOGLE_API_KEY == ""
 GOOGLE_TIMEOUT_S = 10
 
+# A shared secret the app sends as X-App-Key. Not authentication - it
+# ships inside every APK and anyone can read it out - but it costs a
+# scanner one more step than finding an open endpoint, and most of them
+# do not take it. Unset means open, so a fresh checkout still runs.
+APP_KEY = os.environ.get("APP_KEY", "")
+
 # Cameras further than this from the trip's bounding box are not worth
 # fetching. Wide enough to cover a real detour.
 BBOX_PADDING_M = 3000.0
