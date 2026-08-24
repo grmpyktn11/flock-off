@@ -40,3 +40,6 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
+# Local MCP config; names the database project, which strangers have no need of
+.mcp.json
