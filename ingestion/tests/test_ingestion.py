@@ -123,7 +123,8 @@ def test_tiles_split_a_large_box_and_stay_inside_it():
 
 def test_parse_way_becomes_a_linestring():
     way = {"geometry": [{"lon": -77.39, "lat": 38.97}, {"lon": -77.37, "lat": 38.97}]}
-    assert list(overpass.parse_way(way).coords) == [(-77.39, 38.97), (-77.37, 38.97)]
+    road = overpass.parse_way(way)
+    assert list(road.geom.coords) == [(-77.39, 38.97), (-77.37, 38.97)]
 
 
 def test_utm_zone_follows_longitude():
@@ -140,7 +141,8 @@ def test_road_index_returns_only_nearby_candidates():
 
     far = LineString([(-70.0, 38.97), (-70.1, 38.97)])
     index = RoadIndex([ROAD, far])
-    assert index.candidates(*CAMERA) == [ROAD]
+    # Bare LineStrings are wrapped in Road on the way in.
+    assert [r.geom for r in index.candidates(*CAMERA)] == [ROAD]
 
 
 def test_road_index_handles_no_roads():
@@ -149,11 +151,15 @@ def test_road_index_handles_no_roads():
     assert RoadIndex([]).candidates(*CAMERA) == []
 
 
-def test_dead_zone_and_snap_reports_whether_a_road_was_found():
-    from ingestion.deadzone import dead_zone_and_snap
+def test_dead_zone_and_snap_reports_which_road_was_found():
+    from ingestion.deadzone import Road, dead_zone_and_snap
 
-    assert dead_zone_and_snap(*CAMERA, 90, [ROAD])[1] is True
-    assert dead_zone_and_snap(-77.2000, 38.8000, 90, [ROAD])[1] is False
+    named = Road(geom=ROAD, name="Elden Street", ref="VA-606")
+    snapped = dead_zone_and_snap(*CAMERA, 90, [named])[1]
+    assert snapped is not None
+    assert snapped.name == "Elden Street"
+    assert snapped.ref == "VA-606"
+    assert dead_zone_and_snap(-77.2000, 38.8000, 90, [named])[1] is None
 
 
 def test_camera_at_the_end_of_a_road_facing_off_it_still_gets_a_dead_zone():

@@ -19,14 +19,19 @@ from ingestion import overpass
 from ingestion.deadzone import RoadIndex, dead_zone_and_snap, load_roads
 
 UPSERT_SQL = """
-INSERT INTO cameras (osm_id, type, geom, facing_deg, dead_zone)
+INSERT INTO cameras (osm_id, type, geom, facing_deg, dead_zone,
+                     operator, brand, road_name, road_ref)
 VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326), %s,
-        ST_SetSRID(ST_GeomFromText(%s), 4326))
+        ST_SetSRID(ST_GeomFromText(%s), 4326), %s, %s, %s, %s)
 ON CONFLICT (osm_id) DO UPDATE SET
     type       = EXCLUDED.type,
     geom       = EXCLUDED.geom,
     facing_deg = EXCLUDED.facing_deg,
     dead_zone  = EXCLUDED.dead_zone,
+    operator   = EXCLUDED.operator,
+    brand      = EXCLUDED.brand,
+    road_name  = EXCLUDED.road_name,
+    road_ref   = EXCLUDED.road_ref,
     last_seen  = now(),
     active     = TRUE;
 """
@@ -42,10 +47,16 @@ WHERE active AND osm_id <> ALL(%s);
 def build_records(cameras, roads):
     index = RoadIndex(roads)
     for camera in cameras:
-        dead_zone, snapped = dead_zone_and_snap(
+        dead_zone, road = dead_zone_and_snap(
             camera["lon"], camera["lat"], camera["facing_deg"], index
         )
-        yield {**camera, "dead_zone": dead_zone, "snapped": snapped}
+        yield {
+            **camera,
+            "dead_zone": dead_zone,
+            "snapped": road is not None,
+            "road_name": road.name if road else None,
+            "road_ref": road.ref if road else None,
+        }
 
 
 def write_geojson(records, stream):
@@ -58,6 +69,10 @@ def write_geojson(records, stream):
                 "facing_deg": r["facing_deg"],
                 "lon": r["lon"],
                 "lat": r["lat"],
+                "operator": r.get("operator"),
+                "brand": r.get("brand"),
+                "road_name": r.get("road_name"),
+                "road_ref": r.get("road_ref"),
             },
             "geometry": r["dead_zone"].__geo_interface__,
         }
@@ -78,6 +93,10 @@ def write_postgres(records, database_url, batch_size=1000):
             r["lat"],
             r["facing_deg"],
             r["dead_zone"].wkt,
+            r.get("operator"),
+            r.get("brand"),
+            r.get("road_name"),
+            r.get("road_ref"),
         )
         for r in records
     ]

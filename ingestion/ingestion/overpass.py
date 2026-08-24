@@ -17,6 +17,7 @@ import requests
 from shapely.geometry import LineString
 
 from ingestion import regions
+from ingestion.deadzone import Road
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -124,7 +125,12 @@ def fetch_tile(bbox, url=OVERPASS_URL):
 
 
 def parse_way(way):
-    return LineString([(p["lon"], p["lat"]) for p in way["geometry"]])
+    tags = way.get("tags", {})
+    return Road(
+        geom=LineString([(p["lon"], p["lat"]) for p in way["geometry"]]),
+        name=tags.get("name"),
+        ref=tags.get("ref"),
+    )
 
 
 def parse_node(node):
@@ -135,6 +141,12 @@ def parse_node(node):
         "lon": node["lon"],
         "lat": node["lat"],
         "facing_deg": parse_direction(tags),
+        # Who runs the camera and whose product it is, when OSM knows.
+        # This is the difference between "a camera" and "a Flock Safety
+        # reader operated by Fairfax County Police", which is the version
+        # worth telling a driver.
+        "operator": tags.get("operator"),
+        "brand": tags.get("brand") or tags.get("manufacturer"),
     }
 
 

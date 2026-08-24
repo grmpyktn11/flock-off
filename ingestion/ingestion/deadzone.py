@@ -12,6 +12,7 @@ region as wide as the east coast spans three of them.
 """
 
 import math
+from dataclasses import dataclass
 
 from pyproj import Transformer
 from shapely.geometry import LineString, Point, box
@@ -30,6 +31,24 @@ MAX_SNAP_FT = 150.0  # beyond this the camera is not watching that road
 PERPENDICULAR_TOLERANCE_DEG = 15.0
 
 _TRANSFORMERS = {}
+
+
+@dataclass(frozen=True)
+class Road:
+    """A road way with the tags worth keeping.
+
+    The name and ref are what turn a camera row into a sentence a person
+    can act on - "on Lee Highway (US-29)" - so the snapping step that
+    already finds the road passes them through instead of dropping them.
+    """
+
+    geom: LineString
+    name: str | None = None
+    ref: str | None = None
+
+
+def _as_road(road):
+    return road if isinstance(road, Road) else Road(geom=road)
 
 
 def projection(lon):
@@ -64,8 +83,10 @@ class RoadIndex:
     PAD_DEG = MAX_SNAP_FT * METERS_PER_FOOT / 111_320 * 2
 
     def __init__(self, roads):
-        self.roads = list(roads)
-        self.tree = STRtree(self.roads) if self.roads else None
+        self.roads = [_as_road(r) for r in roads]
+        self.tree = (
+            STRtree([r.geom for r in self.roads]) if self.roads else None
+        )
 
     def candidates(self, lon, lat):
         if self.tree is None:
@@ -81,34 +102,39 @@ def compute_dead_zone(lon, lat, facing_deg, roads):
 
 
 def dead_zone_and_snap(lon, lat, facing_deg, roads):
-    """Return (dead zone polygon in WGS84, snapped to a road?).
+    """Return (dead zone polygon in WGS84, the Road snapped to, or None).
 
-    roads is a list of shapely LineStrings in WGS84, or a RoadIndex. If no
-    road is close enough the dead zone is a plain circle around the camera,
-    which is the conservative shape but worth counting separately: a lot of
-    them means the road data is too thin, not that the cameras are rural.
+    roads is a list of Roads or shapely LineStrings in WGS84, or a
+    RoadIndex. If no road is close enough the dead zone is a plain circle
+    around the camera, which is the conservative shape but worth counting
+    separately: a lot of them means the road data is too thin, not that
+    the cameras are rural.
     """
     index = roads if isinstance(roads, RoadIndex) else RoadIndex(roads)
     to_meters, to_degrees = projection(lon)
 
     camera = transform(to_meters, Point(lon, lat))
-    nearby = [transform(to_meters, r) for r in index.candidates(lon, lat)]
-    road = nearest_road(nearby, camera)
+    nearby = [
+        (r, transform(to_meters, r.geom)) for r in index.candidates(lon, lat)
+    ]
+    snapped = nearest_road(nearby, camera)
 
-    if road is None:
+    if snapped is None:
         circle = camera.buffer(DEAD_ZONE_FT * METERS_PER_FOOT)
-        return transform(to_degrees, circle), False
+        return transform(to_degrees, circle), None
 
-    return transform(to_degrees, road_dead_zone(road, camera, facing_deg)), True
+    road, road_m = snapped
+    zone = transform(to_degrees, road_dead_zone(road_m, camera, facing_deg))
+    return zone, road
 
 
 def nearest_road(roads_m, camera_m):
-    """Closest road within MAX_SNAP_FT, or None."""
+    """Closest (Road, projected geometry) pair within MAX_SNAP_FT, or None."""
     limit = MAX_SNAP_FT * METERS_PER_FOOT
-    candidates = [r for r in roads_m if r.distance(camera_m) <= limit]
+    candidates = [pair for pair in roads_m if pair[1].distance(camera_m) <= limit]
     if not candidates:
         return None
-    return min(candidates, key=lambda r: r.distance(camera_m))
+    return min(candidates, key=lambda pair: pair[1].distance(camera_m))
 
 
 def road_dead_zone(road_m, camera_m, facing_deg):
@@ -183,7 +209,11 @@ def load_roads(path):
     with open(path) as f:
         data = json.load(f)
     return [
-        LineString(feature["geometry"]["coordinates"])
+        Road(
+            geom=LineString(feature["geometry"]["coordinates"]),
+            name=feature.get("properties", {}).get("name"),
+            ref=feature.get("properties", {}).get("ref"),
+        )
         for feature in data["features"]
         if feature["geometry"]["type"] == "LineString"
     ]

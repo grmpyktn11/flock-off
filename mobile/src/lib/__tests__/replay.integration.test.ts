@@ -103,7 +103,7 @@ maybe("replaying a real plan", () => {
   it("announces each unavoidable camera exactly once along the route", () => {
     const unavoidable = plan.cameras
       .filter((c) => !c.avoided)
-      .map((c) => ({ ...c, type: c.type as "alpr" | "speed_camera", facingDeg: null }));
+      .map((c) => ({ ...c, type: c.type as "alpr" | "speed_camera", facingDeg: null, operator: null, brand: null, roadName: null, roadRef: null }));
     // If this ever fires, the trip above stopped carrying unavoidable
     // cameras and the test below is checking nothing.
     expect(unavoidable.length).toBeGreaterThan(0);

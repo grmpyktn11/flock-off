@@ -58,6 +58,10 @@ class CameraResult(BaseModel):
     lng: float
     facing_deg: float | None
     avoided: bool
+    operator: str | None = None
+    brand: str | None = None
+    road_name: str | None = None
+    road_ref: str | None = None
 
 
 class WaypointResult(BaseModel):

@@ -20,7 +20,10 @@ def in_bbox(
 
     min_lat, min_lng, max_lat, max_lng = _padded_bbox(origin, destination)
     return [
-        Camera(id=r[0], osm_id=r[1], type=r[2], lat=r[3], lng=r[4], facing_deg=r[5])
+        Camera(
+            id=r[0], osm_id=r[1], type=r[2], lat=r[3], lng=r[4], facing_deg=r[5],
+            operator=r[6], brand=r[7], road_name=r[8], road_ref=r[9],
+        )
         for r in db.fetch_cameras_in_bbox(min_lng, min_lat, max_lng, max_lat)
     ]
 

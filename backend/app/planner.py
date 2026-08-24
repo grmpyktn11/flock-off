@@ -109,6 +109,10 @@ def plan_route(
                 lng=c.lng,
                 facing_deg=c.facing_deg,
                 avoided=c.id in avoided_ids,
+                operator=c.operator,
+                brand=c.brand,
+                road_name=c.road_name,
+                road_ref=c.road_ref,
             )
             for c in reported
         ],

@@ -8,6 +8,13 @@ CREATE TABLE IF NOT EXISTS cameras (
     geom        GEOMETRY(Point, 4326) NOT NULL,
     facing_deg  DOUBLE PRECISION CHECK (facing_deg >= 0 AND facing_deg < 360),
     dead_zone   GEOMETRY(Polygon, 4326),
+    -- Context from OSM, for telling the driver what this thing is rather
+    -- than just where. operator/brand come off the camera node; the road
+    -- name and ref come from the way the camera was snapped to.
+    operator    TEXT,
+    brand       TEXT,
+    road_name   TEXT,
+    road_ref    TEXT,
     first_seen  TIMESTAMPTZ NOT NULL DEFAULT now(),
     last_seen   TIMESTAMPTZ NOT NULL DEFAULT now(),
     active      BOOLEAN NOT NULL DEFAULT TRUE

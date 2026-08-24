@@ -30,6 +30,14 @@ export type Camera = {
   // False means the route still passes this camera and the driver gets an
   // audio alert while driving.
   avoided: boolean;
+  // Context from OSM, when a mapper recorded it: who operates the camera,
+  // whose product it is, and the road it watches. The point of the app is
+  // as much awareness as avoidance, and "a Flock Safety reader run by the
+  // county police on Lee Highway" carries that; a pin on a map does not.
+  operator: string | null;
+  brand: string | null;
+  roadName: string | null;
+  roadRef: string | null;
 };
 
 export type Waypoint = {

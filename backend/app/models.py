@@ -15,3 +15,9 @@ class Camera:
     lat: float
     lng: float
     facing_deg: float | None
+    # Context from OSM, present when the mapper recorded it: who runs the
+    # camera, whose product it is, and the road it watches.
+    operator: str | None = None
+    brand: str | None = None
+    road_name: str | None = None
+    road_ref: str | None = None

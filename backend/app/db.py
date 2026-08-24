@@ -18,7 +18,8 @@ from app.config import DATABASE_URL
 # Cameras whose point falls in the trip's bounding box. The && operator is
 # the one the GIST index answers.
 _IN_BBOX = """
-    SELECT id, osm_id, type, ST_Y(geom), ST_X(geom), facing_deg
+    SELECT id, osm_id, type, ST_Y(geom), ST_X(geom), facing_deg,
+           operator, brand, road_name, road_ref
     FROM cameras
     WHERE active
       AND geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
