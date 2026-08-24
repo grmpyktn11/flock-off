@@ -9,6 +9,7 @@ import { ApiError, Camera, Plan, planRoute } from "../api";
 import { openInGoogleMaps } from "../lib/googleMaps";
 import { haversineMeters } from "../lib/geo";
 import { decodePolyline } from "../lib/polyline";
+import { useAppTheme } from "../theme";
 import { startTrip } from "../lib/tripStore";
 import {
   TickResult,
@@ -19,7 +20,7 @@ import {
   startTripService,
   stopTrip,
 } from "../lib/tripService";
-import { simulateDrive } from "../lib/simulate";
+import { routeLengthMeters, simulateDrive } from "../lib/simulate";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
 
@@ -32,6 +33,11 @@ export default function PlanScreen({ route }: Props) {
   const [canWarn, setCanWarn] = useState(true);
   const [watching, setWatching] = useState(false);
   const insets = useSafeAreaInsets();
+  const { tokens } = useAppTheme();
+  const ghost = tokens.name === "ghost";
+  const body = { color: tokens.text, fontFamily: tokens.fontFamily };
+  const muted = { color: tokens.textMuted, fontFamily: tokens.fontFamily };
+  const card = { borderColor: tokens.border };
 
   useEffect(() => {
     canWatchDrive().then(setCanWarn);
@@ -65,51 +71,7 @@ export default function PlanScreen({ route }: Props) {
   }, [origin, destination, strict]);
 
   async function startNavigation() {
-    // Development only. Replays the planned route through the same handler
-  // the GPS task calls, so warnings, drift and the re-plan prompt all run
-  // without leaving the desk. Stripped from release builds.
-  async function endTrip() {
-    await stopTrip();
-    setWatching(false);
-    setTick(null);
-  }
-
-  async function enableWarnings() {
-    const granted = await requestDrivePermissions();
-    setCanWarn(granted);
-    if (!granted) {
-      setError("Warnings need location access set to Allow all the time.");
-    }
-  }
-
-  async function simulate(veerMeters: number) {
-    if (plan === null || simulating) {
-      return;
-    }
-    const route = decodePolyline(plan.routePolyline);
-    await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
-    setSimulating(true);
-    setTick(null);
-    simulateDrive({
-      route,
-      veerMeters,
-      speedMps: 25,
-      tickMs: 400,
-      onTick: async (position, speedMps) => {
-        const result = await handleLocation(position, speedMps);
-        // Announcements and prompts are worth keeping on screen; a plain
-        // tick only updates the distance readout.
-        setTick((previous) =>
-          result.spoke || result.prompted || result.arrived
-            ? result
-            : { ...result, spoke: previous?.spoke, prompted: previous?.prompted }
-        );
-      },
-      onFinish: () => setSimulating(false),
-    });
-  }
-
-  if (plan === null) {
+    if (plan === null) {
       return;
     }
 
@@ -158,10 +120,14 @@ export default function PlanScreen({ route }: Props) {
     await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
     setSimulating(true);
     setTick(null);
+    // Fast enough that a cross-county route replays in about ninety
+    // seconds, never slower than highway speed for a short one. The
+    // warnings clamp their radius, so they still fire at any of this.
+    const speedMps = Math.max(25, routeLengthMeters(route) / 90);
     simulateDrive({
       route,
       veerMeters,
-      speedMps: 25,
+      speedMps,
       tickMs: 400,
       onTick: async (position, speedMps) => {
         const result = await handleLocation(position, speedMps);
@@ -179,9 +145,11 @@ export default function PlanScreen({ route }: Props) {
 
   if (plan === null) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: tokens.background }}>
         <ActivityIndicator />
-        <Text className="mt-4 text-gray-500">Planning around cameras</Text>
+        <Text className="mt-4" style={muted}>
+          {ghost ? "> computing evasion route_" : "Planning around cameras"}
+        </Text>
       </View>
     );
   }
@@ -189,24 +157,30 @@ export default function PlanScreen({ route }: Props) {
   const unavoidable = plan.cameras.filter((camera) => !camera.avoided);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: tokens.background }}>
       <ScrollView className="flex-1 px-4 pt-4">
-        <View className="items-center rounded-lg border border-gray-200 py-8">
-          <Text className="text-6xl font-bold text-gray-900">{plan.avoidedCount}</Text>
-          <Text className="mt-1 text-gray-600">
-            {plan.avoidedCount === 1 ? "camera avoided" : "cameras avoided"}
+        <View className="items-center rounded-lg border py-8" style={card}>
+          <Text className="text-6xl font-bold" style={{ color: tokens.accent, fontFamily: tokens.fontFamily }}>{plan.avoidedCount}</Text>
+          <Text className="mt-1" style={muted}>
+            {ghost
+              ? plan.avoidedCount === 1
+                ? "CAMERA_EVADED"
+                : "CAMERAS_EVADED"
+              : plan.avoidedCount === 1
+                ? "camera avoided"
+                : "cameras avoided"}
           </Text>
         </View>
 
-        <View className="mt-4 rounded-lg border border-gray-200 p-4">
-          <Text className="text-base text-gray-900">
+        <View className="mt-4 rounded-lg border p-4" style={card}>
+          <Text className="text-base" style={body}>
             {minutes(plan.routeEtaSeconds)} min, {formatDelta(plan.etaDeltaSeconds)} the
             fastest route
           </Text>
-          <Text className="mt-1 text-gray-600">{destination.name}</Text>
+          <Text className="mt-1" style={muted}>{destination.name}</Text>
         </View>
 
-        <Text className="mb-1 mt-6 text-gray-600">
+        <Text className="mb-1 mt-6" style={muted}>
           {unavoidable.length === 0
             ? "No cameras on this route."
             : `${unavoidable.length} ${
@@ -217,9 +191,9 @@ export default function PlanScreen({ route }: Props) {
         </Text>
 
         {unavoidable.length > 0 && !canWarn ? (
-          <View className="mt-3 rounded-lg border border-gray-200 p-4">
-            <Text className="text-gray-900">Turn on camera warnings</Text>
-            <Text className="mt-1 text-gray-600">
+          <View className="mt-3 rounded-lg border p-4" style={card}>
+            <Text style={body}>Turn on camera warnings</Text>
+            <Text className="mt-1" style={muted}>
               To speak a warning as you approach these cameras, the app needs
               location access set to Allow all the time. Google Maps will be
               in front while you drive, so nothing less will do.
@@ -238,6 +212,7 @@ export default function PlanScreen({ route }: Props) {
             <List.Item
               title={cameraLabel(camera)}
               description={describeCamera(camera, plan)}
+              descriptionNumberOfLines={3}
               left={(props) => <List.Icon {...props} icon="cctv" />}
             />
           </View>
@@ -246,7 +221,13 @@ export default function PlanScreen({ route }: Props) {
 
       <View className="px-4 pt-2" style={{ paddingBottom: insets.bottom + 48 }}>
         <Button mode="contained" icon="navigation" onPress={startNavigation}>
-          {watching ? "Back to Google Maps" : "Start in Google Maps"}
+          {ghost
+            ? watching
+              ? "> RESUME HANDOVER"
+              : "> HANDOVER TO GOOGLE MAPS"
+            : watching
+              ? "Back to Google Maps"
+              : "Start in Google Maps"}
         </Button>
         {watching ? (
           <View className="mt-2">
@@ -256,17 +237,17 @@ export default function PlanScreen({ route }: Props) {
           </View>
         ) : null}
         {__DEV__ && tick !== null ? (
-          <View className="mt-2 rounded border border-gray-200 p-2">
-            <Text className="text-xs text-gray-600">
+          <View className="mt-2 rounded border p-2" style={card}>
+            <Text className="text-xs" style={muted}>
               {tick.arrived
                 ? "Arrived, trip ended"
                 : `${Math.round(tick.offRouteMeters)} m off route`}
             </Text>
             {tick.spoke ? (
-              <Text className="mt-1 text-xs text-gray-900">spoke: {tick.spoke}</Text>
+              <Text className="mt-1 text-xs" style={body}>spoke: {tick.spoke}</Text>
             ) : null}
             {tick.prompted ? (
-              <Text className="mt-1 text-xs text-gray-900">re-plan prompt sent</Text>
+              <Text className="mt-1 text-xs" style={body}>re-plan prompt sent</Text>
             ) : null}
           </View>
         ) : null}
@@ -310,9 +291,28 @@ function formatDelta(seconds: number): string {
   return `${minutes(seconds)} min slower than`;
 }
 
-// How far into the trip the driver meets this camera. A latitude and
-// longitude tells them nothing they can use from behind a wheel.
+// Where the camera is in words: the road it watches when OSM names one,
+// then how far into the trip the driver meets it, then who operates it.
+// A latitude and longitude tells them nothing they can use from behind a
+// wheel; "Flock Safety on Lee Highway, run by the county police" is the
+// version worth knowing - and worth repeating to a county board meeting.
 function describeCamera(camera: Camera, plan: Plan): string {
+  const parts = [];
+  if (camera.roadName || camera.roadRef) {
+    const road = camera.roadName ?? camera.roadRef;
+    const ref =
+      camera.roadName && camera.roadRef ? ` (${camera.roadRef})` : "";
+    parts.push(`On ${road}${ref}`);
+  }
+  parts.push(distanceAlong(camera, plan));
+  if (camera.operator) {
+    parts.push(`Operated by ${camera.operator}`);
+  }
+  const text = parts.join(" · ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function distanceAlong(camera: Camera, plan: Plan): string {
   const route = decodePolyline(plan.routePolyline);
   let travelled = 0;
   let best = { distance: Infinity, along: 0 };
@@ -323,9 +323,11 @@ function describeCamera(camera: Camera, plan: Plan): string {
     travelled += step;
   }
   const km = best.along / 1000;
-  return km < 1 ? "Near the start of the route" : `About ${km.toFixed(1)} km in`;
+  return km < 1 ? "near the start of the route" : `about ${km.toFixed(1)} km in`;
 }
 
 function cameraLabel(camera: Camera): string {
-  return camera.type === "alpr" ? "License plate reader" : "Speed camera";
+  const kind =
+    camera.type === "alpr" ? "License plate reader" : "Speed camera";
+  return camera.brand ? `${kind} — ${camera.brand}` : kind;
 }

@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
+import { useAppTheme } from "../theme";
 import { Place, PlaceSuggestion, placeDetails, searchPlaces } from "../api";
 import { newSessionToken } from "../lib/session";
 
@@ -33,6 +34,12 @@ export default function SearchScreen({ navigation }: Props) {
   // call when a place is picked.
   const sessionToken = useRef(newSessionToken());
   const insets = useSafeAreaInsets();
+  const { tokens } = useAppTheme();
+  const ghost = tokens.name === "ghost";
+  // Paper components take their colors from the provider; these styles
+  // cover the plain RN pieces the provider cannot reach.
+  const body = { color: tokens.text, fontFamily: tokens.fontFamily };
+  const muted = { color: tokens.textMuted, fontFamily: tokens.fontFamily };
 
   const query = activeField === "origin" ? originQuery : destinationQuery;
   const selected = activeField === "origin" ? origin : destination;
@@ -109,9 +116,9 @@ export default function SearchScreen({ navigation }: Props) {
   const canPlan = origin !== null && destination !== null;
 
   return (
-    <View className="flex-1 bg-white px-4 pt-4">
+    <View className="flex-1 px-4 pt-4" style={{ backgroundColor: tokens.background }}>
       <TextInput
-        label="Start"
+        label={ghost ? "ORIGIN:" : "Start"}
         mode="outlined"
         value={originQuery}
         onFocus={() => setActiveField("origin")}
@@ -119,7 +126,7 @@ export default function SearchScreen({ navigation }: Props) {
       />
       <View className="h-3" />
       <TextInput
-        label="Destination"
+        label={ghost ? "TARGET:" : "Destination"}
         mode="outlined"
         value={destinationQuery}
         onFocus={() => setActiveField("destination")}
@@ -146,12 +153,18 @@ export default function SearchScreen({ navigation }: Props) {
               />
             )}
             ListEmptyComponent={
-              <Text className="mt-6 text-center text-gray-500">
-                {canPlan
-                  ? "Both places set. Plan the route below."
-                  : `Search for a place to fill the ${
-                      activeField === "origin" ? "start" : "destination"
-                    } field.`}
+              <Text className="mt-6 text-center" style={muted}>
+                {ghost
+                  ? canPlan
+                    ? "> coordinates locked. execute below_"
+                    : `> awaiting ${
+                        activeField === "origin" ? "origin" : "target"
+                      } coordinates_`
+                  : canPlan
+                    ? "Both places set. Plan the route below."
+                    : `Search for a place to fill the ${
+                        activeField === "origin" ? "start" : "destination"
+                      } field.`}
               </Text>
             }
           />
@@ -161,8 +174,10 @@ export default function SearchScreen({ navigation }: Props) {
       <View className="pt-2" style={{ paddingBottom: insets.bottom + 48 }}>
         <View className="mb-3 flex-row items-center justify-between">
           <View className="flex-1 pr-3">
-            <Text className="text-gray-900">Avoid at any cost</Text>
-            <Text className="text-xs text-gray-500">
+            <Text style={body}>
+              {ghost ? "STRICT_EVASION" : "Avoid at any cost"}
+            </Text>
+            <Text className="text-xs" style={muted}>
               Holds the detour instead of letting Google rejoin the fast road.
               Avoids more cameras, sometimes for a lot more time.
             </Text>
@@ -178,7 +193,7 @@ export default function SearchScreen({ navigation }: Props) {
             }
           }}
         >
-          Plan route
+          {ghost ? "> EXECUTE" : "Plan route"}
         </Button>
       </View>
     </View>
