@@ -82,8 +82,7 @@ like over road noise, and whether the timing feels right at speed.
 
 ## 4. Drive it
 
-One of the corridors in [premise-test.md](premise-test.md). Take a
-passenger to watch the phone.
+A corridor with cameras on it. Take a passenger to watch the phone.
 
 Four things only this can answer:
 
@@ -100,7 +99,7 @@ Four things only this can answer:
 4. **What does it cost in battery?** A foreground service with high
    accuracy GPS on a two second tick is not free.
 
-Record what you find in [premise-test.md](premise-test.md).
+Record what you find.
 
 ## What has actually been seen working
 

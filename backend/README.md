@@ -1,7 +1,7 @@
 # Backend
 
 FastAPI backend for the camera-avoiding navigation app. Implements the
-three endpoints from `final-spec.md`.
+three endpoints.
 
 Each source is real when its credential is configured and mocked
 otherwise, so the service runs with no infrastructure at all and each one

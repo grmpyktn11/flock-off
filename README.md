@@ -5,11 +5,10 @@ cameras, then hands the route to Google Maps so Google does the
 turn-by-turn. While you drive it warns you about the cameras the route
 could not avoid.
 
-Currently serving the DMV: Northern Virginia, DC and Maryland, 2,872
+Currently serving the DMV: Northern Virginia, DC and Maryland, 2,890
 cameras. **Adding your own city is one entry in `regions.json` and two
 commands** - see [docs/adding-a-region.md](docs/adding-a-region.md).
 
-The full design is in [docs/final-spec.md](docs/final-spec.md).
 
 ## How it works
 
@@ -75,11 +74,7 @@ Two things worth reading before changing anything:
 - [docs/eta-delta.md](docs/eta-delta.md) - why both ETAs come from Google,
   and why comparing engines quietly reported avoiding two cameras as a
   three-minute *saving*.
-- [docs/premise-test.md](docs/premise-test.md) - the deep link premise the
-  whole project rests on, and the one assumption in it that is still
-  assumed rather than measured.
 
-[docs/todo.md](docs/todo.md) is what is deliberately not built yet, and why.
 
 ## Contributing a region
 

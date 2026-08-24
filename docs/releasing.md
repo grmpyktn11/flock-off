@@ -127,9 +127,15 @@ Three numbers, easily confused:
 `expo-updates` lets you push new JavaScript to installed apps without a
 rebuild or a store review. Fixes reach people on next launch.
 
-**Set this up before you distribute anything.** It needs a native module
-compiled in, so adding it later means rebuilding and redistributing every
-copy already handed out.
+Installed and configured. `updates.url` is set in `app.json` and each build
+profile has a channel, so a build knows which stream of updates it listens
+to.
+
+    npx eas update --branch preview --message "what changed"
+
+This mattered enough to do before the first build left the machine: the
+module compiles into the binary, so adding it afterwards would have meant
+rebuilding and redistributing every copy already handed out.
 
 What it can ship: anything in `src/` - logic, screens, copy, thresholds.
 What it cannot: a new native library, permissions, the icon, the name.
