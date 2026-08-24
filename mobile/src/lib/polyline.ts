@@ -32,3 +32,32 @@ export function decodePolyline(encoded: string, precision = 5): LatLng[] {
   }
   return points;
 }
+
+// The inverse, used only by the mock backend so an offline demo has a
+// route with real geometry to drive along. Nothing in the live path
+// encodes - the backend does that.
+export function encodePolyline(points: LatLng[], precision = 5): string {
+  const scale = Math.pow(10, precision);
+  let lat = 0;
+  let lng = 0;
+  let out = "";
+
+  for (const point of points) {
+    const nextLat = Math.round(point.lat * scale);
+    const nextLng = Math.round(point.lng * scale);
+    out += encodeSigned(nextLat - lat) + encodeSigned(nextLng - lng);
+    lat = nextLat;
+    lng = nextLng;
+  }
+  return out;
+}
+
+function encodeSigned(delta: number): string {
+  let value = delta < 0 ? ~(delta << 1) : delta << 1;
+  let out = "";
+  while (value >= 0x20) {
+    out += String.fromCharCode((0x20 | (value & 0x1f)) + 63);
+    value >>>= 5;
+  }
+  return out + String.fromCharCode(value + 63);
+}
