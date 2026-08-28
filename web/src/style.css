@@ -21,7 +21,21 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
+}
+
+/* Dark mode follows the system. The honest block inverts by design, so
+   it works unchanged: ink and ground simply trade places. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #1c1a14;
+    --surface: #262319;
+    --ink: #f6eeda;
+    --ink-muted: #b0a893;
+    --line: #3b372b;
+    --baseline-gray: #8c8574;
+    --olive-deep: #b8c18b;
+  }
 }
 
 /* Anchored sections land below the fixed nav. */
@@ -199,7 +213,7 @@ code {
 }
 
 .button-primary:hover {
-  background: #000;
+  background: color-mix(in srgb, var(--ink) 85%, var(--ground));
 }
 
 .button-ghost {
@@ -474,6 +488,71 @@ section {
   font-size: clamp(1.05rem, 2vw, 1.3rem);
   color: color-mix(in srgb, var(--ground) 80%, var(--ink));
   margin-bottom: 0;
+}
+
+/* ---- records ---- */
+
+.records {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.records-list {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.records-list li {
+  border-top: 3px solid var(--olive);
+  padding-top: 14px;
+  color: var(--ink-muted);
+  font-size: 0.96rem;
+}
+
+.records-list strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 860px) {
+  .records-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- docs ---- */
+
+.docs {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 0;
+}
+
+.doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.doc-links a {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 10px 20px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.doc-links a:hover {
+  border-color: var(--ink);
 }
 
 /* ---- city ---- */

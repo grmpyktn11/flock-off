@@ -10,10 +10,12 @@ import {
 } from "./copy";
 import { decodePolyline } from "./polyline";
 
-const STYLE = "https://tiles.openfreemap.org/styles/positron";
+import { DARK, MAP_STYLE } from "./theme";
+
 const RASPBERRY = "#cc3a63";
-const OLIVE = "#6f7847";
-const BASELINE = "#a49c8c";
+const OLIVE = DARK ? "#a2ab73" : "#6f7847";
+const BASELINE = DARK ? "#8c8574" : "#a49c8c";
+const GROUND = DARK ? "#1c1a14" : "#fff7eb";
 
 export interface DemoCamera extends CameraProps {
   id: number;
@@ -42,7 +44,7 @@ export function mountTrips(demos: Demo[]): void {
 
   const map = new maplibregl.Map({
     container: "trip-map",
-    style: STYLE,
+    style: MAP_STYLE,
     center: [-77.25, 38.87],
     zoom: 10,
     cooperativeGestures: true,
@@ -90,7 +92,7 @@ export function mountTrips(demos: Demo[]): void {
           RASPBERRY,
         ],
         "circle-radius": 7,
-        "circle-stroke-color": "#fff7eb",
+        "circle-stroke-color": GROUND,
         "circle-stroke-width": 2,
       },
     });

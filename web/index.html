@@ -8,7 +8,8 @@
       name="description"
       content="Driving navigation that plans routes around license plate readers and speed cameras, then hands the route to Google Maps."
     />
-    <meta name="theme-color" content="#fff7eb" />
+    <meta name="theme-color" content="#fff7eb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1a14" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -35,8 +36,8 @@
         <div class="hero-panel">
           <h1>Drive past fewer cameras.</h1>
           <p>
-            flock-off plans routes around license plate readers, hands the
-            drive to Google Maps, and warns you about the rest.
+            Routes around license plate readers. Google Maps drives. You
+            hear about the rest.
           </p>
           <div class="hero-actions">
             <a
@@ -59,9 +60,8 @@
       <section class="trips" id="trips">
         <h2>Three real trips</h2>
         <p class="trips-intro">
-          Planned by the live pipeline against the real camera table. The
-          gray line is the route Google would drive anyway; the green one
-          stays out of the readers' fields of view.
+          Planned by the live pipeline. Gray is Google's usual route;
+          green dodges the readers.
         </p>
         <div class="trip-tabs" role="tablist" aria-label="Demo trips"></div>
         <div class="trip-body">
@@ -79,39 +79,27 @@
         <div class="how-grid">
           <div class="how-step">
             <h3>Search</h3>
-            <p>
-              You pick a destination. The backend proxies Google Places, so
-              the phone never holds a key.
-            </p>
+            <p>Pick a destination.</p>
           </div>
           <div class="how-step">
             <h3>Plan</h3>
             <p>
-              It asks Google for the route you would otherwise drive, finds
-              which cameras watch it, and asks Valhalla for one that stays
-              out of their dead zones.
+              Google gives its usual route; Valhalla routes around the
+              cameras watching it.
             </p>
           </div>
           <div class="how-step">
             <h3>Hand off</h3>
-            <p>
-              The detour becomes Google Maps waypoints, checked so Google
-              will actually follow them, and you get a deep link. Google
-              does the driving.
-            </p>
+            <p>The detour becomes a Google Maps deep link. Google drives.</p>
           </div>
           <div class="how-step">
             <h3>Warn</h3>
-            <p>
-              While you drive, the app watches from the background and
-              speaks up about any camera it could not route around.
-            </p>
+            <p>Spoken heads-up for anything that could not be avoided.</p>
           </div>
         </div>
         <p class="how-note">
-          Valhalla exists in this stack for exactly one reason: it is the
-          only engine that will route around a polygon. Everything the
-          driver sees is Google's, because Google is what does the driving.
+          Valhalla is here for one reason: it is the only engine that will
+          route around a polygon.
         </p>
       </section>
 
@@ -119,27 +107,38 @@
       <section class="honest">
         <h2>The numbers are honest</h2>
         <p>
-          A Fairfax trip avoids one or two readers at a cost of a couple of
-          minutes. A trip whose cameras cannot be dodged says so, rather
-          than claiming otherwise. Five readers ring George Mason's campus;
-          no route through it avoids them, and the app tells you that.
+          A trip avoids a reader or two for a couple of minutes. When
+          nothing can be dodged, it says so.
         </p>
+      </section>
+
+      <!-- Public-records enrichment, currently ingesting. -->
+      <section class="records" id="records">
+        <h2>Checked against public records</h2>
+        <ul class="records-list">
+          <li>
+            <strong>Crime</strong>
+            DC MPD incidents within 800&nbsp;m; Fairfax PD's weekly report.
+          </li>
+          <li>
+            <strong>Income</strong>
+            Census tract and county medians, from the ACS.
+          </li>
+          <li>
+            <strong>In progress</strong>
+            Ingesting now. Explanations get rewritten as the facts land.
+          </li>
+        </ul>
       </section>
 
       <!-- Adding a region. -->
       <section class="city" id="city">
         <div class="city-text">
           <h2>Add your city</h2>
+          <p>One entry in <code>regions.json</code>. That's it.</p>
           <p>
-            Every region the project serves is one entry in
-            <code>regions.json</code>. The camera ingestion and the routing
-            tiles both read it, so the geography is written once.
-          </p>
-          <p>
-            Camera coverage comes from OpenStreetMap, where it is mapped by
-            people. If your area looks thin, the most useful contribution
-            is not code: it is mapping the cameras into OSM, where this
-            project and everyone else's picks them up.
+            Cameras come from OpenStreetMap. Area looks thin? Map them
+            there; everyone benefits.
           </p>
         </div>
         <pre class="city-code"><code>"dmv": {
@@ -151,6 +150,17 @@
     ".../virginia-latest.osm.pbf"
   ]
 }</code></pre>
+      </section>
+
+      <!-- The docs carry the full story. -->
+      <section class="docs" id="docs">
+        <h2>Read the docs</h2>
+        <div class="doc-links">
+          <a href="https://github.com/grmpyktn11/flock-off/blob/main/docs/adding-a-region.md" target="_blank" rel="noopener">Adding a region</a>
+          <a href="https://github.com/grmpyktn11/flock-off/blob/main/docs/eta-delta.md" target="_blank" rel="noopener">Why both ETAs are Google's</a>
+          <a href="https://github.com/grmpyktn11/flock-off/blob/main/docs/privacy.md" target="_blank" rel="noopener">Privacy</a>
+          <a href="https://github.com/grmpyktn11/flock-off/blob/main/docs/testing-the-drive.md" target="_blank" rel="noopener">Testing the drive</a>
+        </div>
       </section>
     </main>
 

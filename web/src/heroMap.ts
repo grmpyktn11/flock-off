@@ -8,7 +8,7 @@ import {
   type CameraProps,
 } from "./copy";
 
-const STYLE = "https://tiles.openfreemap.org/styles/positron";
+import { DARK, MAP_STYLE } from "./theme";
 
 // Northern Virginia and DC, where the density is. The full DMV bbox is
 // two states wide; the first frame should show cameras, not geography.
@@ -18,7 +18,7 @@ const START_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 const RASPBERRY = "#cc3a63";
-const GROUND = "#fff7eb";
+const GROUND = DARK ? "#1c1a14" : "#fff7eb";
 
 export function mountHeroMap(
   container: HTMLElement,
@@ -26,7 +26,7 @@ export function mountHeroMap(
 ): void {
   const map = new maplibregl.Map({
     container,
-    style: STYLE,
+    style: MAP_STYLE,
     bounds: START_BOUNDS,
     fitBoundsOptions: { padding: 40 },
     cooperativeGestures: true,
