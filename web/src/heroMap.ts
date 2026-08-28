@@ -7,8 +7,7 @@ import {
   escapeHtml,
   type CameraProps,
 } from "./copy";
-
-import { DARK, MAP_STYLE } from "./theme";
+import { isDark, mapStyle, onThemeChange } from "./theme";
 
 // Northern Virginia and DC, where the density is. The full DMV bbox is
 // two states wide; the first frame should show cameras, not geography.
@@ -18,7 +17,6 @@ const START_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 const RASPBERRY = "#cc3a63";
-const GROUND = DARK ? "#1c1a14" : "#fff7eb";
 
 export function mountHeroMap(
   container: HTMLElement,
@@ -26,7 +24,7 @@ export function mountHeroMap(
 ): void {
   const map = new maplibregl.Map({
     container,
-    style: MAP_STYLE,
+    style: mapStyle(),
     bounds: START_BOUNDS,
     fitBoundsOptions: { padding: 40 },
     cooperativeGestures: true,
@@ -34,7 +32,10 @@ export function mountHeroMap(
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
-  map.on("load", () => {
+  // A style swap wipes sources and layers, so everything is added on
+  // style.load: once at startup, and again on every theme toggle.
+  map.on("style.load", () => {
+    const ground = isDark() ? "#1c1a14" : "#fff7eb";
     map.addSource("cameras", { type: "geojson", data: cameras });
 
     // The dead zones are ~23m road slices, invisible until street level.
@@ -61,7 +62,7 @@ export function mountHeroMap(
         ["!=", ["get", "type"], "alpr"],
       ],
       paint: {
-        "circle-color": GROUND,
+        "circle-color": ground,
         "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 2, 12, 5],
         "circle-stroke-color": RASPBERRY,
         "circle-stroke-width": 1.5,
@@ -83,25 +84,27 @@ export function mountHeroMap(
         "circle-opacity": 0.85,
       },
     });
-
-    for (const layer of ["cameras-alpr", "cameras-speed"]) {
-      map.on("click", layer, (e) => {
-        const feature = e.features?.[0];
-        if (!feature) return;
-        const props = feature.properties as CameraProps;
-        new maplibregl.Popup({ closeButton: false })
-          .setLngLat(e.lngLat)
-          .setHTML(popupHtml(props))
-          .addTo(map);
-      });
-      map.on("mouseenter", layer, () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", layer, () => {
-        map.getCanvas().style.cursor = "";
-      });
-    }
   });
+
+  onThemeChange(() => map.setStyle(mapStyle()));
+
+  for (const layer of ["cameras-alpr", "cameras-speed"]) {
+    map.on("click", layer, (e) => {
+      const feature = e.features?.[0];
+      if (!feature) return;
+      const props = feature.properties as CameraProps;
+      new maplibregl.Popup({ closeButton: false })
+        .setLngLat(e.lngLat)
+        .setHTML(popupHtml(props))
+        .addTo(map);
+    });
+    map.on("mouseenter", layer, () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", layer, () => {
+      map.getCanvas().style.cursor = "";
+    });
+  }
 }
 
 function popupHtml(c: CameraProps): string {

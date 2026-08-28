@@ -24,10 +24,21 @@
   color-scheme: light dark;
 }
 
-/* Dark mode follows the system. The honest block inverts by design, so
-   it works unchanged: ink and ground simply trade places. */
+/* Dark mode: the nav toggle sets data-theme; before it runs, the system
+   preference decides. The honest block inverts by design, so it works
+   unchanged in both: ink and ground simply trade places. */
+:root[data-theme="dark"] {
+  --ground: #1c1a14;
+  --surface: #262319;
+  --ink: #f6eeda;
+  --ink-muted: #b0a893;
+  --line: #3b372b;
+  --baseline-gray: #8c8574;
+  --olive-deep: #b8c18b;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ground: #1c1a14;
     --surface: #262319;
     --ink: #f6eeda;
@@ -143,6 +154,24 @@ code {
 .nav-links .nav-github:hover {
   background: var(--ink);
   color: var(--ground);
+}
+
+.theme-toggle {
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--ink);
 }
 
 @media (max-width: 640px) {

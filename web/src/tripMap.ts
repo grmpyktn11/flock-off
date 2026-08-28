@@ -9,13 +9,9 @@ import {
   type CameraProps,
 } from "./copy";
 import { decodePolyline } from "./polyline";
-
-import { DARK, MAP_STYLE } from "./theme";
+import { isDark, mapStyle, onThemeChange } from "./theme";
 
 const RASPBERRY = "#cc3a63";
-const OLIVE = DARK ? "#a2ab73" : "#6f7847";
-const BASELINE = DARK ? "#8c8574" : "#a49c8c";
-const GROUND = DARK ? "#1c1a14" : "#fff7eb";
 
 export interface DemoCamera extends CameraProps {
   id: number;
@@ -44,7 +40,7 @@ export function mountTrips(demos: Demo[]): void {
 
   const map = new maplibregl.Map({
     container: "trip-map",
-    style: MAP_STYLE,
+    style: mapStyle(),
     center: [-77.25, 38.87],
     zoom: 10,
     cooperativeGestures: true,
@@ -55,7 +51,13 @@ export function mountTrips(demos: Demo[]): void {
   let ready = false;
   let selected = 0;
 
-  map.on("load", () => {
+  // Sources and layers are wiped by a style swap, so they are (re)built
+  // on every style.load: startup and each theme toggle.
+  map.on("style.load", () => {
+    const olive = isDark() ? "#a2ab73" : "#6f7847";
+    const baseline = isDark() ? "#8c8574" : "#a49c8c";
+    const ground = isDark() ? "#1c1a14" : "#fff7eb";
+
     map.addSource("baseline", { type: "geojson", data: emptyLine() });
     map.addSource("detour", { type: "geojson", data: emptyLine() });
     map.addSource("trip-cameras", {
@@ -68,7 +70,7 @@ export function mountTrips(demos: Demo[]): void {
       type: "line",
       source: "baseline",
       paint: {
-        "line-color": BASELINE,
+        "line-color": baseline,
         "line-width": 3.5,
         "line-dasharray": [2, 1.6],
       },
@@ -78,37 +80,34 @@ export function mountTrips(demos: Demo[]): void {
       type: "line",
       source: "detour",
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": OLIVE, "line-width": 4.5 },
+      paint: { "line-color": olive, "line-width": 4.5 },
     });
     map.addLayer({
       id: "trip-camera-dots",
       type: "circle",
       source: "trip-cameras",
       paint: {
-        "circle-color": [
-          "case",
-          ["get", "avoided"],
-          "#a2ab73",
-          RASPBERRY,
-        ],
+        "circle-color": ["case", ["get", "avoided"], "#a2ab73", RASPBERRY],
         "circle-radius": 7,
-        "circle-stroke-color": GROUND,
+        "circle-stroke-color": ground,
         "circle-stroke-width": 2,
       },
     });
 
-    map.on("click", "trip-camera-dots", (e) => {
-      const feature = e.features?.[0];
-      if (!feature) return;
-      const c = feature.properties as DemoCamera;
-      new maplibregl.Popup({ closeButton: false })
-        .setLngLat(e.lngLat)
-        .setHTML(`<p class="popup-label">${escapeHtml(cameraLabel(c))}</p>`)
-        .addTo(map);
-    });
-
     ready = true;
     show(selected);
+  });
+
+  onThemeChange(() => map.setStyle(mapStyle()));
+
+  map.on("click", "trip-camera-dots", (e) => {
+    const feature = e.features?.[0];
+    if (!feature) return;
+    const c = feature.properties as DemoCamera;
+    new maplibregl.Popup({ closeButton: false })
+      .setLngLat(e.lngLat)
+      .setHTML(`<p class="popup-label">${escapeHtml(cameraLabel(c))}</p>`)
+      .addTo(map);
   });
 
   demos.forEach((demo, i) => {

@@ -5,7 +5,16 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 
 import { mountHeroMap } from "./heroMap";
+import { isDark, onThemeChange, toggleTheme } from "./theme";
 import { mountTrips, type Demo } from "./tripMap";
+
+const toggle = document.getElementById("theme-toggle");
+if (toggle) {
+  const glyph = () => (toggle.textContent = isDark() ? "☀" : "☾");
+  glyph();
+  onThemeChange(glyph);
+  toggle.addEventListener("click", toggleTheme);
+}
 
 const BASE = import.meta.env.BASE_URL;
 
