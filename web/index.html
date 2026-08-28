@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>flock-off · drive past fewer cameras</title>
+    <meta
+      name="description"
+      content="Driving navigation that plans routes around license plate readers and speed cameras, then hands the route to Google Maps."
+    />
+    <meta name="theme-color" content="#fff7eb" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="nav-brand" href="#top">flock-off</a>
+      <nav class="nav-links">
+        <a href="#trips">Trips</a>
+        <a href="#how">How it works</a>
+        <a href="#city">Your city</a>
+        <a
+          class="nav-github"
+          href="https://github.com/grmpyktn11/flock-off"
+          target="_blank"
+          rel="noopener"
+          >GitHub</a
+        >
+      </nav>
+    </header>
+
+    <main id="top">
+      <!-- Hero: the live camera map is the visual. -->
+      <section class="hero">
+        <div id="hero-map" class="hero-map" role="application" aria-label="Map of surveillance cameras in the DMV"></div>
+        <div class="hero-panel">
+          <h1>Drive past fewer cameras.</h1>
+          <p>
+            flock-off plans routes around license plate readers, hands the
+            drive to Google Maps, and warns you about the rest.
+          </p>
+          <div class="hero-actions">
+            <a
+              class="button button-primary"
+              href="https://github.com/grmpyktn11/flock-off"
+              target="_blank"
+              rel="noopener"
+              >View on GitHub</a
+            >
+            <a class="button button-ghost" href="#trips">See a real trip</a>
+          </div>
+        </div>
+        <div class="hero-legend">
+          <span><i class="dot dot-alpr"></i><span class="count" id="count-alpr">…</span> plate readers</span>
+          <span><i class="dot dot-speed"></i><span class="count" id="count-speed">…</span> speed cameras</span>
+        </div>
+      </section>
+
+      <!-- Three precomputed trips through the live pipeline. -->
+      <section class="trips" id="trips">
+        <h2>Three real trips</h2>
+        <p class="trips-intro">
+          Planned by the live pipeline against the real camera table. The
+          gray line is the route Google would drive anyway; the green one
+          stays out of the readers' fields of view.
+        </p>
+        <div class="trip-tabs" role="tablist" aria-label="Demo trips"></div>
+        <div class="trip-body">
+          <div id="trip-map" class="trip-map" role="application" aria-label="Route comparison map"></div>
+          <aside class="trip-facts">
+            <p class="trip-verdict" id="trip-verdict"></p>
+            <ul class="trip-cameras" id="trip-cameras"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <!-- The pipeline, in the README's voice. -->
+      <section class="how" id="how">
+        <h2>How it works</h2>
+        <div class="how-grid">
+          <div class="how-step">
+            <h3>Search</h3>
+            <p>
+              You pick a destination. The backend proxies Google Places, so
+              the phone never holds a key.
+            </p>
+          </div>
+          <div class="how-step">
+            <h3>Plan</h3>
+            <p>
+              It asks Google for the route you would otherwise drive, finds
+              which cameras watch it, and asks Valhalla for one that stays
+              out of their dead zones.
+            </p>
+          </div>
+          <div class="how-step">
+            <h3>Hand off</h3>
+            <p>
+              The detour becomes Google Maps waypoints, checked so Google
+              will actually follow them, and you get a deep link. Google
+              does the driving.
+            </p>
+          </div>
+          <div class="how-step">
+            <h3>Warn</h3>
+            <p>
+              While you drive, the app watches from the background and
+              speaks up about any camera it could not route around.
+            </p>
+          </div>
+        </div>
+        <p class="how-note">
+          Valhalla exists in this stack for exactly one reason: it is the
+          only engine that will route around a polygon. Everything the
+          driver sees is Google's, because Google is what does the driving.
+        </p>
+      </section>
+
+      <!-- The honesty section. -->
+      <section class="honest">
+        <h2>The numbers are honest</h2>
+        <p>
+          A Fairfax trip avoids one or two readers at a cost of a couple of
+          minutes. A trip whose cameras cannot be dodged says so, rather
+          than claiming otherwise. Five readers ring George Mason's campus;
+          no route through it avoids them, and the app tells you that.
+        </p>
+      </section>
+
+      <!-- Adding a region. -->
+      <section class="city" id="city">
+        <div class="city-text">
+          <h2>Add your city</h2>
+          <p>
+            Every region the project serves is one entry in
+            <code>regions.json</code>. The camera ingestion and the routing
+            tiles both read it, so the geography is written once.
+          </p>
+          <p>
+            Camera coverage comes from OpenStreetMap, where it is mapped by
+            people. If your area looks thin, the most useful contribution
+            is not code: it is mapping the cameras into OSM, where this
+            project and everyone else's picks them up.
+          </p>
+        </div>
+        <pre class="city-code"><code>"dmv": {
+  "description": "Northern Virginia, DC and Maryland.",
+  "bbox": [37.85, -79.5, 39.75, -75.05],
+  "osm_extracts": [
+    ".../district-of-columbia-latest.osm.pbf",
+    ".../maryland-latest.osm.pbf",
+    ".../virginia-latest.osm.pbf"
+  ]
+}</code></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>flock-off</span>
+      <span>
+        Camera data
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a>
+        contributors · Not affiliated with Flock Safety
+      </span>
+      <a href="https://github.com/grmpyktn11/flock-off" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

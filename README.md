@@ -32,6 +32,7 @@ does the driving.
 |---|---|
 | `regions.json` | Every region the project serves. The only file a new city touches. |
 | `mobile/` | React Native + Expo app (SDK 54). |
+| `web/` | The showcase site: camera map and precomputed route demos, deployed to GitHub Pages. Data is exported once by `web/scripts/` and committed, so the site costs nothing to serve. |
 | `backend/` | FastAPI: `/search`, `/place`, `/plan`, `/replan`, `/health`. |
 | `ingestion/` | Overpass camera ingestion, dead zone geometry, `schema.sql`. |
 | `infra/valhalla/` | Routing tile build and its smoke test. |

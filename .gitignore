@@ -7,6 +7,10 @@ __pycache__/
 # Ingestion output
 *.geojson
 !ingestion/ingestion/sample_roads.geojson
+!web/public/data/cameras.geojson
+
+# Playwright CLI session scratch
+.playwright-cli/
 
 # Node / Expo (mobile)
 node_modules/
