@@ -164,8 +164,8 @@ code {
   background: none;
   border: 1px solid var(--line);
   border-radius: 999px;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
@@ -293,17 +293,40 @@ code {
 }
 
 @media (max-width: 640px) {
+  /* The map is the hero; the panel gets out of its way. CTAs stay
+     full-width in the thumb zone. */
   .hero-panel {
     top: auto;
-    bottom: 88px;
+    bottom: 72px;
     transform: none;
-    left: 16px;
-    right: 16px;
+    left: 12px;
+    right: 12px;
     max-width: none;
+    padding: 20px;
+  }
+  .hero-panel h1 {
+    font-size: 1.8rem;
+  }
+  .hero-panel p {
+    font-size: 0.95rem;
+    margin-bottom: 1em;
+  }
+  .hero-actions {
+    gap: 8px;
+  }
+  .hero-actions .button {
+    flex: 1;
+    text-align: center;
+    padding: 13px 12px;
   }
   .hero-legend {
     top: 76px;
     bottom: auto;
+    left: 12px;
+    right: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
   }
 }
 
@@ -439,10 +462,22 @@ section {
     grid-template-columns: 1fr;
   }
   .trip-map {
-    height: 380px;
+    height: 340px;
   }
   .trip-cameras {
     max-height: none;
+  }
+  .trip-tabs {
+    gap: 8px;
+  }
+  .trip-tab {
+    width: 100%;
+    min-height: 44px;
+    text-align: left;
+  }
+  .trip-verdict {
+    font-size: 1.05rem;
+    padding: 16px;
   }
 }
 
@@ -576,8 +611,15 @@ section {
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: 999px;
-  padding: 10px 20px;
+  padding: 12px 20px;
   transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+@media (max-width: 640px) {
+  .doc-links a {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .doc-links a:hover {
@@ -617,6 +659,22 @@ section {
 @media (max-width: 860px) {
   .city {
     grid-template-columns: 1fr;
+  }
+  .city-code {
+    font-size: 0.76rem;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .honest h2,
+  .honest p {
+    text-align: left;
+  }
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 
