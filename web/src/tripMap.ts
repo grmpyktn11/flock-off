@@ -87,7 +87,7 @@ export function mountTrips(demos: Demo[]): void {
       type: "circle",
       source: "trip-cameras",
       paint: {
-        "circle-color": ["case", ["get", "avoided"], "#a2ab73", RASPBERRY],
+        "circle-color": ["case", ["get", "avoided"], olive, RASPBERRY],
         "circle-radius": 7,
         "circle-stroke-color": ground,
         "circle-stroke-width": 2,
@@ -180,13 +180,13 @@ function verdictHtml(demo: Demo): string {
     demo.eta_delta_seconds <= 0
       ? "at no cost to the ETA"
       : `<span class="delta">for ${minutes(demo.eta_delta_seconds)} more</span>`;
-  const stays =
+  const inView =
     demo.unavoidable_count > 0
-      ? ` ${plural(demo.unavoidable_count, "camera")} ${
-          demo.unavoidable_count === 1 ? "stays" : "stay"
-        } on the path either way.`
+      ? ` ${plural(demo.unavoidable_count, "camera")} still ${
+          demo.unavoidable_count === 1 ? "sees" : "see"
+        } the drive.`
       : "";
-  return `Avoids ${readers} on a ${base}-minute trip ${cost}.${stays}`;
+  return `Avoids ${readers} on a ${base}-minute trip ${cost}.${inView}`;
 }
 
 function plural(n: number, noun: string): string {
