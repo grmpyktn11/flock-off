@@ -159,7 +159,7 @@ export function mountTrips(demos: Demo[]): void {
       if (c.avoided) item.classList.add("avoided");
       const where = cameraWhere(c);
       item.innerHTML =
-        `<span class="status">${c.avoided ? "Avoided" : "Stays"}</span><br>` +
+        `<span class="status">${c.avoided ? "Out of view" : "In view"}</span><br>` +
         `${escapeHtml(cameraLabel(c))}` +
         (where ? `<br><span class="where">${escapeHtml(where)}</span>` : "");
       list.appendChild(item);

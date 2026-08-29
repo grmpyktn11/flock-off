@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>flock-off · drive past fewer cameras</title>
+    <title>flock-off · 2,890 cameras watch the DMV</title>
     <meta
       name="description"
-      content="Driving navigation that plans routes around license plate readers and speed cameras, then hands the route to Google Maps."
+      content="Every license plate reader and speed camera watching Northern Virginia, DC and Maryland, mapped. Plus navigation that routes around them."
     />
     <meta name="theme-color" content="#fff7eb" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1c1a14" media="(prefers-color-scheme: dark)" />
@@ -35,20 +35,12 @@
       <section class="hero">
         <div id="hero-map" class="hero-map" role="application" aria-label="Map of surveillance cameras in the DMV"></div>
         <div class="hero-panel">
-          <h1>Drive past fewer cameras.</h1>
-          <p>
-            Routes around license plate readers. Google Maps drives. You
-            hear about the rest.
-          </p>
+          <p class="hero-stat"><span>2,890</span> cameras</p>
+          <h1>watch the DMV.</h1>
+          <p>Every one of them is on this map.</p>
           <div class="hero-actions">
-            <a
-              class="button button-primary"
-              href="https://github.com/grmpyktn11/flock-off"
-              target="_blank"
-              rel="noopener"
-              >View on GitHub</a
-            >
-            <a class="button button-ghost" href="#trips">See a real trip</a>
+            <a class="button button-primary" href="#what">What they record</a>
+            <a class="button button-ghost" href="#trips">See routes</a>
           </div>
         </div>
         <div class="hero-legend">
@@ -57,12 +49,44 @@
         </div>
       </section>
 
+      <!-- What the hardware actually does. The awareness payload. -->
+      <section class="what" id="what">
+        <h2>What a plate reader does</h2>
+        <div class="what-grid">
+          <div class="what-item">
+            <h3>Photographs everyone</h3>
+            <p>
+              Not just wanted cars. Every plate that passes is read and
+              logged.
+            </p>
+          </div>
+          <div class="what-item">
+            <h3>Keeps plate, time, place</h3>
+            <p>
+              Enough to reconstruct where a car has been. The records are
+              searchable later.
+            </p>
+          </div>
+          <div class="what-item">
+            <h3>Shared between agencies</h3>
+            <p>
+              A reader on your street answers questions asked from other
+              departments. Retention rules vary by department.
+            </p>
+          </div>
+        </div>
+        <p class="what-note">
+          A speed camera looks for one thing. A plate reader logs everyone
+          and sorts it out later. That is the difference this map draws.
+        </p>
+      </section>
+
       <!-- Three precomputed trips through the live pipeline. -->
       <section class="trips" id="trips">
-        <h2>Three real trips</h2>
+        <h2>You can route around some of them</h2>
         <p class="trips-intro">
           Planned by the live pipeline. Gray is Google's usual route;
-          green dodges the readers.
+          green stays out of view.
         </p>
         <div class="trip-tabs" role="tablist" aria-label="Demo trips"></div>
         <div class="trip-body">

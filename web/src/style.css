@@ -1,26 +1,43 @@
 /* Palette: cream ground, warm surface, olive = the route that works,
-   raspberry = the cameras. One accent family per meaning, everywhere. */
+   raspberry = the cameras. One accent family per meaning, everywhere.
+
+   Spacing is a 4/8 grid, referenced by token rather than typed in, so
+   the rhythm holds when a section is added. Sections pay half the gap
+   at each end, which is why adjacent ones sit exactly --section-y * 2
+   apart instead of stacking two full paddings.
+
+   Radius has one rule: interactive things are pills, containers are
+   --radius, small blocks are --radius-sm. Nothing else. */
 :root {
   --ground: #fff7eb;
   --surface: #f9f0e0;
   --olive: #a2ab73;
   --olive-deep: #6f7847;
   --raspberry: #cc3a63;
-  --raspberry-soft: rgba(204, 58, 99, 0.14);
   --ink: #29271f;
   --ink-muted: #6d675a;
   --line: #e5d9c3;
   --baseline-gray: #a49c8c;
-  --radius: 14px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --section-y: clamp(40px, 5vw, 64px);
+  --gutter: clamp(16px, 5vw, 72px);
+  --max-w: 1200px;
+  --measure: 62ch;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+
   --font: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
   --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, monospace;
-}
 
-* {
-  box-sizing: border-box;
-}
-
-:root {
   color-scheme: light dark;
 }
 
@@ -49,9 +66,8 @@
   }
 }
 
-/* Anchored sections land below the fixed nav. */
-section[id] {
-  scroll-margin-top: 80px;
+* {
+  box-sizing: border-box;
 }
 
 html {
@@ -84,7 +100,8 @@ h2,
 h3 {
   letter-spacing: -0.02em;
   line-height: 1.1;
-  margin: 0 0 0.5em;
+  margin: 0 0 var(--space-4);
+  text-wrap: balance;
 }
 
 h2 {
@@ -100,7 +117,7 @@ code {
   font-size: 0.9em;
   background: var(--surface);
   padding: 0.1em 0.35em;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 /* ---- nav ---- */
@@ -113,7 +130,7 @@ code {
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  padding: 0 clamp(16px, 4vw, 40px);
+  padding-inline: var(--gutter);
   background: color-mix(in srgb, var(--ground) 82%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
@@ -129,7 +146,7 @@ code {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: clamp(14px, 2.5vw, 28px);
+  gap: clamp(var(--space-3), 2.5vw, var(--space-5));
   font-size: 0.95rem;
 }
 
@@ -146,8 +163,8 @@ code {
 .nav-links .nav-github {
   color: var(--ink);
   border: 1px solid var(--ink);
-  border-radius: 999px;
-  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -163,7 +180,7 @@ code {
   color: var(--ink);
   background: none;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   width: 44px;
   height: 44px;
   cursor: pointer;
@@ -172,12 +189,6 @@ code {
 
 .theme-toggle:hover {
   border-color: var(--ink);
-}
-
-@media (max-width: 640px) {
-  .nav-links a:not(.nav-github) {
-    display: none;
-  }
 }
 
 /* ---- hero ---- */
@@ -197,35 +208,53 @@ code {
   position: absolute;
   z-index: 10;
   top: 50%;
-  left: clamp(16px, 5vw, 72px);
+  left: var(--gutter);
   transform: translateY(-50%);
   max-width: 430px;
   background: color-mix(in srgb, var(--ground) 94%, transparent);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: clamp(24px, 3vw, 40px);
+  padding: clamp(var(--space-5), 3vw, 40px);
   box-shadow: 0 24px 60px rgba(83, 63, 22, 0.16);
+}
+
+/* The count is the argument, so it is the largest thing on the page. */
+.hero-panel .hero-stat {
+  margin: 0;
+  font-size: clamp(2.1rem, 4.5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.hero-stat span {
+  display: block;
+  color: var(--raspberry);
+  font-family: var(--mono);
+  font-size: clamp(3.4rem, 7.5vw, 5.2rem);
+  letter-spacing: -0.04em;
 }
 
 .hero-panel h1 {
   font-size: clamp(2.1rem, 4.5vw, 3rem);
+  margin: 0 0 var(--space-3);
 }
 
 .hero-panel p {
   color: var(--ink-muted);
-  margin: 0 0 1.4em;
+  margin: 0 0 var(--space-5);
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .button {
   display: inline-block;
-  border-radius: 999px;
-  padding: 11px 22px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-5);
   font-size: 0.98rem;
   font-weight: 600;
   text-decoration: none;
@@ -257,15 +286,15 @@ code {
 .hero-legend {
   position: absolute;
   z-index: 10;
-  right: clamp(16px, 3vw, 32px);
-  bottom: clamp(28px, 4vh, 44px);
+  right: var(--gutter);
+  bottom: var(--space-6);
   display: flex;
-  gap: 18px;
+  gap: var(--space-4);
   font-size: 0.88rem;
   background: color-mix(in srgb, var(--ground) 92%, transparent);
   border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-5);
 }
 
 .hero-legend .count {
@@ -273,12 +302,13 @@ code {
   font-weight: 600;
 }
 
+/* Both dots occupy 10px so the legend and the map agree. */
 .dot {
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  margin-right: 7px;
+  margin-right: var(--space-2);
 }
 
 .dot-alpr {
@@ -286,61 +316,113 @@ code {
 }
 
 .dot-speed {
+  width: 6px;
+  height: 6px;
   background: transparent;
-  border: 2.5px solid var(--raspberry);
-  width: 7px;
-  height: 7px;
+  border: 2px solid var(--raspberry);
 }
 
 @media (max-width: 640px) {
+  .nav-links a:not(.nav-github) {
+    display: none;
+  }
+
   /* The map is the hero; the panel gets out of its way. CTAs stay
      full-width in the thumb zone. */
   .hero-panel {
     top: auto;
     bottom: 72px;
+    left: var(--space-3);
+    right: var(--space-3);
     transform: none;
-    left: 12px;
-    right: 12px;
     max-width: none;
-    padding: 20px;
+    padding: var(--space-5);
   }
   .hero-panel h1 {
     font-size: 1.8rem;
   }
   .hero-panel p {
     font-size: 0.95rem;
-    margin-bottom: 1em;
+    margin-bottom: var(--space-4);
   }
   .hero-actions {
-    gap: 8px;
+    gap: var(--space-2);
   }
   .hero-actions .button {
     flex: 1;
     text-align: center;
-    padding: 13px 12px;
+    padding: var(--space-3) var(--space-2);
   }
   .hero-legend {
     top: 76px;
     bottom: auto;
-    left: 12px;
-    right: 12px;
+    left: var(--space-3);
+    right: var(--space-3);
     justify-content: center;
     flex-wrap: wrap;
-    gap: 8px 16px;
+    gap: var(--space-2) var(--space-4);
   }
 }
 
-/* ---- sections shared ---- */
+/* ---- section rhythm ---- */
 
 section {
-  padding: clamp(64px, 9vw, 120px) clamp(16px, 5vw, 72px);
+  padding: var(--section-y) var(--gutter);
+}
+
+/* Anchored sections land below the fixed nav. */
+section[id] {
+  scroll-margin-top: 80px;
 }
 
 .trips,
+.what,
 .how,
-.city {
-  max-width: 1200px;
-  margin: 0 auto;
+.records,
+.city,
+.docs {
+  max-width: var(--max-w);
+  margin-inline: auto;
+}
+
+/* A pull-quote closing a section. Olive where it is about the route,
+   raspberry where it is about the cameras. */
+.how-note,
+.what-note {
+  margin: var(--space-6) 0 0;
+  max-width: var(--measure);
+  font-size: 1.08rem;
+  border-left: 3px solid var(--olive);
+  padding-left: var(--space-4);
+}
+
+.what-note {
+  border-left-color: var(--raspberry);
+}
+
+/* ---- what a reader does ---- */
+
+.what-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.what-item {
+  border-top: 3px solid var(--raspberry);
+  padding-top: var(--space-4);
+}
+
+.what-item h3 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-1);
+}
+
+.what-item p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.96rem;
 }
 
 /* ---- trips ---- */
@@ -348,14 +430,14 @@ section {
 .trips-intro {
   color: var(--ink-muted);
   max-width: 58ch;
-  margin: 0 0 28px;
+  margin: 0 0 var(--space-5);
 }
 
 .trip-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
 .trip-tab {
@@ -365,8 +447,8 @@ section {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink-muted);
-  border-radius: 999px;
-  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
@@ -384,7 +466,7 @@ section {
 .trip-body {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
-  gap: 24px;
+  gap: var(--space-5);
   align-items: stretch;
 }
 
@@ -398,7 +480,7 @@ section {
 .trip-facts {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .trip-verdict {
@@ -408,7 +490,7 @@ section {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 18px 20px;
+  padding: var(--space-5);
 }
 
 .trip-verdict .delta {
@@ -421,7 +503,7 @@ section {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   overflow-y: auto;
   max-height: 380px;
 }
@@ -429,8 +511,8 @@ section {
 .trip-cameras li {
   border-left: 3px solid var(--raspberry);
   background: var(--surface);
-  border-radius: 0 10px 10px 0;
-  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--space-3) var(--space-4);
   font-size: 0.92rem;
 }
 
@@ -443,9 +525,6 @@ section {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-
-.trip-cameras li .status {
   color: var(--raspberry);
 }
 
@@ -457,52 +536,28 @@ section {
   color: var(--ink-muted);
 }
 
-@media (max-width: 860px) {
-  .trip-body {
-    grid-template-columns: 1fr;
-  }
-  .trip-map {
-    height: 340px;
-  }
-  .trip-cameras {
-    max-height: none;
-  }
-  .trip-tabs {
-    gap: 8px;
-  }
-  .trip-tab {
-    width: 100%;
-    min-height: 44px;
-    text-align: left;
-  }
-  .trip-verdict {
-    font-size: 1.05rem;
-    padding: 16px;
-  }
-}
-
 /* ---- how ---- */
 
 .how-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0;
   border-top: 1px solid var(--line);
-  margin-top: 28px;
+  margin-top: var(--space-5);
 }
 
 .how-step {
-  padding: 26px 22px 26px 0;
+  padding: var(--space-5) var(--space-5) var(--space-5) 0;
 }
 
 .how-step + .how-step {
   border-left: 1px solid var(--line);
-  padding-left: 22px;
+  padding-left: var(--space-5);
 }
 
 .how-step h3 {
   font-size: 1.15rem;
   color: var(--olive-deep);
+  margin-bottom: var(--space-2);
 }
 
 .how-step p {
@@ -511,40 +566,20 @@ section {
   font-size: 0.96rem;
 }
 
-.how-note {
-  margin: 36px 0 0;
-  max-width: 62ch;
-  font-size: 1.08rem;
-  border-left: 3px solid var(--olive);
-  padding-left: 18px;
-}
-
-@media (max-width: 900px) {
-  .how-grid {
-    grid-template-columns: 1fr;
-  }
-  .how-step + .how-step {
-    border-left: none;
-    border-top: 1px solid var(--line);
-    padding-left: 0;
-  }
-  .how-step {
-    padding-right: 0;
-  }
-}
-
 /* ---- honesty ---- */
 
+/* Full-bleed and inverted, so it gets a little more room than the
+   sections around it: this is the one moment on the page. */
 .honest {
   background: var(--ink);
   color: var(--ground);
+  padding-block: calc(var(--section-y) * 1.5);
 }
 
 .honest h2,
 .honest p {
   max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
   text-align: center;
 }
 
@@ -556,23 +591,18 @@ section {
 
 /* ---- records ---- */
 
-.records {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
 .records-list {
   list-style: none;
-  margin: 24px 0 0;
+  margin: var(--space-5) 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .records-list li {
   border-top: 3px solid var(--olive);
-  padding-top: 14px;
+  padding-top: var(--space-4);
   color: var(--ink-muted);
   font-size: 0.96rem;
 }
@@ -581,49 +611,7 @@ section {
   display: block;
   color: var(--ink);
   font-size: 1.05rem;
-  margin-bottom: 4px;
-}
-
-@media (max-width: 860px) {
-  .records-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ---- docs ---- */
-
-.docs {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-top: 0;
-}
-
-.doc-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.doc-links a {
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 999px;
-  padding: 12px 20px;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-@media (max-width: 640px) {
-  .doc-links a {
-    width: 100%;
-    text-align: center;
-  }
-}
-
-.doc-links a:hover {
-  border-color: var(--ink);
+  margin-bottom: var(--space-1);
 }
 
 /* ---- city ---- */
@@ -631,7 +619,7 @@ section {
 .city {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(24px, 5vw, 64px);
+  gap: clamp(var(--space-5), 5vw, 64px);
   align-items: center;
 }
 
@@ -644,7 +632,7 @@ section {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 22px 24px;
+  padding: var(--space-5);
   font-family: var(--mono);
   font-size: 0.84rem;
   line-height: 1.6;
@@ -656,26 +644,27 @@ section {
   padding: 0;
 }
 
-@media (max-width: 860px) {
-  .city {
-    grid-template-columns: 1fr;
-  }
-  .city-code {
-    font-size: 0.76rem;
-    padding: 16px;
-  }
+/* ---- docs ---- */
+
+.doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
-@media (max-width: 640px) {
-  .honest h2,
-  .honest p {
-    text-align: left;
-  }
-  .footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
+.doc-links a {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-5);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.doc-links a:hover {
+  border-color: var(--ink);
 }
 
 /* ---- footer ---- */
@@ -683,10 +672,10 @@ section {
 .footer {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: space-between;
   align-items: center;
-  padding: 26px clamp(16px, 5vw, 72px);
+  padding: var(--space-5) var(--gutter);
   border-top: 1px solid var(--line);
   color: var(--ink-muted);
   font-size: 0.88rem;
@@ -696,16 +685,78 @@ section {
   color: var(--ink-muted);
 }
 
+/* ---- narrow screens ---- */
+
+@media (max-width: 900px) {
+  .how-grid {
+    grid-template-columns: 1fr;
+  }
+  .how-step {
+    padding-right: 0;
+  }
+  .how-step + .how-step {
+    border-left: none;
+    border-top: 1px solid var(--line);
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .what-grid,
+  .records-list,
+  .city {
+    grid-template-columns: 1fr;
+  }
+  .trip-body {
+    grid-template-columns: 1fr;
+  }
+  .trip-map {
+    height: 340px;
+  }
+  .trip-cameras {
+    max-height: none;
+  }
+  .trip-tab {
+    width: 100%;
+    min-height: 44px;
+    text-align: left;
+  }
+  .trip-verdict {
+    font-size: 1.05rem;
+    padding: var(--space-4);
+  }
+  .city-code {
+    font-size: 0.76rem;
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 640px) {
+  .honest h2,
+  .honest p {
+    text-align: left;
+  }
+  .doc-links a {
+    width: 100%;
+    text-align: center;
+  }
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+
 /* ---- map chrome ---- */
 
 .maplibregl-popup-content {
   font-family: var(--font);
   background: var(--ground);
   color: var(--ink);
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid var(--line);
   box-shadow: 0 12px 32px rgba(83, 63, 22, 0.2);
-  padding: 14px 16px;
+  padding: var(--space-4);
   max-width: 280px;
 }
 
@@ -715,7 +766,7 @@ section {
 
 .popup-label {
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
   font-size: 0.95rem;
 }
 
@@ -726,8 +777,8 @@ section {
 }
 
 .popup-why {
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   font-size: 0.88rem;
   border-left: 3px solid var(--olive);
-  padding-left: 10px;
+  padding-left: var(--space-3);
 }
