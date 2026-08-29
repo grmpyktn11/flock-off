@@ -28,7 +28,10 @@ REGION = "dmv"
 
 _EXPORT = """
     SELECT id, type, ST_X(geom), ST_Y(geom), facing_deg, operator, brand,
-           road_name, road_ref, explanation, ST_AsGeoJSON(dead_zone)
+           road_name, road_ref, explanation,
+           crime_count, crime_desc, arrest_count, arrest_desc,
+           tract_income, county_income, usefulness_score, score_desc,
+           ST_AsGeoJSON(dead_zone)
     FROM cameras
     WHERE active
       AND geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
@@ -51,7 +54,10 @@ def main() -> None:
     features = []
     for (
         camera_id, kind, lng, lat, facing_deg, operator, brand,
-        road_name, road_ref, explanation, dead_zone,
+        road_name, road_ref, explanation,
+        crime_count, crime_desc, arrest_count, arrest_desc,
+        tract_income, county_income, usefulness_score, score_desc,
+        dead_zone,
     ) in rows:
         properties = {
             "id": camera_id,
@@ -63,6 +69,16 @@ def main() -> None:
             "road_name": road_name,
             "road_ref": road_ref,
             "explanation": explanation,
+            # The public-records factors and the score computed from them,
+            # the same fields the app shows on a camera.
+            "crime_count": crime_count,
+            "crime_desc": crime_desc,
+            "arrest_count": arrest_count,
+            "arrest_desc": arrest_desc,
+            "tract_income": tract_income,
+            "county_income": county_income,
+            "usefulness_score": usefulness_score,
+            "score_desc": score_desc,
         }
         features.append({
             "type": "Feature",
@@ -85,13 +101,11 @@ def main() -> None:
         separators=(",", ":"),
     ))
 
-    cameras = sum(1 for f in features if f["properties"]["kind"] == "camera")
-    explained = sum(
-        1 for f in features
-        if f["properties"]["kind"] == "camera" and "explanation" in f["properties"]
-    )
-    print(f"{cameras} cameras ({explained} with explanations), "
-          f"{len(features) - cameras} dead zones -> {OUT.relative_to(REPO)}")
+    points = [f["properties"] for f in features if f["properties"]["kind"] == "camera"]
+    explained = sum(1 for p in points if "explanation" in p)
+    scored = sum(1 for p in points if "usefulness_score" in p)
+    print(f"{len(points)} cameras ({explained} explained, {scored} scored), "
+          f"{len(features) - len(points)} dead zones -> {OUT.relative_to(REPO)}")
 
 
 if __name__ == "__main__":

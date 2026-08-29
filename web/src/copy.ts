@@ -9,6 +9,40 @@ export interface CameraProps {
   road_name?: string;
   road_ref?: string;
   explanation?: string;
+  crime_count?: number;
+  crime_desc?: string;
+  arrest_count?: number;
+  arrest_desc?: string;
+  tract_income?: number;
+  county_income?: number;
+  usefulness_score?: number;
+  score_desc?: string;
+}
+
+// One line per factor the public record actually holds. The desc strings
+// already carry their own source and scope, so nothing is invented on the
+// way out. Mirrors factorLines() in the app.
+export function factorLines(c: CameraProps): string[] {
+  const lines: string[] = [];
+  if (c.crime_count !== undefined && c.crime_desc) {
+    lines.push(`Crime: ${c.crime_count} ${c.crime_desc}`);
+  }
+  if (c.arrest_count !== undefined && c.arrest_desc) {
+    lines.push(`Arrests: ${c.arrest_count} ${c.arrest_desc}`);
+  }
+  if (c.tract_income !== undefined) {
+    const county =
+      c.county_income !== undefined
+        ? ` vs ${dollars(c.county_income)} county median`
+        : "";
+    lines.push(`Income: ${dollars(c.tract_income)} here${county} (US Census ACS)`);
+  }
+  return lines;
+}
+
+// The Census top-codes wealthy tracts as 250001, meaning "$250,000+".
+function dollars(income: number): string {
+  return income >= 250001 ? "$250,000+" : `$${income.toLocaleString("en-US")}`;
 }
 
 export function cameraLabel(c: CameraProps): string {

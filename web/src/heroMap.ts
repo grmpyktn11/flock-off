@@ -5,6 +5,7 @@ import {
   cameraLabel,
   cameraWhere,
   escapeHtml,
+  factorLines,
   type CameraProps,
 } from "./copy";
 import { isDark, mapStyle, onThemeChange } from "./theme";
@@ -41,6 +42,18 @@ export function mountHeroMap(
   if (!phone) {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
   }
+
+  // "What is near me?" is the first question this map invites, and the
+  // answer is the whole point of it. Denial is not an error worth
+  // reporting: the map stays where it is and the DMV is still visible.
+  map.addControl(
+    new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: false,
+      showAccuracyCircle: true,
+      fitBoundsOptions: { maxZoom: 14 },
+    }),
+  );
 
   // A style swap wipes sources and layers, so everything is added on
   // style.load: once at startup, and again on every theme toggle.
@@ -119,11 +132,21 @@ export function mountHeroMap(
 
 function popupHtml(c: CameraProps): string {
   const where = cameraWhere(c);
+  const factors = factorLines(c);
   return [
     `<p class="popup-label">${escapeHtml(cameraLabel(c))}</p>`,
     where ? `<p class="popup-where">${escapeHtml(where)}</p>` : "",
+    c.usefulness_score !== undefined
+      ? `<p class="popup-score"><span>${c.usefulness_score}</span>` +
+        `<span class="popup-score-of">/100 ${escapeHtml(c.score_desc ?? "")}</span></p>`
+      : "",
     c.explanation
       ? `<p class="popup-why">${escapeHtml(c.explanation)}</p>`
+      : "",
+    factors.length
+      ? `<ul class="popup-factors">${factors
+          .map((line) => `<li>${escapeHtml(line)}</li>`)
+          .join("")}</ul>`
       : "",
   ].join("");
 }

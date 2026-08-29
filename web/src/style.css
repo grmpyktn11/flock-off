@@ -350,6 +350,17 @@ code {
     bottom: auto;
   }
 
+  /* Locate sits just above the sheet, where a thumb already is. */
+  .hero .maplibregl-ctrl-top-right {
+    top: auto;
+    bottom: calc(45% + var(--space-3));
+  }
+
+  .hero .maplibregl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+  }
+
   .hero-legend {
     order: 1;
     position: relative;
@@ -911,7 +922,48 @@ section[id] {
   }
 }
 
-/* ---- map chrome ---- */
+/* ---- map chrome ----
+
+   MapLibre ships its controls white with dark icons, which is a pair of
+   glowing boxes on the dark map. Themed here, with the icons inverted in
+   dark mode because they are background images, not fonts. */
+
+/* The nav is fixed over the top of the hero map, so its controls start
+   below it rather than underneath. Phones place them above the sheet
+   instead, in the phone block above. */
+@media (min-width: 641px) {
+  .hero .maplibregl-ctrl-top-right {
+    top: 72px;
+  }
+}
+
+.maplibregl-ctrl-group {
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--line);
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])
+    .maplibregl-ctrl-group
+    button
+    .maplibregl-ctrl-icon {
+    filter: invert(1);
+  }
+}
 
 .maplibregl-popup-content {
   font-family: var(--font);
@@ -945,4 +997,37 @@ section[id] {
   font-size: 0.88rem;
   border-left: 3px solid var(--olive);
   padding-left: var(--space-3);
+}
+
+/* How well the placement matches the public record. Deliberately not
+   colour-coded: a low score is a question, not a verdict. */
+.popup-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+
+.popup-score span:first-child {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.popup-score-of {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+
+.popup-factors {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
 }
