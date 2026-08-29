@@ -193,10 +193,13 @@ code {
 
 /* ---- hero ---- */
 
+/* Full-bleed: the panel and legend place themselves, so the hero opts
+   out of the shared section padding. */
 .hero {
   position: relative;
   min-height: 100dvh;
   overflow: hidden;
+  padding: 0;
 }
 
 .hero-map {
@@ -322,45 +325,112 @@ code {
   border: 2px solid var(--raspberry);
 }
 
+/* ---- phone: a bottom sheet over the map ----
+
+   On a phone this stops pretending to be a page with a card on it and
+   behaves like a maps app: the map owns the screen, and the counts, the
+   headline and the actions ride in a sheet anchored to the bottom edge,
+   inside the thumb's reach. The legend and the panel are siblings, so
+   flex order joins them into one sheet. */
 @media (max-width: 640px) {
   .nav-links a:not(.nav-github) {
     display: none;
   }
 
-  /* The map is the hero; the panel gets out of its way. CTAs stay
-     full-width in the thumb zone. */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  /* The sheet covers the foot of the map, so tile attribution moves up
+     to stay visible. It is required, not decorative. */
+  .hero .maplibregl-ctrl-bottom-right {
+    top: 72px;
+    bottom: auto;
+  }
+
+  .hero-legend {
+    order: 1;
+    position: relative;
+    inset: auto;
+    justify-content: space-around;
+    gap: var(--space-2);
+    width: 100%;
+    background: var(--surface);
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 24px 24px 0 0;
+    padding: var(--space-4) var(--space-5) var(--space-3);
+    font-size: 0.82rem;
+  }
+
+  /* The grab handle. Decorative: the sheet does not actually drag. */
+  .hero-legend::before {
+    content: "";
+    position: absolute;
+    top: var(--space-2);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--line);
+  }
+
   .hero-panel {
-    top: auto;
-    bottom: 72px;
-    left: var(--space-3);
-    right: var(--space-3);
+    order: 2;
+    position: relative;
+    inset: auto;
     transform: none;
     max-width: none;
-    padding: var(--space-5);
+    background: var(--surface);
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: var(--space-5) var(--space-5) var(--space-6);
   }
+
+  .hero-stat span {
+    font-size: 4.2rem;
+    line-height: 1;
+  }
+
+  .hero-panel .hero-stat {
+    font-size: 1.5rem;
+  }
+
   .hero-panel h1 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-2);
   }
+
   .hero-panel p {
     font-size: 0.95rem;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
   }
+
   .hero-actions {
+    flex-direction: column;
     gap: var(--space-2);
   }
+
   .hero-actions .button {
-    flex: 1;
     text-align: center;
-    padding: var(--space-3) var(--space-2);
+    padding: var(--space-4);
   }
-  .hero-legend {
-    top: 76px;
-    bottom: auto;
-    left: var(--space-3);
-    right: var(--space-3);
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
+
+  /* Secondary action reads as a link, not a second button competing
+     with the primary one. */
+  .hero-actions .button-ghost {
+    border: none;
+    padding-block: var(--space-2);
+    color: var(--ink-muted);
+  }
+
+  .hero-actions .button-ghost:hover {
+    background: none;
+    color: var(--ink);
   }
 }
 
@@ -732,18 +802,112 @@ section[id] {
 }
 
 @media (max-width: 640px) {
+  /* Hairline rules separate columns well on a wide screen and read as
+     stray lines on a narrow one, so the same content becomes cards. */
+  .what-item,
+  .records-list li,
+  .how-step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: var(--space-5);
+  }
+
+  .what-item {
+    border-top: 3px solid var(--raspberry);
+  }
+
+  .records-list li {
+    border-top: 3px solid var(--olive);
+  }
+
+  .how-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    border-top: none;
+  }
+
+  .how-step,
+  .how-step + .how-step {
+    border-top: 3px solid var(--olive);
+    border-left: none;
+    padding: var(--space-5);
+  }
+
+  .what-grid,
+  .records-list {
+    gap: var(--space-3);
+  }
+
+  .how-note,
+  .what-note {
+    margin-top: var(--space-5);
+    font-size: 1rem;
+  }
+
   .honest h2,
   .honest p {
     text-align: left;
   }
+
+  /* Docs read as a list of destinations rather than a stack of pills. */
+  .doc-links {
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+
   .doc-links a {
     width: 100%;
-    text-align: center;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: none;
+    padding: var(--space-4) 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 44px;
   }
+
+  .doc-links a::after {
+    content: "›";
+    color: var(--ink-muted);
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+
   .footer {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
+  }
+}
+
+/* The trip selector scrolls sideways instead of stacking three
+   full-width rows and pushing the map off the screen. Full-bleed so the
+   row visibly runs past the gutter and invites the swipe. */
+@media (max-width: 860px) {
+  .trip-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    gap: var(--space-2);
+  }
+
+  .trip-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trip-tab {
+    flex: 0 0 auto;
+    width: auto;
+    scroll-snap-align: start;
+    min-height: 44px;
   }
 }
 

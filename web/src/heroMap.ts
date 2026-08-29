@@ -22,15 +22,25 @@ export function mountHeroMap(
   container: HTMLElement,
   cameras: FeatureCollection,
 ): void {
+  // On a phone the sheet covers the bottom of the map, so the cameras
+  // are fitted into the strip that stays visible rather than the whole
+  // canvas. The map itself stays full-bleed behind the sheet.
+  const phone = window.matchMedia("(max-width: 640px)").matches;
+  const padding = phone
+    ? { top: 88, bottom: Math.round(window.innerHeight * 0.45), left: 24, right: 24 }
+    : 40;
+
   const map = new maplibregl.Map({
     container,
     style: mapStyle(),
     bounds: START_BOUNDS,
-    fitBoundsOptions: { padding: 40 },
+    fitBoundsOptions: { padding },
     cooperativeGestures: true,
     attributionControl: { compact: true },
   });
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
+  if (!phone) {
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
+  }
 
   // A style swap wipes sources and layers, so everything is added on
   // style.load: once at startup, and again on every theme toggle.
