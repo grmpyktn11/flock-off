@@ -26,18 +26,18 @@ from app.geo import encode_polyline  # noqa: E402
 
 OUT = REPO / "web" / "public" / "data" / "routes.json"
 
-# Probed against the live pipeline; each tells a different true story
-# about density and what escaping it costs. GMU-Tysons runs a gauntlet of
-# seven readers - campus, county and the mall's own - and dodges six for
-# 1.7 minutes. Oakton-GMU pays 3.8 minutes on an 11-minute drive and the
-# campus readers still catch it at the gate. Falls Church-Fairfax clears
-# all six cameras on Google's route for 1.8 minutes.
+# Probed against the live pipeline; picked for how much time staying
+# unseen actually costs. Del Ray-Mount Vernon clears all five cameras on
+# the Richmond Highway corridor for 5.7 extra minutes. Oakton-GMU pays
+# 3.8 minutes on an 11-minute drive, a third longer, and the campus
+# readers still catch it at the gate. Georgetown-Reagan National dodges
+# all four cameras on the way to the airport for 3.5 minutes.
 TRIPS = [
-    ("George Mason University", (38.8290, -77.3050),
-     "Tysons Corner Center", (38.9180, -77.2225)),
+    ("Del Ray", (38.8300, -77.0605), "Mount Vernon", (38.7293, -77.1074)),
     ("Oakton", (38.8810, -77.3008),
      "George Mason University", (38.8290, -77.3050)),
-    ("Falls Church", (38.8823, -77.1711), "Fairfax City", (38.8462, -77.3064)),
+    ("Georgetown", (38.9048, -77.0631),
+     "Reagan National Airport", (38.8512, -77.0402)),
 ]
 
 

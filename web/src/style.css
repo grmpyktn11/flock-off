@@ -669,15 +669,31 @@ section[id] {
 .records-list li {
   border-top: 3px solid var(--olive);
   padding-top: var(--space-4);
-  color: var(--ink-muted);
-  font-size: 0.96rem;
 }
 
-.records-list strong {
+/* The factor's weight in the score, big; the factor; then its source. */
+.records-pct {
   display: block;
-  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--olive-deep);
+}
+
+.records-list h3 {
   font-size: 1.05rem;
-  margin-bottom: var(--space-1);
+  margin: var(--space-2) 0 var(--space-1);
+}
+
+.records-list p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+.records-foot {
+  margin-top: var(--space-6);
 }
 
 /* ---- city ---- */
