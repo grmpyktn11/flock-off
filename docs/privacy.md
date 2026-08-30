@@ -1,15 +1,16 @@
 # Privacy policy
 
-**flock-off** &middot; last updated 21 August 2026
+**flock-off** &middot; last updated 30 August 2026
 
 flock-off plans driving routes around automated licence plate readers and
 fixed speed cameras, then hands the route to Google Maps. While you drive
-it warns you about cameras the route could not avoid.
+it warns you about cameras the route could not avoid. There is also a
+public website that shows the camera map and a few example trips.
 
-This policy describes every piece of data the app touches. It is short
-because the app collects almost nothing, and that is deliberate: an app
-whose purpose is to give you a choice about being recorded would be a poor
-one if it kept a record of you.
+This policy describes every piece of data the app and the website touch.
+It is short because they collect almost nothing, and that is deliberate:
+a project whose purpose is to give you a choice about being recorded
+would be a poor one if it kept a record of you.
 
 ## What we collect
 
@@ -68,6 +69,26 @@ Because no route history exists on our server, there is none to disclose -
 to advertisers, to data brokers, or in response to a legal demand. This is
 a consequence of the design rather than a promise about our conduct, which
 is the stronger of the two.
+
+## The website
+
+The website is a static page: no accounts, no analytics, no tracking
+scripts, and no cookies.
+
+- **The locate button.** If you use it, your browser asks your permission
+  and then hands your position to the page, which uses it only to move
+  the map. Your position is never sent to us or to anyone else; the
+  nearest cameras are worked out inside your browser from a data file the
+  page already has.
+- **Map tiles.** The background map is drawn from tiles fetched from
+  [OpenFreeMap](https://openfreemap.org/), so, like any web map, your
+  browser requests the tiles for the area you are looking at. We never
+  see those requests.
+- **Your theme choice.** Light or dark is remembered in your browser's
+  local storage and stays there.
+- **Camera data.** Everything the site shows about a camera, including
+  its usefulness score, is a static file computed from public records.
+  Nothing is looked up about you to show it.
 
 ## Children
 

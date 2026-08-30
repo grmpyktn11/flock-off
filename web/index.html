@@ -10,6 +10,15 @@
     />
     <meta name="theme-color" content="#fff7eb" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1c1a14" media="(prefers-color-scheme: dark)" />
+    <link rel="canonical" href="https://grmpyktn11.github.io/flock-off/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="flock-off" />
+    <meta
+      property="og:description"
+      content="Every license plate reader and speed camera watching Northern Virginia, DC and Maryland, mapped. Plus navigation that routes around them."
+    />
+    <meta property="og:url" content="https://grmpyktn11.github.io/flock-off/" />
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -75,10 +84,6 @@
             </p>
           </div>
         </div>
-        <p class="what-note">
-          A speed camera looks for one thing. A plate reader logs everyone
-          and sorts it out later. That is the difference this map draws.
-        </p>
       </section>
 
       <!-- Three precomputed trips through the live pipeline. -->
@@ -100,34 +105,50 @@
         </div>
       </section>
 
-      <!-- The pipeline, in the README's voice. -->
+      <!-- The pipeline, explained. -->
       <section class="how" id="how">
         <h2>How it works</h2>
+        <p class="trips-intro">
+          Two routing engines, each doing the one thing it is good at.
+        </p>
         <div class="how-grid">
           <div class="how-step">
-            <h3>Search</h3>
-            <p>Pick a destination.</p>
-          </div>
-          <div class="how-step">
-            <h3>Plan</h3>
+            <h3>1. Search</h3>
             <p>
-              Google gives its usual route; Valhalla routes around the
-              cameras watching it.
+              Pick a destination. Search is Google's own autocomplete, so
+              the places you find are the ones navigation understands.
             </p>
           </div>
           <div class="how-step">
-            <h3>Hand off</h3>
-            <p>The detour becomes a Google Maps deep link. Google drives.</p>
+            <h3>2. Plan</h3>
+            <p>
+              The planner asks Google for the route it would normally
+              drive, looks up every camera watching that route, and asks
+              Valhalla, an open routing engine, for a path around their
+              fields of view. Valhalla gets that job because it is the
+              only engine that will route around a polygon, and a
+              camera's view is exactly that. A detour only counts if it
+              truly lowers the number of readers that see you; one that
+              does not is thrown away.
+            </p>
           </div>
           <div class="how-step">
-            <h3>Warn</h3>
-            <p>Spoken heads-up for anything that could not be avoided.</p>
+            <h3>3. Hand off</h3>
+            <p>
+              The detour is pinned with a few waypoints and handed to the
+              Google Maps app as a link. Google does the actual driving:
+              turn by turn, lanes, and traffic.
+            </p>
+          </div>
+          <div class="how-step">
+            <h3>4. Warn</h3>
+            <p>
+              A camera that cannot be avoided is never hidden. The app
+              speaks a heads-up as you approach it, so you always know
+              when you are about to be seen.
+            </p>
           </div>
         </div>
-        <p class="how-note">
-          Valhalla is here for one reason: it is the only engine that will
-          route around a polygon.
-        </p>
       </section>
 
       <!-- The honesty section. -->
@@ -135,7 +156,7 @@
         <h2>The numbers are honest</h2>
         <p>
           Dodging six readers costs about two minutes. When a detour
-          drives past a reader of its own, that counts against it — and
+          drives past a reader of its own, that counts against it, and
           when nothing can be dodged, the plan says so.
         </p>
       </section>
@@ -162,7 +183,7 @@
             number.
           </li>
         </ul>
-        <p class="what-note">
+        <p class="trips-intro">
           246 of 2,890 cameras have enough published data to score. The
           rest say so rather than guessing, because thin public records
           are themselves the finding.

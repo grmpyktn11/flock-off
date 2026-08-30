@@ -466,21 +466,6 @@ section[id] {
   margin-inline: auto;
 }
 
-/* A pull-quote closing a section. Olive where it is about the route,
-   raspberry where it is about the cameras. */
-.how-note,
-.what-note {
-  margin: var(--space-6) 0 0;
-  max-width: var(--measure);
-  font-size: 1.08rem;
-  border-left: 3px solid var(--olive);
-  padding-left: var(--space-4);
-}
-
-.what-note {
-  border-left-color: var(--raspberry);
-}
-
 /* ---- what a reader does ---- */
 
 .what-grid {
@@ -849,12 +834,6 @@ section[id] {
   .what-grid,
   .records-list {
     gap: var(--space-3);
-  }
-
-  .how-note,
-  .what-note {
-    margin-top: var(--space-5);
-    font-size: 1rem;
   }
 
   .honest h2,
