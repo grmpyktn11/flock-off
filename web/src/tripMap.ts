@@ -172,8 +172,8 @@ export function mountTrips(demos: Demo[]): void {
 }
 
 function statusLabel(c: DemoCamera): string {
-  if (c.avoided) return "Dodged";
-  return c.on_baseline ? "Sees you either way" : "New on the detour";
+  if (c.avoided) return "Standard route only";
+  return c.on_baseline ? "Sees you either way" : "New on this route";
 }
 
 function verdictHtml(demo: Demo): string {
@@ -184,8 +184,8 @@ function verdictHtml(demo: Demo): string {
 
   if (demo.avoided_count === 0) {
     return (
-      `None of the ${plural(onBaseline, "camera")} on this ` +
-      `${base}-minute trip can be routed around, and the plan says so.`
+      `Every route on this ${base}-minute trip passes the same ` +
+      `${plural(onBaseline, "camera")}, and the plan says so.`
     );
   }
 
@@ -196,12 +196,10 @@ function verdictHtml(demo: Demo): string {
     demo.eta_delta_seconds <= 0
       ? "and is no slower"
       : `<span class="delta">for ${minutes(demo.eta_delta_seconds)} more</span>`;
-  const dodges = ` The detour dodges ${
+  const aware = ` The camera-aware route passes ${
     demo.avoided_count === onBaseline
-      ? onBaseline === 1
-        ? "it"
-        : "all of them"
-      : demo.avoided_count
+      ? "none of them"
+      : `${demo.avoided_count} fewer`
   } ${cost}.`;
   let sees = "";
   if (inView.length > 0) {
@@ -217,10 +215,10 @@ function verdictHtml(demo: Demo): string {
           : pickedUp === 1
             ? "One of those is a reader"
             : `${pickedUp} of those are readers`;
-      sees += ` ${which} the detour itself drives past.`;
+      sees += ` ${which} this route itself drives past.`;
     }
   }
-  return drives + dodges + sees;
+  return drives + aware + sees;
 }
 
 function plural(n: number, noun: string): string {
