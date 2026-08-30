@@ -27,15 +27,17 @@ from app.geo import encode_polyline  # noqa: E402
 OUT = REPO / "web" / "public" / "data" / "routes.json"
 
 # Probed against the live pipeline; picked because a reader on a bridge
-# gates everything behind it. The Bay Bridge carries four readers and is
-# the only Chesapeake crossing for a hundred miles, so Cape St.
-# Claire-Stevensville stays unseen only by driving around the bay: two
-# and a quarter hours extra on a 20-minute trip. The Nice Bridge is the
-# only Potomac crossing for forty, which prices La Plata-Dahlgren at an
-# extra hour and a half and Waldorf-Colonial Beach at an extra hour, all
-# three with every camera cleared.
+# gates everything behind it, and picked from trips whose detours stay
+# inside the DMV (the Bay Bridge would cost even more, but its loop
+# around the Chesapeake cuts through Delaware). One reader on the Thomas
+# Johnson Bridge, the only lower-Patuxent crossing, prices
+# Solomons-Lexington Park at an extra 54 minutes on a 16-minute drive.
+# The Nice Bridge is the only Potomac crossing for forty miles, which
+# prices La Plata-Dahlgren at an extra hour and a half and
+# Waldorf-Colonial Beach at an extra hour. Every camera cleared on all
+# three.
 TRIPS = [
-    ("Cape St. Claire", (39.0430, -76.4520), "Stevensville", (38.9807, -76.3266)),
+    ("Solomons", (38.3187, -76.4540), "Lexington Park", (38.2666, -76.4531)),
     ("La Plata", (38.5292, -76.9755), "Dahlgren", (38.3311, -77.0508)),
     ("Waldorf", (38.6246, -76.9391), "Colonial Beach", (38.2546, -76.9635)),
 ]

@@ -197,7 +197,11 @@ function verdictHtml(demo: Demo): string {
       ? "and is no slower"
       : `<span class="delta">for ${minutes(demo.eta_delta_seconds)} more</span>`;
   const dodges = ` The detour dodges ${
-    demo.avoided_count === onBaseline ? "all of them" : demo.avoided_count
+    demo.avoided_count === onBaseline
+      ? onBaseline === 1
+        ? "it"
+        : "all of them"
+      : demo.avoided_count
   } ${cost}.`;
   let sees = "";
   if (inView.length > 0) {
