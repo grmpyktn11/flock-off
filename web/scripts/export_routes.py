@@ -27,18 +27,18 @@ from app.geo import encode_polyline  # noqa: E402
 OUT = REPO / "web" / "public" / "data" / "routes.json"
 
 # Probed against the live pipeline; one trip from each side of the
-# region into Virginia, every camera cleared on all three, detours
-# verified inside the DMV. Silver Spring-Tysons pays 12 minutes because
-# a reader on the American Legion Bridge gates the Beltway's own
-# Potomac crossing. Dupont Circle-Reagan National dodges the GW Parkway
-# readers for 4 minutes. La Plata-Dahlgren is the monster: the Nice
-# Bridge is the only Potomac crossing for forty miles, so staying
-# unseen costs an extra hour and a half.
+# region, detours verified inside the DMV. Silver Spring-Tysons pays 12
+# minutes because a reader on the American Legion Bridge gates the
+# Beltway's own Potomac crossing. Dupont Circle-Reagan National dodges
+# the GW Parkway readers for 4 minutes. Oakton-GMU pays around 4 minutes
+# on an 11-minute drive, a third longer, and the campus readers still
+# catch it at the gate - the honest example.
 TRIPS = [
     ("Silver Spring", (38.9907, -77.0261), "Tysons Corner", (38.9187, -77.2311)),
     ("Dupont Circle", (38.9097, -77.0434),
      "Reagan National Airport", (38.8512, -77.0402)),
-    ("La Plata", (38.5292, -76.9755), "Dahlgren", (38.3311, -77.0508)),
+    ("Oakton", (38.8810, -77.3008),
+     "George Mason University", (38.8290, -77.3050)),
 ]
 
 
