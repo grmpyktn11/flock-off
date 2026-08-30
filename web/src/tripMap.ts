@@ -18,6 +18,10 @@ export interface DemoCamera extends CameraProps {
   lat: number;
   lng: number;
   avoided: boolean;
+  // On the route Google would have driven. An in-view camera without this
+  // flag is one the detour itself picked up, and the copy says so rather
+  // than pretending it was always going to be there.
+  on_baseline: boolean;
 }
 
 export interface Demo {
@@ -159,7 +163,7 @@ export function mountTrips(demos: Demo[]): void {
       if (c.avoided) item.classList.add("avoided");
       const where = cameraWhere(c);
       item.innerHTML =
-        `<span class="status">${c.avoided ? "Out of view" : "In view"}</span><br>` +
+        `<span class="status">${statusLabel(c)}</span><br>` +
         `${escapeHtml(cameraLabel(c))}` +
         (where ? `<br><span class="where">${escapeHtml(where)}</span>` : "");
       list.appendChild(item);
@@ -167,26 +171,52 @@ export function mountTrips(demos: Demo[]): void {
   }
 }
 
+function statusLabel(c: DemoCamera): string {
+  if (c.avoided) return "Dodged";
+  return c.on_baseline ? "Sees you either way" : "New on the detour";
+}
+
 function verdictHtml(demo: Demo): string {
   const base = Math.round(demo.baseline_eta_seconds / 60);
+  const onBaseline = demo.cameras.filter((c) => c.on_baseline).length;
+  const inView = demo.cameras.filter((c) => !c.avoided);
+  const pickedUp = inView.filter((c) => !c.on_baseline).length;
+
   if (demo.avoided_count === 0) {
     return (
-      `None of the ${plural(demo.unavoidable_count, "camera")} on this ` +
+      `None of the ${plural(onBaseline, "camera")} on this ` +
       `${base}-minute trip can be routed around, and the plan says so.`
     );
   }
-  const readers = plural(demo.avoided_count, "reader");
+
+  const drives =
+    `Google drives this ${base}-minute trip past ` +
+    `${plural(onBaseline, "camera")}.`;
   const cost =
     demo.eta_delta_seconds <= 0
-      ? "at no cost to the ETA"
+      ? "and is no slower"
       : `<span class="delta">for ${minutes(demo.eta_delta_seconds)} more</span>`;
-  const stays =
-    demo.unavoidable_count > 0
-      ? ` ${plural(demo.unavoidable_count, "camera")} ${
-          demo.unavoidable_count === 1 ? "stays" : "stay"
-        } on the path either way.`
-      : "";
-  return `Avoids ${readers} on a ${base}-minute trip ${cost}.${stays}`;
+  const dodges = ` The detour dodges ${
+    demo.avoided_count === onBaseline ? "all of them" : demo.avoided_count
+  } ${cost}.`;
+  let sees = "";
+  if (inView.length > 0) {
+    sees = ` ${plural(inView.length, "camera")} still ${
+      inView.length === 1 ? "sees" : "see"
+    } it.`;
+    if (pickedUp > 0) {
+      const which =
+        pickedUp === inView.length
+          ? pickedUp === 1
+            ? "That one is a reader"
+            : "All of those are readers"
+          : pickedUp === 1
+            ? "One of those is a reader"
+            : `${pickedUp} of those are readers`;
+      sees += ` ${which} the detour itself drives past.`;
+    }
+  }
+  return drives + dodges + sees;
 }
 
 function plural(n: number, noun: string): string {

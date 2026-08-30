@@ -20,19 +20,24 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "backend"))
 
+from app import cameras as camera_source  # noqa: E402
 from app import config, google, planner  # noqa: E402
 from app.geo import encode_polyline  # noqa: E402
 
 OUT = REPO / "web" / "public" / "data" / "routes.json"
 
-# Probed against the live pipeline; each tells a different true story.
-# Falls Church-Burke avoids two readers, Vienna-GMU dodges one but five
-# campus readers stay, Tysons-Burke cannot avoid anything and says so.
+# Probed against the live pipeline; each tells a different true story
+# about density and what escaping it costs. GMU-Tysons runs a gauntlet of
+# seven readers - campus, county and the mall's own - and dodges six for
+# 1.7 minutes. Oakton-GMU pays 3.8 minutes on an 11-minute drive and the
+# campus readers still catch it at the gate. Falls Church-Fairfax clears
+# all six cameras on Google's route for 1.8 minutes.
 TRIPS = [
-    ("Falls Church", (38.8823, -77.1711), "Burke Centre", (38.8462, -77.3064)),
-    ("Vienna Metro", (38.8776, -77.2723),
+    ("George Mason University", (38.8290, -77.3050),
+     "Tysons Corner Center", (38.9180, -77.2225)),
+    ("Oakton", (38.8810, -77.3008),
      "George Mason University", (38.8290, -77.3050)),
-    ("Tysons", (38.9187, -77.2311), "Burke Centre", (38.8462, -77.3064)),
+    ("Falls Church", (38.8823, -77.1711), "Fairfax City", (38.8462, -77.3064)),
 ]
 
 
@@ -53,6 +58,7 @@ def main() -> None:
         def capturing(o, waypoints, d):
             route, eta = real_directions(o, waypoints, d)
             if not waypoints and not baseline:
+                baseline["route"] = route
                 baseline["polyline"] = encode_polyline(route)
             return route, eta
 
@@ -61,6 +67,15 @@ def main() -> None:
             plan = planner.plan_route(origin, destination)
         finally:
             google.directions = real_directions
+
+        # Which of the reported cameras sat on Google's route. The planner
+        # calls everything on the driven route "unavoidable", but a camera
+        # the detour newly drives past was never unavoidable - it is the
+        # detour's own cost, and the page must not claim it was always
+        # there. Every avoided camera is on the baseline by definition;
+        # this flag separates the in-view ones.
+        bbox_cameras = camera_source.in_bbox(origin, destination)
+        baseline_ids = camera_source.seen_by(baseline["route"], bbox_cameras)
 
         print(f"{origin_name} -> {destination_name}: "
               f"avoided {plan.avoided_count}, unavoidable {plan.unavoidable_count}, "
@@ -73,7 +88,10 @@ def main() -> None:
             },
             "baseline_polyline": baseline["polyline"],
             "route_polyline": plan.route_polyline,
-            "cameras": [c.model_dump() for c in plan.cameras],
+            "cameras": [
+                {**c.model_dump(), "on_baseline": c.id in baseline_ids}
+                for c in plan.cameras
+            ],
             "avoided_count": plan.avoided_count,
             "unavoidable_count": plan.unavoidable_count,
             "baseline_eta_seconds": plan.baseline_eta_seconds,
