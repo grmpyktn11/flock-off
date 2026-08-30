@@ -655,6 +655,54 @@ section[id] {
   margin-bottom: 0;
 }
 
+/* ---- download ---- */
+
+.store-buttons {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  flex-wrap: wrap;
+}
+
+/* Store badges with no store behind them yet: real buttons in shape,
+   visibly not live, and not clickable. */
+.store-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface);
+  color: var(--ink);
+  opacity: 0.7;
+  cursor: default;
+  user-select: none;
+}
+
+.store-button svg {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.store-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.store-text small {
+  font-weight: 600;
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 /* ---- records ---- */
 
 .records-list {
