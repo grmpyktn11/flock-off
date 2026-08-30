@@ -73,6 +73,8 @@ export function escapeHtml(text: string): string {
 
 export function minutes(seconds: number): string {
   if (seconds < 60) return `${seconds} seconds`;
+  // Past an hour and a half, minutes stop meaning anything to a reader.
+  if (seconds >= 5400) return `${(seconds / 3600).toFixed(1)} hours`;
   const m = seconds / 60;
   return `${m < 10 ? m.toFixed(1) : Math.round(m)} minutes`;
 }

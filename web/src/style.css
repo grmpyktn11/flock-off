@@ -657,8 +657,17 @@ section[id] {
 
 /* ---- download ---- */
 
+.download {
+  text-align: center;
+}
+
+.download .trips-intro {
+  margin-inline: auto;
+}
+
 .store-buttons {
   display: flex;
+  justify-content: center;
   gap: var(--space-4);
   margin-top: var(--space-5);
   flex-wrap: wrap;

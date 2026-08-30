@@ -26,18 +26,18 @@ from app.geo import encode_polyline  # noqa: E402
 
 OUT = REPO / "web" / "public" / "data" / "routes.json"
 
-# Probed against the live pipeline; picked for how much time staying
-# unseen actually costs. Del Ray-Mount Vernon clears all five cameras on
-# the Richmond Highway corridor for 5.7 extra minutes. Oakton-GMU pays
-# 3.8 minutes on an 11-minute drive, a third longer, and the campus
-# readers still catch it at the gate. Georgetown-Reagan National dodges
-# all four cameras on the way to the airport for 3.5 minutes.
+# Probed against the live pipeline; picked because a reader on a bridge
+# gates everything behind it. The Bay Bridge carries four readers and is
+# the only Chesapeake crossing for a hundred miles, so Cape St.
+# Claire-Stevensville stays unseen only by driving around the bay: two
+# and a quarter hours extra on a 20-minute trip. The Nice Bridge is the
+# only Potomac crossing for forty, which prices La Plata-Dahlgren at an
+# extra hour and a half and Waldorf-Colonial Beach at an extra hour, all
+# three with every camera cleared.
 TRIPS = [
-    ("Del Ray", (38.8300, -77.0605), "Mount Vernon", (38.7293, -77.1074)),
-    ("Oakton", (38.8810, -77.3008),
-     "George Mason University", (38.8290, -77.3050)),
-    ("Georgetown", (38.9048, -77.0631),
-     "Reagan National Airport", (38.8512, -77.0402)),
+    ("Cape St. Claire", (39.0430, -76.4520), "Stevensville", (38.9807, -76.3266)),
+    ("La Plata", (38.5292, -76.9755), "Dahlgren", (38.3311, -77.0508)),
+    ("Waldorf", (38.6246, -76.9391), "Colonial Beach", (38.2546, -76.9635)),
 ]
 
 
