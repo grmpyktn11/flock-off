@@ -46,14 +46,28 @@ export function mountHeroMap(
   // "What is near me?" is the first question this map invites, and the
   // answer is the whole point of it. Denial is not an error worth
   // reporting: the map stays where it is and the DMV is still visible.
-  map.addControl(
-    new maplibregl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: false,
-      showAccuracyCircle: true,
-      fitBoundsOptions: { maxZoom: 14 },
-    }),
-  );
+  //
+  // The control's own zoom lands on the user's street, which on a quiet
+  // block answers the question with an empty map. So after it locates,
+  // the view is refit to hold the user and their nearest cameras
+  // together - the neighborhood's coverage, not the doorstep.
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: false,
+    showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 14 },
+  });
+  map.addControl(geolocate);
+  geolocate.on("geolocate", (position) => {
+    const here: [number, number] = [
+      position.coords.longitude,
+      position.coords.latitude,
+    ];
+    const bounds = nearbyCameraBounds(cameras, here);
+    if (bounds) {
+      map.fitBounds(bounds, { padding, maxZoom: 13, duration: 1200 });
+    }
+  });
 
   // A style swap wipes sources and layers, so everything is added on
   // style.load: once at startup, and again on every theme toggle.
@@ -128,6 +142,39 @@ export function mountHeroMap(
       map.getCanvas().style.cursor = "";
     });
   }
+}
+
+// Enough dots to read as "my area is covered" without hunting for them.
+const NEARBY_CAMERAS = 12;
+// Past this a camera is not "near" in any sense a resident would accept,
+// and fitting to it would zoom out to geography instead of neighborhood.
+// It also keeps a visitor from far outside the DMV from being flown to a
+// county-spanning frame: with no cameras in range the control's own
+// street-level zoom stands.
+const NEARBY_MAX_KM = 30;
+
+function nearbyCameraBounds(
+  cameras: FeatureCollection,
+  here: [number, number],
+): maplibregl.LngLatBounds | null {
+  const kmPerLng = 111.32 * Math.cos((here[1] * Math.PI) / 180);
+  const nearest = cameras.features
+    .filter(
+      (f) => f.properties?.kind === "camera" && f.geometry.type === "Point",
+    )
+    .map((f) => {
+      const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
+      const km = Math.hypot((lng - here[0]) * kmPerLng, (lat - here[1]) * 111.32);
+      return { lng, lat, km };
+    })
+    .filter((c) => c.km <= NEARBY_MAX_KM)
+    .sort((a, b) => a.km - b.km)
+    .slice(0, NEARBY_CAMERAS);
+  if (nearest.length === 0) return null;
+
+  const bounds = new maplibregl.LngLatBounds(here, here);
+  for (const c of nearest) bounds.extend([c.lng, c.lat]);
+  return bounds;
 }
 
 function popupHtml(c: CameraProps): string {
