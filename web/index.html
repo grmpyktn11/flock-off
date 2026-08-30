@@ -6,7 +6,7 @@
     <title>flock-off</title>
     <meta
       name="description"
-      content="Every license plate reader and speed camera watching Northern Virginia, DC and Maryland, mapped. Plus navigation that routes around them."
+      content="Every license plate reader and speed camera watching Northern Virginia, DC and Maryland, mapped. Plus camera-aware navigation that tells you what sees you on the way."
     />
     <meta name="theme-color" content="#fff7eb" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1c1a14" media="(prefers-color-scheme: dark)" />
@@ -15,7 +15,7 @@
     <meta property="og:title" content="flock-off" />
     <meta
       property="og:description"
-      content="Every license plate reader and speed camera watching Northern Virginia, DC and Maryland, mapped. Plus navigation that routes around them."
+      content="Every license plate reader and speed camera watching Northern Virginia, DC and Maryland, mapped. Plus camera-aware navigation that tells you what sees you on the way."
     />
     <meta property="og:url" content="https://grmpyktn11.github.io/flock-off/" />
     <meta name="twitter:card" content="summary" />
@@ -88,12 +88,12 @@
 
       <!-- Three precomputed trips through the live pipeline. -->
       <section class="trips" id="trips">
-        <h2>Dodging them costs real minutes</h2>
+        <h2>Privacy costs real minutes</h2>
         <ul class="trip-key" aria-label="Map key">
-          <li><i class="key-dot key-avoided"></i>Camera on original route</li>
-          <li><i class="key-dot key-unavoidable"></i>Unavoidable camera</li>
-          <li><i class="key-line key-baseline"></i>Original Google route</li>
-          <li><i class="key-line key-ours"></i>Our route</li>
+          <li><i class="key-dot key-standard"></i>Camera on the standard route only</li>
+          <li><i class="key-dot key-onroute"></i>Camera still on the route</li>
+          <li><i class="key-line key-baseline"></i>Standard Google route</li>
+          <li><i class="key-line key-ours"></i>Camera-aware route</li>
         </ul>
         <div class="trip-tabs" role="tablist" aria-label="Demo trips"></div>
         <div class="trip-body">
@@ -111,20 +111,20 @@
         <div class="how-prose">
           <p>
             Pick a destination with Google's own autocomplete. The
-            planner asks Google for the route it would normally drive,
-            looks up every camera watching it, and asks Valhalla, an
-            open routing engine, for a path around their fields of
-            view. Valhalla gets the job because it is the only engine
-            that will route around a polygon, and a camera's view is
-            exactly that. A detour that does not truly lower the number
-            of readers that see you is thrown away.
+            planner asks Google for the route it would normally drive
+            and looks up every camera whose field of view that route
+            crosses, so you know what sees you before you leave.
+            Valhalla, an open routing engine, treats each field of view
+            as a polygon on the map and proposes a camera-aware
+            alternate; one that does not actually pass fewer readers is
+            thrown away.
           </p>
           <p>
-            The detour is pinned with a few waypoints and handed to the
-            Google Maps app, which does the actual driving: turn by
-            turn, lanes, and traffic. A camera that cannot be avoided
-            is never hidden; the app speaks a heads-up as you approach
-            it, so you always know when you are about to be seen.
+            The alternate is pinned with a few waypoints and handed to
+            the Google Maps app, which does the actual driving: turn by
+            turn, lanes, and traffic. Any camera still on the route is
+            called out; the app speaks a heads-up as you approach it,
+            so you always know when you are on camera.
           </p>
         </div>
       </section>

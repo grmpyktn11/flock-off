@@ -499,8 +499,9 @@ section[id] {
 }
 
 /* Compact key for the trip map. Swatches mirror tripMap.ts: olive dot
-   for a dodged camera, raspberry for one still watching, dashed line
-   for Google's route, solid olive for the detour. */
+   for a camera only the standard route passes, raspberry for one still
+   on the route, dashed line for Google's standard route, solid olive
+   for the camera-aware one. */
 .trip-key {
   list-style: none;
   display: flex;
@@ -525,11 +526,11 @@ section[id] {
   flex: none;
 }
 
-.key-avoided {
+.key-standard {
   background: var(--olive);
 }
 
-.key-unavoidable {
+.key-onroute {
   background: var(--raspberry);
 }
 
