@@ -2,35 +2,35 @@
  "demos": [
   {
    "origin": {
-    "name": "Solomons",
-    "lat": 38.3187,
-    "lng": -76.454
+    "name": "Silver Spring",
+    "lat": 38.9907,
+    "lng": -77.0261
    },
    "destination": {
-    "name": "Lexington Park",
-    "lat": 38.2666,
-    "lng": -76.4531
+    "name": "Tysons Corner",
+    "lat": 38.9187,
+    "lng": -77.2311
    },
-   "baseline_polyline": "}b{hFnlsqMKh@aD}Ae@nBIz@n@nFD~ACp@O~@q@`D}@r@wBpAyJjIaFpC{OhIcMhGeKnFaAf@wAj@t@lBTVXRn@V@F[jBIRWTa@AgASaD_AEIAQFWRK`@@TDJERBRA^H`Bf@jCnAtB~ApArA|E`Gnn@pv@d@t@dBpDl@dBp@tCTrAf@bE|BpTVxBAVNhB^hCv@vDbAvDvA~DPVbAvBjAnBtAfBtAxAjB|AbNlKFNnBtB`BnB`BlCjBvDRPdAfDj@hCh@pDXbDJvCBxBEfBKd@UdDk@~EUtAkBpI@L}AvGi@dDMrAK\\MhCGbCPjAPvD\\vBf@pBRn@HDjAzCv@bBBJz@vAnA~AvAnA~B~AnQbKtAz@bClApA|@j@wAbBsFfAaDfAgCrCkFtGmLJOpAqC`@aA~GuShAuD\\{@zCkJ|J}ZfL_^nHqT`AsDt@}Dd@_DpBiShAeLbAqJ`@oCj@kCd@aBv@{BdFeK~LuUbGaKjE{HzIuPzBkEjAiB|AkB`AaAtAgAnLwHlCsBt@q@XOnHqFzUiOlA{@jBaBnB{BtAmBjAmBtAwCj@uAlAoEbCwLV}@b@iAUUu@lBg@bB",
-   "route_polyline": "}b{hFnlsqMKh@aD}Ae@nBIz@n@nFD~ACp@O~@q@`D}@r@wBpAyJjIaFpC{OhIcMhGeKnFaAf@wAj@cAj@k@VkBZoGFCZEPMRm@NGFCNyAL]ImL~@yA@sAGyAW_AWoCqAOMeSiKiF{Cw^eVsKeH}AeA}DcCcUeOcB_A{BaA{Bs@eDo@yo@qK{Aa@cBo@wBkAkA{@yAsA_LoL_EcEuGkGyDiDs@s@sBaBq\\mYqDmCiEgCaDyAsEeBaCq@yCs@cDi@{Eg@oES}CAuEJmCPoEh@iFbA{Bl@sDnAiBt@mDdBaEfCyAdAaBpAsDjDqC~C{C~Dq\\re@_BrBuC`DiDzCgDfCmCdBoE~Bci@rW{CfB{DpCyVnSeCdBmCzAeDvAmDfAkkB|h@aBn@gBbA}AlA}@~@{AtBaAbBo@vAu@rB_@~Ac@~Be@tEaD`_@uB|UoBdUq@zE_AvEu@pCaAtC_B`EeB`DgBrCiB|BmArAkAhAohBx~A}AfAsBhAqBx@kBl@}Bb@{BX_CHiB?aAE{XC}B@m]AmBLcBV_Cl@}Aj@oDpBmt@vb@wBbBgBfB_AjAeBfC_B|CmAxCs@zBm@~Bk@|C_@pCU~CeCde@i@rHq@vGYjCwApKOz@gFr^}BlNsC`Pq@tCw@hCiA`D{D`JqAdDy@lCs@tCs@jDy@nEcAlEm@bCyBzG}CrHqCjGmAtBmAxA}@z@mBtAsAx@{BhAiBhAiAx@sCdCiB`Bx@hAR`@_AzBuAfCcBhXJhFHlC@xAEh@Yh@QRo@d@u@|@Sl@kBnD_@vAQ|AWbHEr@OlAYdA[r@eA`B{ApBY`@e@hA[fAWjAuApCaClEITCl@DdAPr@~BlEl@vAX|ARvAJbC?fCS~DJpALlA?n@EfAMpBB`Al@bJDtBEbEJz@jAbH?|@U~@}@|BqA~Do@~C[p@_CjCgC|BwBbDq@~@Wh@Qv@GdA?tAK`CQnAM`@e@z@sEdHkAdBeCvEcDrF_B|CyAdDa@nAq@tCc@hCCn@D|@Bj@?n@KzDA\\BPvGfEhAn@H@`Ah@pB|@l@V`Bd@lGvA|IpBrEhAbCf@|@J|FNvBZx@TzAj@|HlDzBlAvApAz@fAj@~@f@~@z@zBzKrd@fGhW`AjE\\rBPhC@hCQ`H{@nZSxD[vDcKb~@oAdLWfDEtBDbDP|GCzBOzCQhBARg@dC_AfD{Yp_AuBhHg@|B]xBWjCQnDcAde@CjFDnDPtDp@tHdElc@`@pFR`EJjFJzKGhIGxCO~Ci@zEWfBs@nDmA`FuLf^y@fCuA`Gs@pEiAlJkAlKoBjPe@`Cg@nBs@hBkAzB{@pAa@f@wBtBwQfOwCnCqC|Ci]x_@}DvEqCbEiBbD}BzEcFnNmAbDeArByApBaCrCmC|CcAvA_AbBu@jBo@xBWhA]pCW`COnEe@zTMpDa@bG{@tHm@hFIxAm@`Ea@~DOrCCbCDzCZjD`@lC^~Ar@xBbA~B`AdBfBfCnNrQxAbCd@bAf@tAt@|Ch@tChDnTl@hD@bBIT?ZL^PPZn@ZlBDl@Af@IZ?ZHXXVX?TMFIF[@e@Vy@rDsGz@aA`As@~Ao@d@SNKbBSvAApAFzAXz@TpAl@dAr@|F~EnAr@zAj@dBZrAJhAAnAGfAS|Ac@h@S~e@{VnAa@dB[dAIzI@pt@`@dGDpLHzEAvSTbNDtGFrPDbMNnDBjAA~NLtp@^tFQfFe@lBWlCe@nHiB|EeBnCiAlDiBhDsB|DwC`DoCvFgGjDoEpGuJbZkd@bCyDhj@}z@t`@wm@bKsOpReZvHkLtKuPfIiMxXwb@dKsOlAqBrBaEnBuEnCaIls@kyBlIkWtXuz@`EoMnAcFnFqW|@}C`AmChAwBrOiUpEcGnF_H|GyJl]eh@zC{F`CwFvBsFlGaQzAqEd^eaAdLe[nCuG~e@mdAz@uBz@eC|@wCz@oDrLmi@|@_FdAyGf@mCnAuFlAmEvCwI~b@qlAxA}ClAuBp@cApB_CxAuAp_@uZxb@o]fEwDpFqFnl@qn@z@cA|EsE~CgCrDqCbByAhBsBdGsIxYeb@rJcNpAuAxDiD~QuOjD}CvCqCxEeFz\\a`@t@y@xF}G`HmJjFqHfB_CfMaNtS_V`JiKxKoMTQvAiBtAsBxAsC|@wB`AwCvBiHl@iBxBkHbA}CbF_Qj@wAbBsFfAaDfAgCrCkFtGmLJOpAqC`@aA~GuShAuD\\{@zCkJ|J}ZfL_^nHqT`AsDt@}Dd@_DpBiShAeLbAqJ`@oCj@kCd@aBv@{BdFeK~LuUbGaKjE{HzIuPzBkEjAiB|AkB`AaAtAgAnLwHlCsBt@q@XOnHqFzUiOlA{@jBaBnB{BtAmBjAmBtAwCj@uAlAoEbCwLV}@b@iAUUsCoFlBrDCZD`@Ev@@Ru@bC",
+   "baseline_polyline": "mk~lFbdcuM@|@sAB_@TyDCgJXmALeAb@y@d@o@l@wBdCe@b@cDnD}BfCQXgMdNwa@fd@eCtBkEfCWV}Ap@gDdAyOdEiD|@k@AoE~@e@JSIUAOSI]?w@FYPSHCPBPPFT?hARX_ArfAOfHg@lKy@fNC`CBlBNbB\\dB`@nAf@fA|@vAhAhAvClBtD`CfB|A`BlBxCzDtAvAzAfA|DjCfAdAt@dAf@`A`@jA`@lBLjA~@dOlD~m@FtCE|BSfCa@bCo@|B{@tB{HpPi@|@}@fAcA|@qF|CyAjAq@v@w@rAk@zA}@nDeAhEk@|Ak@hAgArA_Av@_B~@iDjBiAx@eAbA_AlAcAlBq@hBcA|D_BlG}AvE{AtDcBfDmCtEkBvCa@~@a@tAWrAOtAEr@?fAD`BTjBb@dBp@`Bz@pAnH`J|@tAh@bAv@xBb@fBb@fCTjC`@tOv@p[LvEZ`Ej@|EzElXr@tE`AvIf@fHVdFPpGFpGWrz@MnKB~AHtAPpA\\tA^~@x@|A`AfAhAx@hJfErC|Ah@DfFpCjClAfJlD~CxA|CfBnLdI`CtA|CrAzCbA~Bf@`Db@|CTfDDbCE`E[tc@_FdBEjADnALjB^bBl@bBz@jBrAv@t@r@z@bAvAn@hA`A|Bj@hBj@lC\\nCNnC^zIt@vP\\`Ex@`Gt@dEt@dDbBxFnApDnBpEzApClAjB`BnBhBbBjBpAdB`ApBv@lBh@|Cf@vp@rGzBXrBh@nB|@rAx@tClC~@jAbAdBpAxCj@dBrAtExBfJf@nBt@~BhB~ExAhDz@dBdAhBl@t@t@v@vAlAbBfAjBv@nExAtCz@|DtAfEpBbAh@rCjBnCvBbC`CpDdErCxDnCxDjDvEtC~C`DrClBzAvDzBfCrApAl@tGdDnFdC|@f@hChAr^`R|@h@fCvBzA`BdArAhCbEzBxD`BxBhAjAxB|ApBbAnBn@bC\\tBHvJIjBFbCXhCl@|Bz@rKhFvCdAdEdAhEv@nRxBdG^R@\\\\|D\\pBj@f@JVXx@b@\\`@Th@r@nCZr@r@rAFXA^AJBPmEtJqCjFoMvUsDxGmCdEaAxAoA~A",
+   "route_polyline": "mk~lFbdcuM@|@sAB_@TyDCgJXmALeAb@y@d@o@l@wBdCe@b@cDnD}BfCQXgMdNwa@fd@eCtBkEfCWV}Ap@gDdAyOdEiD|@k@AoE~@e@JSIUAOSI]?w@FYPSHCPBPPFT?hARX_ArfAOfHg@lKy@fNC`CBlBNbB\\dB`@nAf@fA|@vAhAhAvClBtD`CfB|A`BlBxCzDtAvAzAfA|DjCfAdAt@dAf@`A`@jA`@lBLjA~@dOlD~m@FtCE|BSfCa@bCo@|B{@tB{HpPi@|@}@fAcA|@qF|CyAjAq@v@w@rAk@zA}@nDeAhEk@|Ak@hAgArA_Av@_B~@iDjBiAx@eAbA_AlAcAlBq@hBcA|D_BlG}AvE{AtDcBfDmCtEkBvCa@~@a@tAWrAOtAEr@?fAD`BTjBb@dBp@`Bz@pAnH`J|@tAh@bAv@xBb@fBb@fCTjC`@tOv@p[LvEZ`Ej@|EzElXr@tE`AvIf@fHVdFPpGFpGWrz@MnKB~AHtAPpA\\tA^~@x@|A`AfAhAx@hJfErC|Ah@DfFpCjClAfJlD~CxA|CfBnLdI`CtA|CrAzCbA~Bf@`Db@|CTfDDbCE`E[h[mD\\R~A?bBL~AXbFtAHHtA\\dDp@bBN`BB`AE`BUjBc@jBu@|AcAvAmA|@eA~\\me@jAoAbBuA|A{@fBs@jBc@dR_CpAc@r@c@l@m@PUTe@VaAFq@PgD`@eBv@_Cl@uArAwB`BqBrMoNdBaCnH{LdB_CxBaC`EaEz@_AhDsErAsBl@u@@CjCoCxEiErBcBxCwBrCeBxQwJxCoAnGgC|EgC|I}FbFiC`Bu@pGgC|CcAjG{AxKeCzAg@dB{@fAw@dCeC|@gAz@sA^_AhIyOx@gAjAkAfS{O~@m@dD}AnCkA|AaAf@_@~@m@dDr]Px@f@fATz@_@Tq@VaATq@\\{QzP{AzA}AnAo@x@[p@]nAeA`Hg@hBiBtE_@jA_BrG}CjJqFxNOTQ`@o@RSBmAO_@B]PSTy@~Ai@l@c@^u@`@EJ{At@i@ZkCtBqGnFqBtAyBbAqBh@sCZ{_@dAeDb@{Bd@eBn@cCfAoBlAiBbBcBlBiAbBu@v@mF`IaIbM}BzDu@|AkBhFaAdD}@zD{Fp^g@rCi@|BwAzEqFtPc@hBg@jDY|DAjDJlCNxB`CtVLbD?tDErCUvDcAzJOnDCxCDnDVlDXtB`CzOPzB@nCGrBStBwAlJUpA]|Ag@fBMbAA|AHjABN`@vA^v@d@h@r@h@bA^vBXp@Zj@f@l@bA~DlJtA`ChB`Cx@x@tAfAtAr@jG`CdGjCjATvBRrA^lAd@TErCjBnCvBbC`CpDdErCxDnCxDjDvEtC~C`DrClBzAvDzBfCrApAl@tGdDnFdC|@f@hChAr^`R|@h@fCvBzA`BdArAhCbEzBxD`BxBhAjAxB|ApBbAnBn@bC\\tBHvJIjBFbCXhCl@|Bz@dClAB\\p@z@^t@dBnH^|@d@j@n@d@n@Tt@FfCAf@Hj@Rh@l@^|@J^LNVvBLbCZhOF~BZ~E`@|EBh@vArPCh@Ep@On@]h@aA`AUj@Kj@Ad@Fj@Nh@`@n@|@pAh@NPa@hAeBz@eA",
    "cameras": [
     {
-     "id": 1234,
+     "id": 614,
      "type": "alpr",
-     "lat": 38.3310748,
-     "lng": -76.4664207,
-     "facing_deg": null,
+     "lat": 38.9671222,
+     "lng": -77.1801306,
+     "facing_deg": 190.0,
      "avoided": true,
-     "operator": null,
-     "brand": "Leonardo",
-     "road_name": "South Solomons Island Road",
-     "road_ref": "MD 4",
+     "operator": "Virginia State Police",
+     "brand": null,
+     "road_name": "Capital Beltway",
+     "road_ref": "I 495",
      "crime_count": null,
      "crime_desc": null,
      "arrest_count": null,
      "arrest_desc": null,
-     "tract_income": 130592,
-     "county_income": 132059,
+     "tract_income": 250001,
+     "county_income": 150113,
      "usefulness_score": null,
      "score_desc": "insufficient public data (income only, 1 of 3 factors)",
      "on_baseline": true
@@ -38,9 +38,93 @@
    ],
    "avoided_count": 1,
    "unavoidable_count": 0,
-   "baseline_eta_seconds": 985,
-   "route_eta_seconds": 4250,
-   "eta_delta_seconds": 3265
+   "baseline_eta_seconds": 1368,
+   "route_eta_seconds": 2083,
+   "eta_delta_seconds": 715
+  },
+  {
+   "origin": {
+    "name": "Dupont Circle",
+    "lat": 38.9097,
+    "lng": -77.0434
+   },
+   "destination": {
+    "name": "Reagan National Airport",
+    "lat": 38.8512,
+    "lng": -77.0402
+   },
+   "baseline_polyline": "qpnlFjpfuMuOnHYKsN?YFpBjExAtBfAhAnAh@nCxAlBhB`@j@@Jz@lAPN~CJt@PxB|@j@FfFBb@P\\X~@pA`@Rj@B~XBb@PJn@R\\d@Xh@H`@GZUR_@H_@^a@HEfVBzEEjXDvLBzAB@VFLHr@Z|@FNf@d@j@Xf@JfAN^T^f@?NfOxk@Bz@Il@Sf@g@`@aFlCiAz@o@v@o@nA]jASpAFZTTT@`@Sz@c@rEeAtF_CrDkBdC}AxAkA`BkBx@cABa@l@cBZ{A|AsKh@_C~@uC|BaGLGz@iBxBuDdCsDfC}C~AeBlFcFbKyItBuBdEgF~@oAbFyHdAcB`BwBzCcDhA{@|@k@|Aq@tA]dAMlAC`BFbBTvA`@hBz@tA~@vAlAxBzBtJjLxAtArB|ApCdB\\d@nFfEhAp@bA^bAXz@Fb@Gd@O`@[lF_Gn@]f@Id@?jGd@tDf@l@LrBTrCHnCEpBKj@MpAu@tA_A`C}BNWBg@Ek@@YsAmDB]EkANgCA_@S[UOYCUF_@f@o@ZQA_AX",
+   "route_polyline": "qpnlFjpfuMuOnHq@TeAn@gD~A}@b@{A`@w@FoERUD]EiADKF_@CONETNt@`@OtAg@pAMhES~@M`A[dFgC`Aa@j@]r@O|CwAh@Y@kP`LA~DaPtAyFFCX_Af@aABQPGT[Dc@Co@ACTiBBICMdAgENUt@wCNUpA}EJQFQZEPMTE|@e@VK`a@@PAJKtBCxDBfA?FJtF?JKlEAlQB?H?IdZ?L?JNlIA|IF`AJfBh@fAh@nNbJx@~@d@v@\\~@TtARvCHjCFnBPpAPv@Vz@VPn@pAn@|@|^t]tEbErA`A|@j@~EdCpErBjAx@~A|AnAdBT^^@zBbD\\\\tBtAzIhFx@ZdBZlGd@lHd@dPn@lHTtLp@nCJ~BLv@JfBDlB?LT`@TVVp@jAZNb@@b@Q\\_@P_@XmA|@qEnAuFxCaORq@Xm@pAwBRWRk@@oAQgBAG@W}@{CsBsFB]EkANgCA_@S[UOYCUF_@f@o@ZQA_AX",
+   "cameras": [
+    {
+     "id": 2224,
+     "type": "alpr",
+     "lat": 38.8533801,
+     "lng": -77.0459206,
+     "facing_deg": 230.0,
+     "avoided": true,
+     "operator": null,
+     "brand": "Flock Safety",
+     "road_name": "West Entrance Road",
+     "road_ref": null,
+     "crime_count": null,
+     "crime_desc": null,
+     "arrest_count": null,
+     "arrest_desc": null,
+     "tract_income": null,
+     "county_income": null,
+     "usefulness_score": null,
+     "score_desc": "insufficient public data (0 of 3 factors)",
+     "on_baseline": true
+    },
+    {
+     "id": 1954,
+     "type": "alpr",
+     "lat": 38.8756393,
+     "lng": -77.0475567,
+     "facing_deg": 137.0,
+     "avoided": true,
+     "operator": null,
+     "brand": "Flock Safety",
+     "road_name": "George Washington Memorial Parkway",
+     "road_ref": null,
+     "crime_count": 0,
+     "crime_desc": "reported incidents within half a mile in the last 12 months (DC MPD)",
+     "arrest_count": 71,
+     "arrest_desc": "arrests recorded in police service area 207 in 2025 (DC MPD)",
+     "tract_income": null,
+     "county_income": 106287,
+     "usefulness_score": 8,
+     "score_desc": "scored on 2 of 3 factors",
+     "on_baseline": true
+    },
+    {
+     "id": 2548,
+     "type": "alpr",
+     "lat": 38.9008131,
+     "lng": -77.0499787,
+     "facing_deg": 268.0,
+     "avoided": true,
+     "operator": null,
+     "brand": "Flock Safety",
+     "road_name": "23rd Street Northwest",
+     "road_ref": null,
+     "crime_count": 346,
+     "crime_desc": "reported incidents within half a mile in the last 12 months (DC MPD)",
+     "arrest_count": 71,
+     "arrest_desc": "arrests recorded in police service area 207 in 2025 (DC MPD)",
+     "tract_income": 35983,
+     "county_income": 106287,
+     "usefulness_score": 34,
+     "score_desc": "scored on 3 of 3 factors",
+     "on_baseline": true
+    }
+   ],
+   "avoided_count": 3,
+   "unavoidable_count": 0,
+   "baseline_eta_seconds": 1192,
+   "route_eta_seconds": 1453,
+   "eta_delta_seconds": 261
   },
   {
    "origin": {
@@ -122,72 +206,9 @@
    ],
    "avoided_count": 3,
    "unavoidable_count": 0,
-   "baseline_eta_seconds": 1304,
-   "route_eta_seconds": 6656,
-   "eta_delta_seconds": 5352
-  },
-  {
-   "origin": {
-    "name": "Waldorf",
-    "lat": 38.6246,
-    "lng": -76.9391
-   },
-   "destination": {
-    "name": "Colonial Beach",
-    "lat": 38.2546,
-    "lng": -76.9635
-   },
-   "baseline_polyline": "_{vjF~ertMlALx@Br@CbBe@HGjCu@|@Ej@Bt@PhGnBFe@XmAv@uBv@wAd@{@bAuCh@gER}Bh@_@d@Sh^rMxB~@vBlAnBtAnAhArBzB|AxBdAfB`BlDfAzCl@xBt@jDvAxJ|@rEZpAv@nCZlAt@|B`AbCh@bA~@lAdAz@v@\\p@V~B}HjBqGz@_CnAkCrMgWnDqGz@eAd@g@pIgHxAoBt@mARI^Sb@GJEnB`@lCz@jClAtCjBbL`IjC|BjDbDnLrLjEdFfB`C~KzO`GfId@v@p@v@tDzFbAlBx@rB~@fDXjA|D~TpAxFlAjErRfj@fFtNdHnSv@rBbFrNjBtEhAhC~AzCdCxDvC~DrCbDpDlDhCrBfExCzCbB`DzAlEdBdHjBbDj@`Fj@jEVdEDjEIvF[tr@}E|Io@bCW|OgA`CKpGi@~F_@nc@_Dx^gC|[}BdJe@hECvGBzENdFXvIr@nFx@dYtE`KdBh]vFzHlAhEr@hFx@xFn@jIl@jSlAdG^hIh@~gAvGxeBjKhShA|CFvC?dFM`F_@`Gy@lFgAtC{@`EyA|DeB~DuB`F_DlFgEf_E}rDzBiBlFuDnDyBvFuClEiBlFgBvEqAbDo@tHkA`Fc@fFSnDEpHNtF\\~OdBjg@zFT?nzA|PpDl@nCr@`Cv@hCdA`D~A|BtA|B~AnDxCbCjCdBvB~BjDpBpDfBtDpA~CzBjHn@bC|@zDL~@TfAl@pE\\`DnAzQXlDVtE`@~HPxEh@`WXdIb@bIpArQbA`Pn@tIh@nINbBl@lJfCt^hD~f@n@fHpDt]bAjM^xG|@|VTxDbNbbBd@zDj@~Cv@xCvAbEdI|TjBjFbLvZbPjc@lj@f{AzGtQh@`B|BhG|EzMfF`NnBlEt@~ArAa@rD_AzIsB`Gw@xF]hHe@pE_@`Eq@~Bk@`KoCzEeApIsAjFq@|XuCxCa@nFiAvC}@`JsCzAc@~FmBfa@gMfRaGpAm@fBgAdM{IvBeBvFgFjE{ErDoEvCgEnCmEf_@}p@~@oBbAmC|@yCl@oClK}p@|C^fADnACrBYhSqDlC_@`CKfBDzANdHvAxCl@dBTpDPvB@tWmAlKu@nMkApHq@jCOjAAt@H`FiJbHaNhBqCrLsN~M_PpAiBt@yAp@oB^yA\\{BLgBBiB?u@IcCg@eFaE__@_@aCe@kBu@wB}@oB{AeCyRqWeMwPwAeBsBsBcz@}t@{@y@qA}AiAgBiAcCm@gBc@gBa@}BWgCMqCAiChAom@ReBXsAXw@t@qAz@{@jo@cj@zl@sf@|IiHd@U^CAeGMaR?gAIgIWa]",
-   "route_polyline": "_{vjF~ertMlALx@Br@CbBe@HGjCu@|@Ej@Bt@PfF`BUdBInACvAFbCF~AeBFg@G_Cs@eDiAgASiAC{BTiCl@aBv@m@`@kAbA}CxCm@v@iAjBcGnHoChCoBzB_At@yB~Ao@^wAn@s@Vk@VsAv@iC|@iCt@sF|A_JrBaG|AoAFwJTw@LwCx@iATuAb@_Ar@o@n@i@x@_@x@_GzPOHQNUFsUsEa@B_A~G}Fx\\y@fFqAhHYhBq@pDsBnLIt@CFsAbJ]xCSzA[vEQtEIxH?bGNhKHbE@tCbAzs@@~FKhGaA`VMhBc@tCa@jBy@hCcAzBmBzCeHrKaArBy@zBg@lBc@vB]bDMfDWlJ[zEg@vEo@xDeAnE{@vCgAtCeBzDGTeC~DkCjDoIhKoA|AuAtAWRoBp@mAPm@@gAGoAUcAa@aAq@[YOBe@i@qCuDiKsM{DyEwGoIaJqKcJ}JuSeTiHeIiGsHmAsAcK}Lu@eAmBwBqPeSuD_EcD_DiEqDsEeDkEoCeDiBaEkBcFqB_DeAuCm@aDe@wDSuDEmDPkCXuB^uCt@yCfAoPpHuBt@}Bl@gDl@sCXsDJ{cBRqGRkpB|Jcy@bEmCRwFRcQ|@UBu`@pBcE\\OD{CZyEf@{IhAie@bG}JlAwAJwMzA_JdAiLdAqL~@{@@gFZmNf@oLNcGBkH?g@WsCWaK{AsAEaADwAZqAl@}@r@s@t@m@x@u@|AIVQN{@tBg@hBW~AOpBEbBDzAPpB\\jBj@hB`IjRbExILFtGxO`C`HjCfKzAjI`EzYx@jHl@fH`@fHTzGN|Hb@p~@AvFOpGyBhe@_AxOqAdRqAbOyApOaAnHoAlHuAtGyBlIwHvWkBrHcBxHeAbGu@jFc@jEa@lF_GxbAoCjd@{B~a@Qb@W|J?vGJfJ^pI^tF`@nEt@hGhAnHdS|jAjA|Gl@~CjAhIx@hHlHj{@zDpd@n@rH|Dlc@hAjORPdA`IlFd_@n@rFd@|G\\jJP~HHtLLfCZnCz@pE~DrRf@bBn@~Av@tA`AjAvAnAdB~@rFhBfTlGnBh@HTvPfEdEx@pNfCfHhA~Q`CnHl@xId@xJXf\\v@dCDpPb@fId@bIp@`S`CbFz@lIjBpHvBpGvBfHpCzGvClHrDpJvFdIlFvM~J`JfH|IrHdL~JjH`HlIrItLbN`HpInF~G~HvK~CvElG~JvMdUrDxFhE|FbDxDjDlDnC~BtCpBpDpBtD~AjGxBzHxBnJvBjLrBbKvAfsArOjEv@|DfAtDrA`DvAfDhB~CtBtDzClDhDzClDfJjLhCtDjCrEhBpDtBbFfBdF`B~FbA|EfJrd@pA|GdAhHbAdIl@rG|@xLz@lN|Cfe@b@pEt@fF~@rE`ArDtAhE`BdEhBrDrBjD~AzBnB`CvDxDpCxBvBvAlCxAbRrIfyAbq@~HdDfG`ClL|DhHtBhj@rN|IlCvJhDf}@d]|DjBjC|AzCvBlCvBpClC|OpQrU`XhHfIrCpCzBjBlDdCfDnBhD`BpE`Bji@nPps@vT|Bx@rD|AdFhCbEfC~EpDtCfCnDjDjz@d|@dChCbFlElDjCbDnBlDdBvDxAnErA~zAta@|QhFdDlApEtBjC|AhDbCrCdCrCrC|AfBf}@hgAnGdIrh@ps@vCnDxCzChCxB~BbB`DpBlDhBhCfAfDjAhD|@`nApXlHvB`HdCdGhC`GzCpGrDrFrD|ErD`I~G`eAz~@xIdHhIfGhJjGvUzNb^pTzDlBlCfAfF~A`E|@hEn@jDXbENfD?nDKpHi@`RyAbEQrFCnFJbG^xC\\`GbAnDx@bGhBhDpAzExBvPlJ`^`SlL|FdKpErLrEfSvGlPhFfFvBpDnBjBhAhChBrMtJdFhDvEnCrHtD|GrC`FdBje@dNrNbExDrAtChAjGrCvEjCdFhDrFnElAbArCpCdEnElB~B`oAldBxXt_@fC|CvCzCrCdCpCrBvD`CnBdAvGtCxb@rQpPjHnFlCtFdDhFlD`FvDpFxEdE~D`DlDzGfIhIzJnGjHD`@rExFjLpMrDnEnN|PdJzKzAdB|JrLfCrC`EdEjDtCtF~DbC|AbEzB|FjCtG|Blu@vU~E|@lFl@zDP`EClHc@zFs@pa@}FxAKfHQjDFnDPhFj@bDn@fHhBtIzBha@`KZ`@ZP`@d@Rf@Ff@?r@Il@Wf@WXy@b@e@Hg@Cc@O_@]Uc@Oo@MoAMOScVQaMC{GBcBLkD@eANaCnB{SJiBBo@IiBw@sFc@aEOqBGS@qE?eA|AkTR}FFIBsBLuBZgBn@wBR]d@k@b@]j@g@vBkAfA{@v@}@b@o@f@eA|DgNfDiMTaA|@qF~@cFVuBn@cMlA}VB{AC_DKaDi@kKG[c@}HoAgV@g@EmCDcCPiCbByPJ_DAeBGeBSeCa@cCYiAu@yBaAoBw@oAa@g@UuA?g@Hm@DMDY|_@_t@tBwDx@sA|AoBbUuVvE{EvMiMdGuF|U_UjB_B|ByAjDcBbSwIjDoBnAw@`IeHdC}CnCgErAaCjAeCrAcD|@mClAiE|@aEv@{EhUyiBp@_GX{CTcF`@uXZeF`@aDx@uEpL_m@h@{C^cDFsAF_CCqGI_L?{AUmSEoBIeB[wCk@iDm@cC}Nad@uA_F{@_Eo@yD_@eDs@gJk@eEcA}EiA_Eg@gBk@_C}DeOcDeMiEiPe@aCWiCImB?mBFqBR}Bb@kCd@gB|@aCtFiMrBgFdAsD~DyQj@oBl@eBr@}AlAcCvA_CnUm[fAiBnAeCdAoCl@mBlAwExEeR~@sEr@gF^aENsCHiD?wDQmJ]iMW_DMaAk@}Cs@gCcDcJwEwN{Ik[sC{JkDcMs@{CsAkHaA_Ge@yB_BiF}CsJu@yCg@}CMuAM_DqAu~ACgCOwCQkB]sBk@aCaAsCs@{A{Sk_@}Sk_@eEsHoJwRqCaFaBeCeIkK_Zc_@wAwBk@eAq@}Ay@aCqAsFqEsSa@iCUiCMcD@mDJ{EPkCVkB`SyqAb@aDfAqGrDwVvB}Mn@yC^yAjAeD^}@`CuEZs@tBuDhJqMrAeC~@_C\\oAj@cCPmBtBoP\\aBb@kAbLyVRo@dBgLXyB~CiTJOx@iEbAoD`AmCZu@l@mA|AiC|AqBjCoCxBiBhAy@l^ySlW_Op{@}f@zAeAjBaBbAoAhAiBz@gBt@sBv@}CbAyENcAHo@^aB|BgMbAmGAKzDqSjDsPvPow@`AqFx@mGpGwn@d@wCf@aCv@iC`A_CbAoBhAcB~AiB`ByAvBwAlZmPnCiBdB_B`BqBtAyB|@iB|@{B\\eApByFbFqNzAoD|A}C`BwC|BoDvCaE`TmYtA}Bp@uAZ{@|C_KdA_D~@uB`AaBlAaBzCuC|EeESaAEeAFoEGiB_@}F_@iDi@eDk@kCw@qCwA{Dk@wAeAoBwBiDc@_AQq@MwCEgDDmAp@oEHs@Bi@Bg\\AkBQwJaAoCaB_EU}@I}@UcJGaAK{@}@aEu@kCgA}C}@{B_BgCa@m@wDaEcCyCsD_FwEqF_FiGwCcE[s@s@uC}CqPuA}FsF_T_@iA{@oAsE}F[m@I[KeAAsADkDEsAWiBqAkIoBmGmAmHe@oDGu@Yad@A{AOyCw@eEw@sB{A}Ck@{@w@q@]Q_BOkFNoCNw@CuA]oGwBi@[o@q@MUKu@WeHa@uTF}@Xy@h@iAjAaCt@uB`AqDHw@G}CEgCQgCG_A]kCYiAa@y@sCkEg@gAsDuLa@kBEYEm@HqGMaCKk@s@oDgDqMwCaOMaAAs@N{@xAkEdC{FyK{FgPoImU}L{AeAsAqAgAsAiMsSq[ih@}DkGqImNUYEa@c@eAAcEMyQ?gAIgIWa]",
-   "cameras": [
-    {
-     "id": 1260,
-     "type": "alpr",
-     "lat": 38.2727286,
-     "lng": -76.9929482,
-     "facing_deg": 120.0,
-     "avoided": true,
-     "operator": "Colonial Beach Police Department",
-     "brand": "Flock Safety",
-     "road_name": "McKinney Boulevard",
-     "road_ref": "VA 205",
-     "crime_count": null,
-     "crime_desc": null,
-     "arrest_count": null,
-     "arrest_desc": null,
-     "tract_income": 51705,
-     "county_income": 59766,
-     "usefulness_score": null,
-     "score_desc": "insufficient public data (income only, 1 of 3 factors)",
-     "on_baseline": true
-    },
-    {
-     "id": 1554,
-     "type": "alpr",
-     "lat": 38.3650634,
-     "lng": -76.9717393,
-     "facing_deg": null,
-     "avoided": true,
-     "operator": "Maryland Transportation Authority",
-     "brand": null,
-     "road_name": "Crain Highway",
-     "road_ref": "US 301",
-     "crime_count": null,
-     "crime_desc": null,
-     "arrest_count": null,
-     "arrest_desc": null,
-     "tract_income": 116304,
-     "county_income": 120592,
-     "usefulness_score": null,
-     "score_desc": "insufficient public data (income only, 1 of 3 factors)",
-     "on_baseline": true
-    }
-   ],
-   "avoided_count": 2,
-   "unavoidable_count": 0,
-   "baseline_eta_seconds": 2884,
-   "route_eta_seconds": 6507,
-   "eta_delta_seconds": 3623
+   "baseline_eta_seconds": 1310,
+   "route_eta_seconds": 6626,
+   "eta_delta_seconds": 5316
   }
  ]
 }

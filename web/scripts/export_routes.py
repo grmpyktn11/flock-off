@@ -26,20 +26,19 @@ from app.geo import encode_polyline  # noqa: E402
 
 OUT = REPO / "web" / "public" / "data" / "routes.json"
 
-# Probed against the live pipeline; picked because a reader on a bridge
-# gates everything behind it, and picked from trips whose detours stay
-# inside the DMV (the Bay Bridge would cost even more, but its loop
-# around the Chesapeake cuts through Delaware). One reader on the Thomas
-# Johnson Bridge, the only lower-Patuxent crossing, prices
-# Solomons-Lexington Park at an extra 54 minutes on a 16-minute drive.
-# The Nice Bridge is the only Potomac crossing for forty miles, which
-# prices La Plata-Dahlgren at an extra hour and a half and
-# Waldorf-Colonial Beach at an extra hour. Every camera cleared on all
-# three.
+# Probed against the live pipeline; one trip from each side of the
+# region into Virginia, every camera cleared on all three, detours
+# verified inside the DMV. Silver Spring-Tysons pays 12 minutes because
+# a reader on the American Legion Bridge gates the Beltway's own
+# Potomac crossing. Dupont Circle-Reagan National dodges the GW Parkway
+# readers for 4 minutes. La Plata-Dahlgren is the monster: the Nice
+# Bridge is the only Potomac crossing for forty miles, so staying
+# unseen costs an extra hour and a half.
 TRIPS = [
-    ("Solomons", (38.3187, -76.4540), "Lexington Park", (38.2666, -76.4531)),
+    ("Silver Spring", (38.9907, -77.0261), "Tysons Corner", (38.9187, -77.2311)),
+    ("Dupont Circle", (38.9097, -77.0434),
+     "Reagan National Airport", (38.8512, -77.0402)),
     ("La Plata", (38.5292, -76.9755), "Dahlgren", (38.3311, -77.0508)),
-    ("Waldorf", (38.6246, -76.9391), "Colonial Beach", (38.2546, -76.9635)),
 ]
 
 
