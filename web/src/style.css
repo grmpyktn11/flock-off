@@ -42,8 +42,7 @@
 }
 
 /* Dark mode: the nav toggle sets data-theme; before it runs, the system
-   preference decides. The honest block inverts by design, so it works
-   unchanged in both: ink and ground simply trade places. */
+   preference decides. */
 :root[data-theme="dark"] {
   --ground: #1c1a14;
   --surface: #262319;
@@ -499,6 +498,56 @@ section[id] {
   margin: 0 0 var(--space-5);
 }
 
+/* Compact key for the trip map. Swatches mirror tripMap.ts: olive dot
+   for a dodged camera, raspberry for one still watching, dashed line
+   for Google's route, solid olive for the detour. */
+.trip-key {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+}
+
+.trip-key li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.key-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.key-avoided {
+  background: var(--olive);
+}
+
+.key-unavoidable {
+  background: var(--raspberry);
+}
+
+.key-line {
+  width: 24px;
+  border-top: 3px solid;
+  flex: none;
+}
+
+.key-baseline {
+  border-top-style: dashed;
+  border-top-color: var(--ink-muted);
+}
+
+.key-ours {
+  border-top-color: var(--olive-deep);
+}
+
 .trip-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -604,54 +653,18 @@ section[id] {
 
 /* ---- how ---- */
 
-.how-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+.how-prose {
   border-top: 1px solid var(--line);
   margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  max-width: 68ch;
 }
 
-.how-step {
-  padding: var(--space-5) var(--space-5) var(--space-5) 0;
-}
-
-.how-step + .how-step {
-  border-left: 1px solid var(--line);
-  padding-left: var(--space-5);
-}
-
-.how-step h3 {
-  font-size: 1.15rem;
-  color: var(--olive-deep);
-  margin-bottom: var(--space-2);
-}
-
-.how-step p {
-  margin: 0;
+.how-prose p {
   color: var(--ink-muted);
-  font-size: 0.96rem;
 }
 
-/* ---- honesty ---- */
-
-/* Full-bleed and inverted, so it gets a little more room than the
-   sections around it: this is the one moment on the page. */
-.honest {
-  background: var(--ink);
-  color: var(--ground);
-  padding-block: calc(var(--section-y) * 1.5);
-}
-
-.honest h2,
-.honest p {
-  max-width: 760px;
-  margin-inline: auto;
-  text-align: center;
-}
-
-.honest p {
-  font-size: clamp(1.05rem, 2vw, 1.3rem);
-  color: color-mix(in srgb, var(--ground) 80%, var(--ink));
+.how-prose p:last-child {
   margin-bottom: 0;
 }
 
@@ -659,10 +672,6 @@ section[id] {
 
 .download {
   text-align: center;
-}
-
-.download .trips-intro {
-  margin-inline: auto;
 }
 
 .store-buttons {
@@ -826,20 +835,6 @@ section[id] {
 
 /* ---- narrow screens ---- */
 
-@media (max-width: 900px) {
-  .how-grid {
-    grid-template-columns: 1fr;
-  }
-  .how-step {
-    padding-right: 0;
-  }
-  .how-step + .how-step {
-    border-left: none;
-    border-top: 1px solid var(--line);
-    padding-left: 0;
-  }
-}
-
 @media (max-width: 860px) {
   .what-grid,
   .records-list,
@@ -874,8 +869,7 @@ section[id] {
   /* Hairline rules separate columns well on a wide screen and read as
      stray lines on a narrow one, so the same content becomes cards. */
   .what-item,
-  .records-list li,
-  .how-step {
+  .records-list li {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -890,28 +884,9 @@ section[id] {
     border-top: 3px solid var(--olive);
   }
 
-  .how-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    border-top: none;
-  }
-
-  .how-step,
-  .how-step + .how-step {
-    border-top: 3px solid var(--olive);
-    border-left: none;
-    padding: var(--space-5);
-  }
-
   .what-grid,
   .records-list {
     gap: var(--space-3);
-  }
-
-  .honest h2,
-  .honest p {
-    text-align: left;
   }
 
   /* Docs read as a list of destinations rather than a stack of pills. */

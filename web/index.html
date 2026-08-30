@@ -46,7 +46,7 @@
         <div class="hero-panel">
           <p class="hero-stat"><span>2,890</span> cameras</p>
           <h1>watch the DMV.</h1>
-          <p>Every one of them is on this map.</p>
+          <p>Tap any camera to see what it watches and how it scores.</p>
           <div class="hero-actions">
             <a class="button button-primary" href="#what">What they record</a>
             <a class="button button-ghost" href="#trips">See routes</a>
@@ -89,12 +89,12 @@
       <!-- Three precomputed trips through the live pipeline. -->
       <section class="trips" id="trips">
         <h2>Dodging them costs real minutes</h2>
-        <p class="trips-intro">
-          Three real trips priced by the live pipeline, chosen for what
-          staying unseen actually costs. Gray is the route Google would
-          drive; green is the detour. Green dots get dodged; red ones
-          still see you.
-        </p>
+        <ul class="trip-key" aria-label="Map key">
+          <li><i class="key-dot key-avoided"></i>Camera on original route</li>
+          <li><i class="key-dot key-unavoidable"></i>Unavoidable camera</li>
+          <li><i class="key-line key-baseline"></i>Original Google route</li>
+          <li><i class="key-line key-ours"></i>Our route</li>
+        </ul>
         <div class="trip-tabs" role="tablist" aria-label="Demo trips"></div>
         <div class="trip-body">
           <div id="trip-map" class="trip-map" role="application" aria-label="Route comparison map"></div>
@@ -108,56 +108,30 @@
       <!-- The pipeline, explained. -->
       <section class="how" id="how">
         <h2>How it works</h2>
-        <p class="trips-intro">
-          Two routing engines, each doing the one thing it is good at.
-        </p>
-        <div class="how-grid">
-          <div class="how-step">
-            <h3>1. Search</h3>
-            <p>
-              Pick a destination. Search is Google's own autocomplete, so
-              the places you find are the ones navigation understands.
-            </p>
-          </div>
-          <div class="how-step">
-            <h3>2. Plan</h3>
-            <p>
-              The planner asks Google for the route it would normally
-              drive, looks up every camera watching that route, and asks
-              Valhalla, an open routing engine, for a path around their
-              fields of view. Valhalla gets that job because it is the
-              only engine that will route around a polygon, and a
-              camera's view is exactly that. A detour only counts if it
-              truly lowers the number of readers that see you; one that
-              does not is thrown away.
-            </p>
-          </div>
-          <div class="how-step">
-            <h3>3. Hand off</h3>
-            <p>
-              The detour is pinned with a few waypoints and handed to the
-              Google Maps app as a link. Google does the actual driving:
-              turn by turn, lanes, and traffic.
-            </p>
-          </div>
-          <div class="how-step">
-            <h3>4. Warn</h3>
-            <p>
-              A camera that cannot be avoided is never hidden. The app
-              speaks a heads-up as you approach it, so you always know
-              when you are about to be seen.
-            </p>
-          </div>
+        <div class="how-prose">
+          <p>
+            Pick a destination with Google's own autocomplete. The
+            planner asks Google for the route it would normally drive,
+            looks up every camera watching it, and asks Valhalla, an
+            open routing engine, for a path around their fields of
+            view. Valhalla gets the job because it is the only engine
+            that will route around a polygon, and a camera's view is
+            exactly that. A detour that does not truly lower the number
+            of readers that see you is thrown away.
+          </p>
+          <p>
+            The detour is pinned with a few waypoints and handed to the
+            Google Maps app, which does the actual driving: turn by
+            turn, lanes, and traffic. A camera that cannot be avoided
+            is never hidden; the app speaks a heads-up as you approach
+            it, so you always know when you are about to be seen.
+          </p>
         </div>
       </section>
 
       <!-- The app, when the stores let it in. -->
       <section class="download" id="download">
         <h2>Get the app</h2>
-        <p class="trips-intro">
-          The navigation lives in the app: plan a trip, hand it to
-          Google Maps, and get spoken warnings while you drive.
-        </p>
         <div class="store-buttons">
           <span class="store-button" aria-disabled="true">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -174,25 +148,9 @@
         </div>
       </section>
 
-      <!-- The honesty section. -->
-      <section class="honest">
-        <h2>The numbers are honest</h2>
-        <p>
-          Staying unseen is not free: a single reader on the American
-          Legion Bridge adds twelve minutes to a Beltway commute. When a
-          detour drives past a reader of its own, that counts against
-          it, and when nothing can be dodged, the plan says so.
-        </p>
-      </section>
-
       <!-- Public-records enrichment, currently ingesting. -->
       <section class="records" id="records">
         <h2>Does the placement match the need?</h2>
-        <p class="trips-intro">
-          Every camera is scored against the public record: three
-          factors, weighed into one number out of 100. Tap a camera on
-          the map to see its own.
-        </p>
         <ul class="records-list">
           <li>
             <span class="records-pct">50%</span>
