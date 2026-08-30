@@ -8,7 +8,6 @@ export interface CameraProps {
   operator?: string;
   road_name?: string;
   road_ref?: string;
-  explanation?: string;
   crime_count?: number;
   crime_desc?: string;
   arrest_count?: number;

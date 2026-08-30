@@ -992,15 +992,8 @@ section[id] {
   font-size: 0.85rem;
 }
 
-.popup-why {
-  margin: var(--space-2) 0 0;
-  font-size: 0.88rem;
-  border-left: 3px solid var(--olive);
-  padding-left: var(--space-3);
-}
-
-/* How well the placement matches the public record. Deliberately not
-   colour-coded: a low score is a question, not a verdict. */
+/* How well the placement matches the public record: the app's card,
+   with the same low-score accent it uses. */
 .popup-score {
   display: flex;
   align-items: baseline;
@@ -1015,7 +1008,24 @@ section[id] {
   line-height: 1;
 }
 
+.popup-score.low span:first-child {
+  color: var(--raspberry);
+}
+
 .popup-score-of {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+
+.popup-score-none {
+  margin: var(--space-3) 0 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.popup-score-desc {
+  margin: var(--space-1) 0 0;
   color: var(--ink-muted);
   font-size: 0.76rem;
 }

@@ -28,7 +28,7 @@ REGION = "dmv"
 
 _EXPORT = """
     SELECT id, type, ST_X(geom), ST_Y(geom), facing_deg, operator, brand,
-           road_name, road_ref, explanation,
+           road_name, road_ref,
            crime_count, crime_desc, arrest_count, arrest_desc,
            tract_income, county_income, usefulness_score, score_desc,
            ST_AsGeoJSON(dead_zone)
@@ -54,7 +54,7 @@ def main() -> None:
     features = []
     for (
         camera_id, kind, lng, lat, facing_deg, operator, brand,
-        road_name, road_ref, explanation,
+        road_name, road_ref,
         crime_count, crime_desc, arrest_count, arrest_desc,
         tract_income, county_income, usefulness_score, score_desc,
         dead_zone,
@@ -68,9 +68,11 @@ def main() -> None:
             "brand": brand,
             "road_name": road_name,
             "road_ref": road_ref,
-            "explanation": explanation,
-            # The public-records factors and the score computed from them,
-            # the same fields the app shows on a camera.
+            # The public-records factors and the deterministic score, the
+            # same numbers the app shows on a camera. The AI explanation
+            # layer stays in the app: the site is static and the scoring
+            # pipeline is reproducible arithmetic, so this is everything
+            # the record supports with nothing generated.
             "crime_count": crime_count,
             "crime_desc": crime_desc,
             "arrest_count": arrest_count,
@@ -102,9 +104,8 @@ def main() -> None:
     ))
 
     points = [f["properties"] for f in features if f["properties"]["kind"] == "camera"]
-    explained = sum(1 for p in points if "explanation" in p)
     scored = sum(1 for p in points if "usefulness_score" in p)
-    print(f"{len(points)} cameras ({explained} explained, {scored} scored), "
+    print(f"{len(points)} cameras ({scored} scored), "
           f"{len(features) - len(points)} dead zones -> {OUT.relative_to(REPO)}")
 
 

@@ -177,18 +177,26 @@ function nearbyCameraBounds(
   return bounds;
 }
 
+// The app's camera card, minus its AI explanation: the deterministic
+// score out of 100 (accented when low, like the app), how many factors
+// carried it, and one line per factor the public record holds. A camera
+// without a score says so instead of showing nothing - thin public data
+// is itself the finding.
 function popupHtml(c: CameraProps): string {
   const where = cameraWhere(c);
   const factors = factorLines(c);
+  const score =
+    c.usefulness_score !== undefined
+      ? `<p class="popup-score${c.usefulness_score < 30 ? " low" : ""}">` +
+        `<span>${c.usefulness_score}</span>` +
+        `<span class="popup-score-of">/100 useful score</span></p>`
+      : `<p class="popup-score-none">Useful score: not enough public data</p>`;
   return [
     `<p class="popup-label">${escapeHtml(cameraLabel(c))}</p>`,
     where ? `<p class="popup-where">${escapeHtml(where)}</p>` : "",
-    c.usefulness_score !== undefined
-      ? `<p class="popup-score"><span>${c.usefulness_score}</span>` +
-        `<span class="popup-score-of">/100 ${escapeHtml(c.score_desc ?? "")}</span></p>`
-      : "",
-    c.explanation
-      ? `<p class="popup-why">${escapeHtml(c.explanation)}</p>`
+    score,
+    c.score_desc
+      ? `<p class="popup-score-desc">${escapeHtml(c.score_desc)}</p>`
       : "",
     factors.length
       ? `<ul class="popup-factors">${factors
