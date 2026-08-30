@@ -25,18 +25,34 @@ DETOUR_REACH_M = 600.0
 AVERAGE_SPEED_MPS = 13.4  # roughly 30 mph on suburban arterials
 
 
-# Sample rows from the cameras table.
+# Sample rows from the cameras table. The operator/brand/road context is
+# what both the camera list and the explanation feature ground on, so the
+# mock rows carry it the way real ingested rows do.
 CAMERAS: list[Camera] = [
     # Spaced along the Herndon-to-Fairfax corridor, plus one sitting on top
     # of a common origin (unavoidable) and one off to the side (ignored).
-    Camera(1, 1001001, "alpr", 38.95109, -77.37414, 90.0),
-    Camera(2, 1001002, "alpr", 38.93258, -77.36219, None),
-    Camera(3, 1001003, "speed_camera", 38.91407, -77.35024, 270.0),
-    Camera(4, 1001004, "alpr", 38.89556, -77.33828, 180.0),
-    Camera(5, 1001005, "alpr", 38.87705, -77.32633, None),
-    Camera(6, 1001006, "speed_camera", 38.85854, -77.31437, 0.0),
-    Camera(7, 1001007, "alpr", 38.96950, -77.38600, 45.0),
-    Camera(8, 1001008, "alpr", 38.94300, -77.42000, None),
+    Camera(1, 1001001, "alpr", 38.95109, -77.37414, 90.0,
+           operator="Fairfax County Police Department", brand="Flock Safety",
+           road_name="Herndon Parkway"),
+    Camera(2, 1001002, "alpr", 38.93258, -77.36219, None,
+           operator="Fairfax County Police Department", brand="Flock Safety",
+           road_name="Fairfax County Parkway", road_ref="VA 286"),
+    Camera(3, 1001003, "speed_camera", 38.91407, -77.35024, 270.0,
+           operator="Fairfax County Police Department",
+           road_name="Leesburg Pike", road_ref="VA 7"),
+    Camera(4, 1001004, "alpr", 38.89556, -77.33828, 180.0,
+           operator="Town of Vienna Police Department", brand="Flock Safety",
+           road_name="Chain Bridge Road", road_ref="VA 123"),
+    Camera(5, 1001005, "alpr", 38.87705, -77.32633, None,
+           brand="Flock Safety", road_name="Lee Highway", road_ref="US 29"),
+    Camera(6, 1001006, "speed_camera", 38.85854, -77.31437, 0.0,
+           operator="City of Fairfax Police Department",
+           road_name="Main Street", road_ref="VA 236"),
+    Camera(7, 1001007, "alpr", 38.96950, -77.38600, 45.0,
+           operator="Town of Herndon Police Department", brand="Flock Safety",
+           road_name="Elden Street"),
+    Camera(8, 1001008, "alpr", 38.94300, -77.42000, None,
+           brand="Flock Safety"),
 ]
 
 # Sample rows behind the Places Autocomplete proxy.
@@ -61,6 +77,35 @@ PLACES: list[dict] = [
     {"place_id": "p_burke_centre", "name": "Burke Centre",
      "address": "Burke Centre, Burke, VA", "lat": 38.8462, "lng": -77.3064},
 ]
+
+
+def camera_explanations(camera_ids: list[int]) -> dict[int, str]:
+    """Stand-in for the Claude-written placement explanations.
+
+    Deterministic sentences assembled from the same fields the real prompt
+    grounds on, so the offline demo reads like the real feature. Unknown
+    ids are left out of the result, matching how the real path treats a
+    camera that is not in the table.
+    """
+    by_id = {c.id: c for c in CAMERAS}
+    return {
+        camera_id: _canned_explanation(by_id[camera_id])
+        for camera_id in camera_ids
+        if camera_id in by_id
+    }
+
+
+def _canned_explanation(camera: Camera) -> str:
+    where = f"on {camera.road_name}" if camera.road_name else "here"
+    if camera.type == "speed_camera":
+        return (
+            "This speed camera cannot be evaluated from public data - no "
+            "local crash figures are published."
+        )
+    return (
+        "This plate reader cannot be evaluated from public data; audits "
+        "found most Flock scans are never linked to any investigation."
+    )
 
 
 def search_places(query: str, lat: float | None, lng: float | None) -> list[dict]:

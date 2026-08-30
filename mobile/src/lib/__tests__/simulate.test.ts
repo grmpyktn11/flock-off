@@ -4,7 +4,6 @@ import {
   offsetPerpendicular,
   positionAt,
   routeLengthMeters,
-  simulateDrive,
 } from "../simulate";
 
 const ROUTE: LatLng[] = [
@@ -33,45 +32,5 @@ describe("offsetPerpendicular", () => {
     const distance = distanceToRouteMeters(off, ROUTE);
     expect(distance).toBeGreaterThan(250);
     expect(distance).toBeLessThan(350);
-  });
-});
-
-describe("simulateDrive", () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
-
-  it("walks the route and stops at the end", () => {
-    const seen: LatLng[] = [];
-    const onFinish = jest.fn();
-    simulateDrive({
-      route: ROUTE,
-      speedMps: 100,
-      tickMs: 1000,
-      onTick: (p) => void seen.push(p),
-      onFinish,
-    });
-
-    jest.advanceTimersByTime(60_000);
-    expect(seen.length).toBeGreaterThan(5);
-    expect(onFinish).toHaveBeenCalled();
-    // Every tick sits on the route when nothing is veering it off.
-    expect(Math.max(...seen.map((p) => distanceToRouteMeters(p, ROUTE)))).toBeLessThan(1);
-  });
-
-  it("veers off once past the given fraction", () => {
-    const seen: LatLng[] = [];
-    simulateDrive({
-      route: ROUTE,
-      speedMps: 100,
-      tickMs: 1000,
-      veerMeters: 300,
-      veerAfterFraction: 0.5,
-      onTick: (p) => void seen.push(p),
-    });
-
-    jest.advanceTimersByTime(60_000);
-    const distances = seen.map((p) => distanceToRouteMeters(p, ROUTE));
-    expect(distances[0]).toBeLessThan(1);
-    expect(Math.max(...distances)).toBeGreaterThan(250);
   });
 });

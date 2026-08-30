@@ -6,7 +6,6 @@ import {
   Button,
   Divider,
   List,
-  Switch,
   TextInput,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,7 +25,6 @@ export default function SearchScreen({ navigation }: Props) {
   const [originQuery, setOriginQuery] = useState("");
   const [destinationQuery, setDestinationQuery] = useState("");
   const [activeField, setActiveField] = useState<Field>("origin");
-  const [strict, setStrict] = useState(false);
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [resolving, setResolving] = useState(false);
@@ -35,7 +33,6 @@ export default function SearchScreen({ navigation }: Props) {
   const sessionToken = useRef(newSessionToken());
   const insets = useSafeAreaInsets();
   const { tokens } = useAppTheme();
-  const ghost = tokens.name === "ghost";
   // Paper components take their colors from the provider; these styles
   // cover the plain RN pieces the provider cannot reach.
   const body = { color: tokens.text, fontFamily: tokens.fontFamily };
@@ -118,7 +115,7 @@ export default function SearchScreen({ navigation }: Props) {
   return (
     <View className="flex-1 px-4 pt-4" style={{ backgroundColor: tokens.background }}>
       <TextInput
-        label={ghost ? "ORIGIN:" : "Start"}
+        label="Start"
         mode="outlined"
         value={originQuery}
         onFocus={() => setActiveField("origin")}
@@ -126,7 +123,7 @@ export default function SearchScreen({ navigation }: Props) {
       />
       <View className="h-3" />
       <TextInput
-        label={ghost ? "TARGET:" : "Destination"}
+        label="Destination"
         mode="outlined"
         value={destinationQuery}
         onFocus={() => setActiveField("destination")}
@@ -154,17 +151,11 @@ export default function SearchScreen({ navigation }: Props) {
             )}
             ListEmptyComponent={
               <Text className="mt-6 text-center" style={muted}>
-                {ghost
-                  ? canPlan
-                    ? "> coordinates locked. execute below_"
-                    : `> awaiting ${
-                        activeField === "origin" ? "origin" : "target"
-                      } coordinates_`
-                  : canPlan
-                    ? "Both places set. Plan the route below."
-                    : `Search for a place to fill the ${
-                        activeField === "origin" ? "start" : "destination"
-                      } field.`}
+                {canPlan
+                  ? "Both places set. Plan the route below."
+                  : `Search for a place to fill the ${
+                      activeField === "origin" ? "start" : "destination"
+                    } field.`}
               </Text>
             }
           />
@@ -172,28 +163,16 @@ export default function SearchScreen({ navigation }: Props) {
       </View>
 
       <View className="pt-2" style={{ paddingBottom: insets.bottom + 48 }}>
-        <View className="mb-3 flex-row items-center justify-between">
-          <View className="flex-1 pr-3">
-            <Text style={body}>
-              {ghost ? "STRICT_EVASION" : "Avoid at any cost"}
-            </Text>
-            <Text className="text-xs" style={muted}>
-              Holds the detour instead of letting Google rejoin the fast road.
-              Avoids more cameras, sometimes for a lot more time.
-            </Text>
-          </View>
-          <Switch value={strict} onValueChange={setStrict} />
-        </View>
         <Button
           mode="contained"
           disabled={!canPlan}
           onPress={() => {
             if (origin !== null && destination !== null) {
-              navigation.navigate("Plan", { origin, destination, strict });
+              navigation.navigate("Plan", { origin, destination });
             }
           }}
         >
-          {ghost ? "> EXECUTE" : "Plan route"}
+          Plan route
         </Button>
       </View>
     </View>

@@ -12,7 +12,7 @@ from app.valhalla import RoutingError
 from app.geo import encode_polyline, haversine_m
 from app.models import Camera
 from app.schemas import CameraResult, PlanResponse, WaypointResult
-from app.waypoints import pick_waypoints
+from app.waypoints import Picks, pick_waypoints
 
 MAX_VERIFY_RETRIES = 2
 
@@ -40,7 +40,6 @@ def plan_route(
     destination: tuple[float, float],
     origin_place_id: str | None = None,
     destination_place_id: str | None = None,
-    strict: bool = False,
 ) -> PlanResponse:
     cameras = camera_source.in_bbox(origin, destination)
 
@@ -63,14 +62,22 @@ def plan_route(
     # counting those would claim credit for every camera in the county.
     baseline_ids = camera_source.seen_by(baseline_route, cameras)
 
-    route, _ = _route_avoiding(origin, destination, cameras, baseline_ids, baseline_route)
+    # Only plate readers are worth spending minutes to drive around: a
+    # speed camera matters only at speed, and the driver gets a spoken
+    # heads-up for those anyway. Speed cameras stay in the counts and the
+    # list below; they just no longer pull the route sideways. Passing
+    # only the readers into the avoidance step keeps its retry loop from
+    # re-adding a speed camera to the exclusion set.
+    readers = [c for c in cameras if c.type == "alpr"]
+    avoid_ids = {c.id for c in readers if c.id in baseline_ids}
+
+    route, _ = _route_avoiding(origin, destination, readers, avoid_ids, baseline_route)
 
     picked = pick_waypoints(
         route,
         baseline_route,
-        [(c.lat, c.lng) for c in cameras if c.id in baseline_ids],
+        [(c.lat, c.lng) for c in readers if c.id in avoid_ids],
         google.directions,
-        strict,
     )
     picks = [(w.lat, w.lng) for w in picked.waypoints]
 
@@ -89,6 +96,21 @@ def plan_route(
         driven_route, route_eta = google.directions(origin, picks, destination)
 
     unavoidable_ids = camera_source.seen_by(driven_route, cameras)
+
+    # The detour has to earn its keep: strictly fewer readers than the
+    # route Google would have driven anyway. Google honors waypoints
+    # loosely and fills in the rest its own way, so the driven route can
+    # pass readers the baseline never did - measured on Vienna Metro-GMU,
+    # where the "detour" dodged one reader and drove past three new ones.
+    # A detour that does not lower the count is worthless, so the driver
+    # gets the plain route and a warning for everything on it instead.
+    reader_ids = {c.id for c in readers}
+    if picks and len(unavoidable_ids & reader_ids) >= len(baseline_ids & reader_ids):
+        picks = []
+        picked = Picks([], None)
+        driven_route, route_eta = baseline_route, baseline_eta
+        unavoidable_ids = baseline_ids
+
     avoided_ids = baseline_ids - unavoidable_ids
     reported = [c for c in cameras if c.id in avoided_ids or c.id in unavoidable_ids]
 
@@ -113,6 +135,14 @@ def plan_route(
                 brand=c.brand,
                 road_name=c.road_name,
                 road_ref=c.road_ref,
+                crime_count=c.crime_count,
+                crime_desc=c.crime_desc,
+                arrest_count=c.arrest_count,
+                arrest_desc=c.arrest_desc,
+                tract_income=c.tract_income,
+                county_income=c.county_income,
+                usefulness_score=c.usefulness_score,
+                score_desc=c.score_desc,
             )
             for c in reported
         ],

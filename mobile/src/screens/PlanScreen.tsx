@@ -1,43 +1,47 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { ActivityIndicator, Button, Divider, List, Snackbar } from "react-native-paper";
+import { ActivityIndicator, Button, List, Snackbar } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
-import { ApiError, Camera, Plan, planRoute } from "../api";
+import { ApiError, Camera, Plan, cameraExplanations, planRoute } from "../api";
+import { cameraLabel, describeCamera, factorLines } from "../lib/cameraCopy";
 import { openInGoogleMaps } from "../lib/googleMaps";
-import { haversineMeters } from "../lib/geo";
 import { decodePolyline } from "../lib/polyline";
 import { useAppTheme } from "../theme";
 import { startTrip } from "../lib/tripStore";
 import {
-  TickResult,
   canWatchDrive,
-  handleLocation,
   reconcileTrip,
   requestDrivePermissions,
   startTripService,
   stopTrip,
 } from "../lib/tripService";
-import { routeLengthMeters, simulateDrive } from "../lib/simulate";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Plan">;
 
 export default function PlanScreen({ route }: Props) {
-  const { origin, destination, strict } = route.params;
+  const { origin, destination } = route.params;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [error, setError] = useState("");
-  const [simulating, setSimulating] = useState(false);
-  const [tick, setTick] = useState<TickResult | null>(null);
+  // Bumped by the retry button when planning itself failed.
+  const [attempt, setAttempt] = useState(0);
+  // The camera whose "why is it here" line is expanded inline, and the
+  // answers already fetched this visit, so re-tapping a camera is instant.
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [explanations, setExplanations] = useState<Record<number, string>>({});
+  const [explainError, setExplainError] = useState("");
   const [canWarn, setCanWarn] = useState(true);
   const [watching, setWatching] = useState(false);
   const insets = useSafeAreaInsets();
   const { tokens } = useAppTheme();
-  const ghost = tokens.name === "ghost";
   const body = { color: tokens.text, fontFamily: tokens.fontFamily };
   const muted = { color: tokens.textMuted, fontFamily: tokens.fontFamily };
-  const card = { borderColor: tokens.border };
+  const card = {
+    borderColor: tokens.border,
+    backgroundColor: tokens.surface,
+  };
 
   useEffect(() => {
     canWatchDrive().then(setCanWarn);
@@ -49,7 +53,8 @@ export default function PlanScreen({ route }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    planRoute(origin, destination, strict)
+    setError("");
+    planRoute(origin, destination)
       .then((result) => {
         if (!cancelled) {
           setPlan(result);
@@ -68,7 +73,7 @@ export default function PlanScreen({ route }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [origin, destination, strict]);
+  }, [origin, destination, attempt]);
 
   async function startNavigation() {
     if (plan === null) {
@@ -95,175 +100,306 @@ export default function PlanScreen({ route }: Props) {
     }
   }
 
-  // Development only. Replays the planned route through the same handler
-  // the GPS task calls, so warnings, drift and the re-plan prompt all run
-  // without leaving the desk. Stripped from release builds.
   async function endTrip() {
     await stopTrip();
     setWatching(false);
-    setTick(null);
+  }
+
+  // Expand the tapped camera's "why is it here" line, fetching the answer
+  // the first time. Answers the backend already has cached come back
+  // fast; a brand new one costs a short Claude call.
+  function toggleWhy(camera: Camera) {
+    if (expandedId === camera.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(camera.id);
+    if (explanations[camera.id] === undefined) {
+      fetchWhy(camera);
+    }
+  }
+
+  function fetchWhy(camera: Camera) {
+    setExplainError("");
+    cameraExplanations([camera.id])
+      .then((result) => {
+        setExplanations((previous) => ({ ...previous, ...result }));
+        if (result[camera.id] === undefined) {
+          setExplainError("No explanation available for this camera.");
+        }
+      })
+      .catch((cause) => {
+        setExplainError(
+          cause instanceof ApiError
+            ? cause.message
+            : "Could not load the explanation."
+        );
+      });
   }
 
   async function enableWarnings() {
     const granted = await requestDrivePermissions();
     setCanWarn(granted);
     if (!granted) {
-      setError("Warnings need location access set to Allow all the time.");
+      setError("Alerts need location access set to Allow all the time.");
     }
-  }
-
-  async function simulate(veerMeters: number) {
-    if (plan === null || simulating) {
-      return;
-    }
-    const route = decodePolyline(plan.routePolyline);
-    await startTrip(destination, route, plan.cameras.filter((c) => !c.avoided));
-    setSimulating(true);
-    setTick(null);
-    // Fast enough that a cross-county route replays in about ninety
-    // seconds, never slower than highway speed for a short one. The
-    // warnings clamp their radius, so they still fire at any of this.
-    const speedMps = Math.max(25, routeLengthMeters(route) / 90);
-    simulateDrive({
-      route,
-      veerMeters,
-      speedMps,
-      tickMs: 400,
-      onTick: async (position, speedMps) => {
-        const result = await handleLocation(position, speedMps);
-        // Announcements and prompts are worth keeping on screen; a plain
-        // tick only updates the distance readout.
-        setTick((previous) =>
-          result.spoke || result.prompted || result.arrived
-            ? result
-            : { ...result, spoke: previous?.spoke, prompted: previous?.prompted }
-        );
-      },
-      onFinish: () => setSimulating(false),
-    });
   }
 
   if (plan === null) {
+    // A failed plan used to leave this spinner up forever: the error
+    // snackbar only rendered on the planned screen, which a failure never
+    // reaches. Failure gets its own words and a way to try again.
     return (
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: tokens.background }}>
-        <ActivityIndicator />
-        <Text className="mt-4" style={muted}>
-          {ghost ? "> computing evasion route_" : "Planning around cameras"}
-        </Text>
+      <View
+        className="flex-1 items-center justify-center px-8"
+        style={{ backgroundColor: tokens.background }}
+      >
+        {error === "" ? (
+          <>
+            <ActivityIndicator />
+            <Text className="mt-4" style={muted}>
+              Looking up public camera data…
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text className="text-center" style={body}>
+              {error}
+            </Text>
+            <View className="mt-4">
+              <Button mode="outlined" onPress={() => setAttempt(attempt + 1)}>
+                Try again
+              </Button>
+            </View>
+          </>
+        )}
       </View>
     );
   }
 
   const unavoidable = plan.cameras.filter((camera) => !camera.avoided);
+  // Plate readers are the app's subject; speed cameras ride along in a
+  // collapsed group since they only matter at speed.
+  const readers = plan.cameras.filter((camera) => camera.type === "alpr");
+  const readersOnPath = readers.filter((camera) => !camera.avoided);
+  const readersAvoided = readers.filter((camera) => camera.avoided);
+  const speedCams = plan.cameras.filter(
+    (camera) => camera.type === "speed_camera"
+  );
+
+  function cameraRow(camera: Camera) {
+    const expanded = expandedId === camera.id;
+    // The site's camera list, carried over: a raspberry rail for a camera
+    // on the path, olive for one the detour goes around.
+    const rail = camera.avoided ? tokens.olive : tokens.accent;
+    return (
+      <View
+        key={camera.id}
+        className="mb-2 overflow-hidden rounded-r-xl"
+        style={{ backgroundColor: tokens.surface, borderLeftWidth: 3, borderLeftColor: rail }}
+      >
+        <List.Item
+          title={cameraLabel(camera)}
+          description={describeCamera(camera, plan!)}
+          descriptionNumberOfLines={3}
+          left={(props) => (
+            <List.Icon
+              {...props}
+              color={rail}
+              icon={
+                camera.type === "speed_camera"
+                  ? "speedometer"
+                  : camera.avoided
+                    ? "cctv-off"
+                    : "cctv"
+              }
+            />
+          )}
+          right={(props) => (
+            <List.Icon {...props} icon={expanded ? "chevron-up" : "chevron-down"} />
+          )}
+          onPress={() => toggleWhy(camera)}
+        />
+        {expanded ? (
+          <View
+            className="mb-3 ml-4 mr-4 pl-3"
+            style={{ borderLeftWidth: 3, borderLeftColor: tokens.olive }}
+          >
+            <Text
+              style={{
+                color:
+                  camera.usefulnessScore !== null &&
+                  camera.usefulnessScore < 30
+                    ? tokens.accent
+                    : tokens.text,
+                fontFamily: tokens.fontFamilySemibold,
+              }}
+            >
+              {camera.usefulnessScore !== null
+                ? `Useful score: ${camera.usefulnessScore}/100`
+                : "Useful score: not enough public data"}
+            </Text>
+            {camera.scoreDesc ? (
+              <Text className="text-xs" style={muted}>
+                {camera.scoreDesc}
+              </Text>
+            ) : null}
+            {factorLines(camera).map((line) => (
+              <Text key={line} className="mt-1" style={body}>
+                {`• ${line}`}
+              </Text>
+            ))}
+            <View className="mt-2">
+              {explanations[camera.id] !== undefined ? (
+                <Text className="text-xs" style={muted}>
+                  {explanations[camera.id]}
+                </Text>
+              ) : explainError !== "" ? (
+                <View className="flex-row items-center">
+                  <Text className="text-xs" style={muted}>
+                    {explainError}
+                  </Text>
+                  <Button compact mode="text" onPress={() => fetchWhy(camera)}>
+                    Retry
+                  </Button>
+                </View>
+              ) : (
+                <View className="flex-row items-center">
+                  <ActivityIndicator size="small" />
+                  <Text className="ml-2 text-xs" style={muted}>
+                    Reading the numbers…
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: tokens.background }}>
       <ScrollView className="flex-1 px-4 pt-4">
-        <View className="items-center rounded-lg border py-8" style={card}>
-          <Text className="text-6xl font-bold" style={{ color: tokens.accent, fontFamily: tokens.fontFamily }}>{plan.avoidedCount}</Text>
+        <View
+          className="rounded-3xl border p-6"
+          style={{
+            ...card,
+            shadowColor: "#533F16",
+            shadowOpacity: 0.12,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 2,
+          }}
+        >
+          {/* The number is the verdict; everything else supports it. */}
+          <Text
+            style={{
+              fontFamily: tokens.fontFamilyBold,
+              fontSize: 56,
+              lineHeight: 60,
+              letterSpacing: -2,
+              color: readers.length === 0 ? tokens.oliveDeep : tokens.accent,
+            }}
+          >
+            {readers.length}
+          </Text>
+          <Text
+            className="text-lg"
+            style={{ color: tokens.text, fontFamily: tokens.fontFamilySemibold }}
+          >
+            {`license plate ${
+              readers.length === 1 ? "reader" : "readers"
+            } on the way to ${destination.name}`}
+          </Text>
           <Text className="mt-1" style={muted}>
-            {ghost
-              ? plan.avoidedCount === 1
-                ? "CAMERA_EVADED"
-                : "CAMERAS_EVADED"
-              : plan.avoidedCount === 1
-                ? "camera avoided"
-                : "cameras avoided"}
+            {`${minutes(plan.baselineEtaSeconds)} min drive`}
+            {speedCams.length > 0
+              ? ` · ${speedCams.length} speed ${
+                  speedCams.length === 1 ? "camera" : "cameras"
+                }`
+              : ""}
           </Text>
-        </View>
-
-        <View className="mt-4 rounded-lg border p-4" style={card}>
-          <Text className="text-base" style={body}>
-            {minutes(plan.routeEtaSeconds)} min, {formatDelta(plan.etaDeltaSeconds)} the
-            fastest route
-          </Text>
-          <Text className="mt-1" style={muted}>{destination.name}</Text>
-        </View>
-
-        <Text className="mb-1 mt-6" style={muted}>
-          {unavoidable.length === 0
-            ? "No cameras on this route."
-            : `${unavoidable.length} ${
-                unavoidable.length === 1 ? "camera" : "cameras"
-              } could not be avoided.${
-                canWarn ? " You will get an audio alert near each one." : ""
-              }`}
-        </Text>
-
-        {unavoidable.length > 0 && !canWarn ? (
-          <View className="mt-3 rounded-lg border p-4" style={card}>
-            <Text style={body}>Turn on camera warnings</Text>
-            <Text className="mt-1" style={muted}>
-              To speak a warning as you approach these cameras, the app needs
-              location access set to Allow all the time. Google Maps will be
-              in front while you drive, so nothing less will do.
+          {readersAvoided.length > 0 ? (
+            <Text className="mt-3" style={body}>
+              Avoiding {readersAvoided.length} of the readers would take{" "}
+              <Text
+                style={{
+                  color: tokens.oliveDeep,
+                  fontFamily: tokens.fontFamilySemibold,
+                }}
+              >
+                {formatCost(plan.etaDeltaSeconds)}
+                {percentSlower(plan.etaDeltaSeconds, plan.baselineEtaSeconds)}
+              </Text>
+              .
             </Text>
-            <View className="mt-3">
-              <Button mode="outlined" onPress={enableWarnings}>
-                Enable warnings
-              </Button>
-            </View>
+          ) : readers.length > 0 ? (
+            <Text className="mt-2" style={muted}>
+              None of the readers can be routed around on this trip.
+            </Text>
+          ) : null}
+          <View className="mt-4">
+            <Button mode="contained" icon="navigation" onPress={startNavigation}>
+              {watching ? "Back to Google Maps" : "See potential path"}
+            </Button>
+          </View>
+        </View>
+
+        {readersOnPath.length > 0 ? (
+          <View className="mb-2 mt-6">
+            <Text
+              className="text-xs uppercase tracking-wide"
+              style={{ color: tokens.accent, fontFamily: tokens.fontFamilyBold }}
+            >
+              {`On the path — ${readersOnPath.length}`}
+            </Text>
+            <Text className="mt-1" style={muted}>
+              These stay either way. Tap one to see why it is there.
+            </Text>
           </View>
         ) : null}
+        {readersOnPath.map(cameraRow)}
 
-        {unavoidable.map((camera) => (
-          <View key={camera.id}>
-            <Divider />
-            <List.Item
-              title={cameraLabel(camera)}
-              description={describeCamera(camera, plan)}
-              descriptionNumberOfLines={3}
-              left={(props) => <List.Icon {...props} icon="cctv" />}
-            />
+        {readersAvoided.length > 0 ? (
+          <View className="mb-2 mt-6">
+            <Text
+              className="text-xs uppercase tracking-wide"
+              style={{ color: tokens.oliveDeep, fontFamily: tokens.fontFamilyBold }}
+            >
+              {`Routed around — ${readersAvoided.length}`}
+            </Text>
           </View>
-        ))}
+        ) : null}
+        {readersAvoided.map(cameraRow)}
+
+        {speedCams.length > 0 ? (
+          <View
+            className="mt-6 overflow-hidden rounded-2xl border"
+            style={{ borderColor: tokens.border }}
+          >
+            <List.Accordion
+              title={`Speed cameras (${speedCams.length})`}
+              style={{ backgroundColor: tokens.background }}
+              left={(props) => <List.Icon {...props} icon="speedometer" />}
+            >
+              {speedCams.map(cameraRow)}
+            </List.Accordion>
+          </View>
+        ) : null}
       </ScrollView>
 
       <View className="px-4 pt-2" style={{ paddingBottom: insets.bottom + 48 }}>
-        <Button mode="contained" icon="navigation" onPress={startNavigation}>
-          {ghost
-            ? watching
-              ? "> RESUME HANDOVER"
-              : "> HANDOVER TO GOOGLE MAPS"
-            : watching
-              ? "Back to Google Maps"
-              : "Start in Google Maps"}
-        </Button>
+        {unavoidable.length > 0 && !canWarn ? (
+          <Button mode="outlined" icon="bell-outline" onPress={enableWarnings}>
+            Turn on heads-up alerts
+          </Button>
+        ) : null}
         {watching ? (
           <View className="mt-2">
             <Button mode="outlined" icon="stop" onPress={endTrip}>
               Stop watching
             </Button>
-          </View>
-        ) : null}
-        {__DEV__ && tick !== null ? (
-          <View className="mt-2 rounded border p-2" style={card}>
-            <Text className="text-xs" style={muted}>
-              {tick.arrived
-                ? "Arrived, trip ended"
-                : `${Math.round(tick.offRouteMeters)} m off route`}
-            </Text>
-            {tick.spoke ? (
-              <Text className="mt-1 text-xs" style={body}>spoke: {tick.spoke}</Text>
-            ) : null}
-            {tick.prompted ? (
-              <Text className="mt-1 text-xs" style={body}>re-plan prompt sent</Text>
-            ) : null}
-          </View>
-        ) : null}
-        {__DEV__ ? (
-          <View className="mt-2 flex-row">
-            <View className="flex-1">
-              <Button mode="outlined" disabled={simulating} onPress={() => simulate(0)}>
-                {simulating ? "Simulating" : "Simulate drive"}
-              </Button>
-            </View>
-            <View className="w-2" />
-            <View className="flex-1">
-              <Button mode="outlined" disabled={simulating} onPress={() => simulate(300)}>
-                Simulate wrong turn
-              </Button>
-            </View>
           </View>
         ) : null}
       </View>
@@ -280,54 +416,22 @@ function minutes(seconds: number): number {
 }
 
 // The delta is the number the user is being asked to accept, so a detour
-// that costs under a minute says so rather than rounding to "0 min slower".
-function formatDelta(seconds: number): string {
+// that costs under a minute says so rather than rounding to "0 min".
+function formatCost(seconds: number): string {
   if (seconds <= 0) {
-    return "no slower than";
+    return "no extra time";
   }
   if (seconds < 60) {
-    return "under a minute slower than";
+    return "under a minute longer";
   }
-  return `${minutes(seconds)} min slower than`;
+  return `${minutes(seconds)} min longer`;
 }
 
-// Where the camera is in words: the road it watches when OSM names one,
-// then how far into the trip the driver meets it, then who operates it.
-// A latitude and longitude tells them nothing they can use from behind a
-// wheel; "Flock Safety on Lee Highway, run by the county police" is the
-// version worth knowing - and worth repeating to a county board meeting.
-function describeCamera(camera: Camera, plan: Plan): string {
-  const parts = [];
-  if (camera.roadName || camera.roadRef) {
-    const road = camera.roadName ?? camera.roadRef;
-    const ref =
-      camera.roadName && camera.roadRef ? ` (${camera.roadRef})` : "";
-    parts.push(`On ${road}${ref}`);
+// " — a 18% longer trip", or nothing when the increase rounds to zero.
+function percentSlower(deltaSeconds: number, baselineSeconds: number): string {
+  if (deltaSeconds <= 0 || baselineSeconds <= 0) {
+    return "";
   }
-  parts.push(distanceAlong(camera, plan));
-  if (camera.operator) {
-    parts.push(`Operated by ${camera.operator}`);
-  }
-  const text = parts.join(" · ");
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function distanceAlong(camera: Camera, plan: Plan): string {
-  const route = decodePolyline(plan.routePolyline);
-  let travelled = 0;
-  let best = { distance: Infinity, along: 0 };
-  for (let i = 0; i < route.length - 1; i++) {
-    const step = haversineMeters(route[i], route[i + 1]);
-    const distance = haversineMeters(route[i], { lat: camera.lat, lng: camera.lng });
-    if (distance < best.distance) best = { distance, along: travelled };
-    travelled += step;
-  }
-  const km = best.along / 1000;
-  return km < 1 ? "near the start of the route" : `about ${km.toFixed(1)} km in`;
-}
-
-function cameraLabel(camera: Camera): string {
-  const kind =
-    camera.type === "alpr" ? "License plate reader" : "Speed camera";
-  return camera.brand ? `${kind} — ${camera.brand}` : kind;
+  const percent = Math.round((deltaSeconds / baselineSeconds) * 100);
+  return percent >= 1 ? ` — a ${percent}% longer trip` : "";
 }

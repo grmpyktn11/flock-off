@@ -2,7 +2,12 @@
 // so swapping between them is a config change and the screens never know
 // which one they are talking to.
 
-import { API_BASE_URL, APP_KEY, REQUEST_TIMEOUT_MS } from "./config";
+import {
+  API_BASE_URL,
+  APP_KEY,
+  REQUEST_TIMEOUT_MS,
+  SLOW_REQUEST_TIMEOUT_MS,
+} from "./config";
 import { Camera, CameraType, Place, PlaceSuggestion, Plan, Waypoint } from "./types";
 
 export class ApiError extends Error {
@@ -60,18 +65,20 @@ export async function placeDetails(
 
 export async function planRoute(
   origin: Place,
-  destination: Place,
-  strict = false
+  destination: Place
 ): Promise<Plan> {
-  const body = await request("/plan", {
-    origin: { lat: origin.lat, lng: origin.lng },
-    destination: { lat: destination.lat, lng: destination.lng },
-    // Only used to label the deep link. Without them Google names the
-    // endpoints after whatever it finds nearest the coordinate.
-    origin_place_id: origin.placeId,
-    destination_place_id: destination.placeId,
-    strict,
-  });
+  const body = await request(
+    "/plan",
+    {
+      origin: { lat: origin.lat, lng: origin.lng },
+      destination: { lat: destination.lat, lng: destination.lng },
+      // Only used to label the deep link. Without them Google names the
+      // endpoints after whatever it finds nearest the coordinate.
+      origin_place_id: origin.placeId,
+      destination_place_id: destination.placeId,
+    },
+    SLOW_REQUEST_TIMEOUT_MS
+  );
   return toPlan(body);
 }
 
@@ -81,19 +88,47 @@ export async function replanRoute(
   current: { lat: number; lng: number },
   destination: Place
 ): Promise<Plan> {
-  const body = await request("/replan", {
-    current,
-    destination: { lat: destination.lat, lng: destination.lng },
-    destination_place_id: destination.placeId,
-  });
+  const body = await request(
+    "/replan",
+    {
+      current,
+      destination: { lat: destination.lat, lng: destination.lng },
+      destination_place_id: destination.placeId,
+    },
+    SLOW_REQUEST_TIMEOUT_MS
+  );
   return toPlan(body);
 }
 
-async function request(path: string, json?: unknown): Promise<any> {
+/**
+ * Why each of these cameras is plausibly where it is, keyed by camera id.
+ *
+ * One batch per plan. Ids the backend could not explain are simply absent
+ * from the result, so callers show what they got.
+ */
+export async function cameraExplanations(
+  cameraIds: number[]
+): Promise<Record<number, string>> {
+  if (cameraIds.length === 0) {
+    return {};
+  }
+  const body = await request(
+    "/explanations",
+    { camera_ids: cameraIds },
+    SLOW_REQUEST_TIMEOUT_MS
+  );
+  return body.explanations as Record<number, string>;
+}
+
+async function request(
+  path: string,
+  json?: unknown,
+  timeoutMs: number = REQUEST_TIMEOUT_MS
+): Promise<any> {
   // React Native has no default request timeout, so a server that accepts
   // the connection and then stalls would hang the screen forever.
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   const headers: Record<string, string> = {};
   if (json !== undefined) {
@@ -174,6 +209,14 @@ function toCamera(raw: any): Camera {
     brand: raw.brand ?? null,
     roadName: raw.road_name ?? null,
     roadRef: raw.road_ref ?? null,
+    crimeCount: raw.crime_count ?? null,
+    crimeDesc: raw.crime_desc ?? null,
+    arrestCount: raw.arrest_count ?? null,
+    arrestDesc: raw.arrest_desc ?? null,
+    tractIncome: raw.tract_income ?? null,
+    countyIncome: raw.county_income ?? null,
+    usefulnessScore: raw.usefulness_score ?? null,
+    scoreDesc: raw.score_desc ?? null,
   };
 }
 

@@ -23,6 +23,10 @@ def in_bbox(
         Camera(
             id=r[0], osm_id=r[1], type=r[2], lat=r[3], lng=r[4], facing_deg=r[5],
             operator=r[6], brand=r[7], road_name=r[8], road_ref=r[9],
+            crime_count=r[10], crime_desc=r[11],
+            arrest_count=r[12], arrest_desc=r[13],
+            tract_income=r[14], county_income=r[15],
+            usefulness_score=r[16], score_desc=r[17],
         )
         for r in db.fetch_cameras_in_bbox(min_lng, min_lat, max_lng, max_lat)
     ]

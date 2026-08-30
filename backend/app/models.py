@@ -21,3 +21,14 @@ class Camera:
     brand: str | None = None
     road_name: str | None = None
     road_ref: str | None = None
+    # Public-records enrichment and the computed usefulness score, filled
+    # by ingestion/enrich.py where jurisdictions publish the data. The
+    # app renders these as the camera's factor breakdown.
+    crime_count: int | None = None
+    crime_desc: str | None = None
+    arrest_count: int | None = None
+    arrest_desc: str | None = None
+    tract_income: int | None = None
+    county_income: int | None = None
+    usefulness_score: int | None = None
+    score_desc: str | None = None

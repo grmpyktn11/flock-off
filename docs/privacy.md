@@ -2,93 +2,59 @@
 
 **flock-off** &middot; last updated 30 August 2026
 
-flock-off plans driving routes around automated licence plate readers and
-fixed speed cameras, then hands the route to Google Maps. While you drive
-it warns you about cameras the route could not avoid. There is also a
-public website that shows the camera map and a few example trips.
-
-This policy describes every piece of data the app and the website touch.
-It is short because they collect almost nothing, and that is deliberate:
-a project whose purpose is to give you a choice about being recorded
-would be a poor one if it kept a record of you.
+flock-off plans driving routes around license plate readers and speed
+cameras, hands the route to Google Maps, and warns you about cameras the
+route could not avoid. There is also a public website showing the camera
+map and example trips.
 
 ## What we collect
 
-**Nothing that identifies you.** There are no accounts, no sign-in, no
-email address, no device identifier, and no advertising ID. Nothing links
-one trip you plan to another.
+Nothing that identifies you. No accounts, no sign-in, no email, no device
+identifier, no advertising ID. Nothing links one trip to another.
 
 ## Your location
 
-**On your phone.** While a trip is running, the app reads your GPS
-position every couple of seconds so it can tell you when you are
-approaching a camera and notice if you have left the planned route. That
-processing happens entirely on the device. Those positions are never
-transmitted anywhere.
-
-**Sent to our server.** When you plan a route, the app sends the server a
-starting point and a destination so it can work out a route. That request
-carries nothing else - no account, no device, no history.
-
-**Not stored.** Our server does not write route requests to disk. It keeps
-counts of how many requests each network address made, so we can notice
-somebody abusing the service, and those counts contain no coordinates and
-are discarded when the server restarts.
-
-**Background location.** If you grant it, the app keeps reading your
-position after you switch to Google Maps, because the warnings are the
-whole point and by design this app is not the one on your screen. You can
-decline. If you do, route planning still works; you lose the spoken
-warnings, and the app tells you so.
+- **On your phone:** while a trip runs, the app reads GPS to warn you
+  near cameras and notice if you left the route. This happens on the
+  device. Positions are never transmitted.
+- **Sent to our server:** planning a route sends an origin and a
+  destination. Nothing else.
+- **Not stored:** the server does not write route requests to disk. It
+  keeps per-IP request counts for abuse detection; they contain no
+  coordinates and are discarded on restart.
+- **Background location:** optional. Grant it and warnings work while
+  Google Maps is in front. Decline and planning still works; you lose
+  the spoken warnings.
 
 ## Other services
 
-Planning a route requires two outside services:
-
-- **Google Maps Platform** provides place search and route timings. Your
-  search text and the two endpoints of your trip reach Google as part of
-  this. Google's handling of that data is covered by
+- **Google Maps Platform** handles place search and route timings. Your
+  search text and trip endpoints reach Google, covered by
   [Google's privacy policy](https://policies.google.com/privacy).
-- **OpenStreetMap** is where camera locations come from. We read from it;
-  nothing about you is sent to it.
+  Tapping through to navigate puts you in the Google Maps app.
+- **OpenStreetMap** is where camera locations come from. Nothing about
+  you is sent to it.
 
-When you tap through to navigate, you leave flock-off and enter the Google
-Maps app, which is governed by Google's policy and not this one.
+## On your device
 
-## What is stored on your device
-
-The trip you are currently driving - its route, its camera list, and which
-warnings have already been spoken - is saved to your phone's local storage
-so a trip survives the app being closed or restarted. It is overwritten by
-your next trip and removed when you uninstall the app. It never leaves the
-device.
+The current trip (route, cameras, spoken warnings) is saved locally so it
+survives an app restart. Overwritten by the next trip, removed on
+uninstall, never leaves the device.
 
 ## Data we could hand over
 
-Because no route history exists on our server, there is none to disclose -
-to advertisers, to data brokers, or in response to a legal demand. This is
-a consequence of the design rather than a promise about our conduct, which
-is the stronger of the two.
+No route history exists on the server, so there is nothing to disclose to
+anyone. That is a consequence of the design, not a promise.
 
 ## The website
 
-The website is a static page: no accounts, no analytics, no tracking
-scripts, and no cookies.
+Static page. No accounts, analytics, tracking, or cookies.
 
-- **The locate button.** If you use it, your browser asks your permission
-  and then hands your position to the page, which uses it only to move
-  the map. Your position is never sent to us or to anyone else; the
-  nearest cameras are worked out inside your browser from a data file the
-  page already has.
-- **Map tiles.** The background map is drawn from tiles fetched from
-  [OpenFreeMap](https://openfreemap.org/), so, like any web map, your
-  browser requests the tiles for the area you are looking at. We never
-  see those requests.
-- **Your theme choice.** Light or dark is remembered in your browser's
-  local storage and stays there.
-- **Camera data.** Everything the site shows about a camera, including
-  its usefulness score, is a static file computed from public records.
-  Nothing is looked up about you to show it.
+- The locate button uses your position in-browser only, to move the map.
+- Map tiles come from [OpenFreeMap](https://openfreemap.org/); your
+  browser requests tiles for the area you view.
+- Theme choice is stored in your browser.
+- Camera data is a static file computed from public records.
 
 ## Children
 
@@ -96,9 +62,8 @@ flock-off is a driving aid and is not directed at children.
 
 ## Changes
 
-Material changes to this policy will be published here with a new date at
-the top.
+Material changes will be published here with a new date.
 
 ## Contact
 
-Questions about this policy: open an issue on the project's repository.
+Open an issue on the project's repository.

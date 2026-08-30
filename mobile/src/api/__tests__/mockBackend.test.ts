@@ -2,7 +2,7 @@
 // on this module, so if the mock plan is not drivable there is nothing to
 // record and no way to show the app without a server.
 
-import { planRoute } from "../mockBackend";
+import { cameraExplanations, planRoute } from "../mockBackend";
 import { Place } from "../types";
 import { nextAnnouncement } from "../../lib/alerts";
 import { distanceToRouteMeters, haversineMeters } from "../../lib/geo";
@@ -101,6 +101,24 @@ test("driving the mock route announces the unavoidable camera once", async () =>
 
   expect(spoken).toHaveLength(1);
   expect(spoken[0]).toMatch(/License plate reader ahead, in about \d+ meters\./);
+});
+
+test("every camera in the mock plan has a canned explanation", async () => {
+  const plan = await planRoute(RESTON, VIENNA);
+  const explanations = await cameraExplanations(
+    plan.cameras.map((camera) => camera.id)
+  );
+
+  for (const camera of plan.cameras) {
+    expect(explanations[camera.id]).toBeTruthy();
+    expect(explanations[camera.id].length).toBeGreaterThan(30);
+  }
+});
+
+test("unknown camera ids are left out rather than failing the batch", async () => {
+  const explanations = await cameraExplanations([1, 999]);
+  expect(explanations[1]).toBeTruthy();
+  expect(explanations[999]).toBeUndefined();
 });
 
 test("the detour costs time, and the numbers agree with each other", async () => {

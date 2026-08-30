@@ -4,7 +4,7 @@
   "features": [
     {
       "type": "Feature",
-      "properties": {"name": "Elden Street", "direction": "west to east"},
+      "properties": {"name": "Elden Street", "direction": "west to east", "highway": "secondary", "maxspeed": "35 mph"},
       "geometry": {
         "type": "LineString",
         "coordinates": [[-77.3990, 38.9690], [-77.3850, 38.9700], [-77.3700, 38.9712], [-77.3560, 38.9725]]
@@ -12,7 +12,7 @@
     },
     {
       "type": "Feature",
-      "properties": {"name": "Fairfax County Parkway", "direction": "south to north"},
+      "properties": {"name": "Fairfax County Parkway", "direction": "south to north", "highway": "trunk", "maxspeed": "50 mph"},
       "geometry": {
         "type": "LineString",
         "coordinates": [[-77.3400, 38.8800], [-77.3380, 38.9100], [-77.3350, 38.9400], [-77.3320, 38.9700]]
@@ -20,7 +20,7 @@
     },
     {
       "type": "Feature",
-      "properties": {"name": "Leesburg Pike (VA-7)", "direction": "west to east"},
+      "properties": {"name": "Leesburg Pike (VA-7)", "direction": "west to east", "highway": "primary", "maxspeed": "45 mph"},
       "geometry": {
         "type": "LineString",
         "coordinates": [[-77.4200, 38.9200], [-77.3800, 38.9210], [-77.3400, 38.9225], [-77.3000, 38.9240]]

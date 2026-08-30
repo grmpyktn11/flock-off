@@ -67,7 +67,8 @@
             "enableMinifyInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "runtimeVersion": {
       "policy": "appVersion"

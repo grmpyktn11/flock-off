@@ -19,7 +19,9 @@ from app.config import DATABASE_URL
 # the one the GIST index answers.
 _IN_BBOX = """
     SELECT id, osm_id, type, ST_Y(geom), ST_X(geom), facing_deg,
-           operator, brand, road_name, road_ref
+           operator, brand, road_name, road_ref,
+           crime_count, crime_desc, arrest_count, arrest_desc,
+           tract_income, county_income, usefulness_score, score_desc
     FROM cameras
     WHERE active
       AND geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)
@@ -79,6 +81,38 @@ def fetch_dead_zone_rings(
         with conn.cursor() as cur:
             cur.execute(_DEAD_ZONES, (expand_m, expand_m, camera_ids))
             return [json.loads(row[0])["coordinates"][0] for row in cur.fetchall()]
+
+
+# The facts the explanation feature grounds on, plus any explanation a
+# previous request already paid for. One round trip for the whole batch.
+_CAMERAS_FOR_EXPLAIN = """
+    SELECT id, type, facing_deg, operator, brand, road_name, road_ref,
+           road_class, maxspeed, crime_count, crime_desc,
+           tract_income, county_income, arrest_count, arrest_desc,
+           usefulness_score, score_desc, explanation
+    FROM cameras
+    WHERE id = ANY(%s)
+      AND active
+"""
+
+_SAVE_EXPLANATION = """
+    UPDATE cameras SET explanation = %s, explained_at = now() WHERE id = %s
+"""
+
+
+def fetch_cameras_for_explain(camera_ids: list[int]) -> list[tuple]:
+    if not camera_ids:
+        return []
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(_CAMERAS_FOR_EXPLAIN, (camera_ids,))
+            return cur.fetchall()
+
+
+def save_explanation(camera_id: int, text: str) -> None:
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(_SAVE_EXPLANATION, (text, camera_id))
 
 
 def route_wkt(route: list[tuple[float, float]]) -> str:

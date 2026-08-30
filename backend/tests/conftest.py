@@ -19,6 +19,9 @@ def use_mock_sources(monkeypatch):
     monkeypatch.setattr(config, "USE_MOCK_CAMERAS", True)
     monkeypatch.setattr(config, "USE_MOCK_ROUTING", True)
     monkeypatch.setattr(config, "USE_MOCK_GOOGLE", True)
+    # Anthropic bills like Google does, and an ANTHROPIC_API_KEY in a dev
+    # .env must not turn the suite into a paid one.
+    monkeypatch.setattr(config, "USE_MOCK_EXPLAIN", True)
     # Rate limit buckets live in module state, and TestClient presents the
     # same address every time. Without this the suite shares one allowance
     # and whichever test happens to run thirtieth gets a 429.

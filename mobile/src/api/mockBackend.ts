@@ -67,16 +67,35 @@ const PLACES: Place[] = [
 const CAMERA_PLACEMENTS = [
   { id: 1, type: "alpr", atFraction: 0.18, offsetMeters: 240, facingDeg: 90,
     operator: "Fairfax County Police Department", brand: "Flock Safety",
-    roadName: "Lee Highway", roadRef: "US 29" },
+    roadName: "Lee Highway", roadRef: "US 29",
+    crimeCount: 3,
+    crimeDesc: "reported incidents in this ZIP last week (FCPD weekly report)",
+    arrestCount: null, arrestDesc: null,
+    tractIncome: 152000, countyIncome: 150113,
+    usefulnessScore: 21, scoreDesc: "scored on 2 of 3 factors" },
   { id: 2, type: "alpr", atFraction: 0.37, offsetMeters: 300, facingDeg: null,
     operator: "Fairfax County Police Department", brand: "Flock Safety",
-    roadName: "Chain Bridge Road", roadRef: "VA 123" },
+    roadName: "Chain Bridge Road", roadRef: "VA 123",
+    crimeCount: null, crimeDesc: null, arrestCount: null, arrestDesc: null,
+    tractIncome: 119545, countyIncome: 150113,
+    usefulnessScore: null,
+    scoreDesc: "insufficient public data (income only, 1 of 3 factors)" },
   { id: 3, type: "speed_camera", atFraction: 0.55, offsetMeters: 260, facingDeg: 270,
     operator: "City of Falls Church", brand: null,
-    roadName: "Arlington Boulevard", roadRef: "US 50" },
+    roadName: "Arlington Boulevard", roadRef: "US 50",
+    crimeCount: null, crimeDesc: null, arrestCount: null, arrestDesc: null,
+    tractIncome: null, countyIncome: null,
+    usefulnessScore: null,
+    scoreDesc: "insufficient public data (0 of 3 factors)" },
   { id: 4, type: "alpr", atFraction: 0.72, offsetMeters: 0, facingDeg: 180,
     operator: "Metropolitan Police Department", brand: "Flock Safety",
-    roadName: "Constitution Avenue NW", roadRef: null },
+    roadName: "Constitution Avenue NW", roadRef: null,
+    crimeCount: 213,
+    crimeDesc: "reported incidents within half a mile in the last 12 months (DC MPD)",
+    arrestCount: 71,
+    arrestDesc: "arrests recorded in police service area 207 in 2025 (DC MPD)",
+    tractIncome: 54000, countyIncome: 101000,
+    usefulnessScore: 34, scoreDesc: "scored on 3 of 3 factors" },
 ] as const;
 
 // Where the detour hangs, between the cameras it is dodging.
@@ -136,8 +155,39 @@ function camerasFor(route: LatLng[], totalMeters: number): Camera[] {
       brand: placement.brand,
       roadName: placement.roadName,
       roadRef: placement.roadRef,
+      crimeCount: placement.crimeCount,
+      crimeDesc: placement.crimeDesc,
+      arrestCount: placement.arrestCount,
+      arrestDesc: placement.arrestDesc,
+      tractIncome: placement.tractIncome,
+      countyIncome: placement.countyIncome,
+      usefulnessScore: placement.usefulnessScore,
+      scoreDesc: placement.scoreDesc,
     };
   });
+}
+
+// Canned "why is a camera here" paragraphs, one per placement above, in
+// the register the real Claude-written ones aim for. Written against the
+// same operator/brand/road fields so the offline demo reads grounded.
+const CAMERA_EXPLANATIONS: Record<number, string> = {
+  1: "A low score: little recorded crime near a reader in an average-income area.",
+  2: "Cannot be fully evaluated - the enforcement data that would justify this reader is not published.",
+  3: "Cannot be evaluated from public data; no local crash figures are published.",
+  4: "Scores mid-range: real crime and arrest activity nearby, in a tract well below the county's income.",
+};
+
+export async function cameraExplanations(
+  cameraIds: number[]
+): Promise<Record<number, string>> {
+  await delay(700);
+  const explanations: Record<number, string> = {};
+  for (const id of cameraIds) {
+    if (CAMERA_EXPLANATIONS[id]) {
+      explanations[id] = CAMERA_EXPLANATIONS[id];
+    }
+  }
+  return explanations;
 }
 
 function delay(ms: number): Promise<void> {
@@ -184,8 +234,7 @@ export async function searchPlaces(
 
 export async function planRoute(
   origin: Place,
-  destination: Place,
-  _strict = false
+  destination: Place
 ): Promise<Plan> {
   await delay(900);
 

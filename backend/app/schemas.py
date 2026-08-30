@@ -16,10 +16,6 @@ class PlanRequest(BaseModel):
     # Corner Center" arrives in the Maps app called "Default".
     origin_place_id: str | None = None
     destination_place_id: str | None = None
-    # Avoid whatever it costs. Pins Google to our route rather than
-    # letting it rejoin its own, which avoids more cameras and can add a
-    # lot of time.
-    strict: bool = False
 
 
 class ReplanRequest(BaseModel):
@@ -51,6 +47,19 @@ class PlaceDetail(PlaceSuggestion):
     lng: float
 
 
+class ExplainRequest(BaseModel):
+    """The cameras of one plan. Capped because each unexplained camera is
+    a billed Claude call, and no real plan crosses thirty cameras."""
+
+    camera_ids: list[int] = Field(min_length=1, max_length=30)
+
+
+class ExplainResponse(BaseModel):
+    # Keyed by camera id. Unknown ids and failed generations are absent,
+    # so the app shows what it got rather than nothing.
+    explanations: dict[int, str]
+
+
 class CameraResult(BaseModel):
     id: int
     type: str
@@ -62,6 +71,17 @@ class CameraResult(BaseModel):
     brand: str | None = None
     road_name: str | None = None
     road_ref: str | None = None
+    # The camera's public-records factors and computed usefulness score,
+    # rendered by the app as a structured breakdown. Null where the
+    # jurisdiction publishes nothing.
+    crime_count: int | None = None
+    crime_desc: str | None = None
+    arrest_count: int | None = None
+    arrest_desc: str | None = None
+    tract_income: int | None = None
+    county_income: int | None = None
+    usefulness_score: int | None = None
+    score_desc: str | None = None
 
 
 class WaypointResult(BaseModel):

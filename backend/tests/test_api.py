@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.geo import decode_polyline, point_to_polyline_m
+from app.geo import decode_polyline, encode_polyline, point_to_polyline_m
 from app.main import app
 from app import cameras as camera_source
 from app import mock_data
@@ -75,6 +75,25 @@ def test_plan_counts_and_eta_delta_are_consistent():
     assert body["eta_delta_seconds"] > 0
 
 
+def test_speed_cameras_are_reported_but_never_routed_around():
+    """A speed camera matters only at speed and gets a spoken heads-up, so
+    it must not cost the driver detour minutes. This trip runs the corridor
+    between two ALPRs and crosses only mock camera 3, a speed camera:
+    reported, unavoided, and no waypoints spent on it."""
+    trip = {
+        # Midpoints of the camera 2-3 and 3-4 corridor gaps, so the
+        # straight route passes camera 3 alone.
+        "origin": {"lat": 38.923325, "lng": -77.356215},
+        "destination": {"lat": 38.904815, "lng": -77.34426},
+    }
+    body = client.post("/plan", json=trip).json()
+    assert [c["type"] for c in body["cameras"]] == ["speed_camera"]
+    assert body["avoided_count"] == 0
+    assert body["unavoidable_count"] == 1
+    assert body["waypoints"] == []
+    assert body["eta_delta_seconds"] == 0
+
+
 def test_replan_from_a_midpoint_matches_a_plan_from_the_same_point():
     midpoint = {"lat": 38.9079, "lng": -77.3462}
     replanned = client.post(
@@ -126,6 +145,40 @@ def test_plan_of_a_trip_with_no_cameras_is_a_plain_google_route():
     # this is exactly zero rather than merely small.
     assert body["eta_delta_seconds"] == 0
     assert body["route_eta_seconds"] == body["baseline_eta_seconds"]
+
+
+def test_a_detour_that_does_not_lower_the_reader_count_is_discarded(monkeypatch):
+    """The whole point of the detour is fewer readers, always.
+
+    Google honors waypoints loosely, so the route it actually drives can
+    pass readers the baseline never did (measured on Vienna Metro-GMU:
+    one dodged, three new). Here the picked "detour" is the baseline
+    itself - zero improvement - and the plan must throw it away: plain
+    route, no waypoints, nothing claimed as avoided.
+    """
+    from app import planner
+    from app.waypoints import Picks, Waypoint
+
+    origin = (TRIP["origin"]["lat"], TRIP["origin"]["lng"])
+    destination = (TRIP["destination"]["lat"], TRIP["destination"]["lng"])
+    baseline, baseline_eta = mock_data.google_baseline_route(origin, destination)
+
+    def worthless_detour(our_route, baseline_route, camera_points, directions_fn=None):
+        middle = baseline[len(baseline) // 2]
+        return Picks(
+            [Waypoint(middle[0], middle[1], 0, 0.0, 0.0)],
+            baseline_eta + 300,
+            baseline,
+        )
+
+    monkeypatch.setattr(planner, "pick_waypoints", worthless_detour)
+
+    body = client.post("/plan", json=TRIP).json()
+    assert body["waypoints"] == []
+    assert "waypoints=" not in body["deep_link"]
+    assert body["avoided_count"] == 0
+    assert body["eta_delta_seconds"] == 0
+    assert body["route_polyline"] == encode_polyline(baseline)
 
 
 def test_plan_rejects_an_impossible_coordinate():
@@ -290,13 +343,10 @@ def test_a_camera_at_the_destination_does_not_lose_the_others(monkeypatch):
     assert stuck == {99}, "only the camera at the endpoint is unavoidable by position"
 
 
-def test_strict_keeps_spans_a_normal_plan_would_drop():
-    """Strict pins Google to our route instead of letting it rejoin its own.
-
-    It avoids more and costs more. Measured across five Fairfax trips: two
-    extra cameras avoided on one, at 23 minutes; one extra on another, at
-    1.4 minutes. Whether that is worth it is the driver's call, which is
-    why it is a setting.
+def test_every_span_is_held_by_default():
+    """The plan pins Google to our route instead of letting it rejoin its
+    own. Avoiding every camera that can possibly be avoided is the
+    default and only behavior, whatever the detour costs.
     """
     from app.geo import resample
     from app.waypoints import pick_waypoints
@@ -308,5 +358,4 @@ def test_strict_keeps_spans_a_normal_plan_would_drop():
     ]
     far_from_any_camera = [(38.5, -77.0)]
 
-    assert pick_waypoints(ours, baseline, far_from_any_camera).waypoints == []
-    assert pick_waypoints(ours, baseline, far_from_any_camera, strict=True).waypoints
+    assert pick_waypoints(ours, baseline, far_from_any_camera).waypoints

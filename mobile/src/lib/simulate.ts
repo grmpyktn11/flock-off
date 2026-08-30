@@ -1,11 +1,6 @@
-// Replaying a drive without driving.
-//
-// Feeds synthetic positions into the same handler the GPS task calls, so
-// warnings, drift detection, the re-plan prompt and the trip store all
-// run for real. What it cannot exercise is the layer underneath: whether
-// Android actually delivers locations to a backgrounded task, and whether
-// the foreground service survives. Those need a real device moving, or a
-// mock location app. See docs/testing-the-drive.md.
+// Route geometry helpers: length, position along, and sideways offset.
+// Used by the mock backend to place cameras on a generated route and by
+// the trip machinery to reason about positions.
 
 import { haversineMeters } from "./geo";
 import { LatLng } from "./polyline";
@@ -64,48 +59,3 @@ export function offsetPerpendicular(
   };
 }
 
-export type SimulationOptions = {
-  route: LatLng[];
-  speedMps?: number;
-  tickMs?: number;
-  /** Push the driver this far off the route, to trigger drift detection. */
-  veerMeters?: number;
-  /** Start veering once this fraction of the route is behind us. */
-  veerAfterFraction?: number;
-  onTick: (position: LatLng, speedMps: number) => unknown;
-  onFinish?: () => void;
-};
-
-/** Drive the route. Returns a function that stops it early. */
-export function simulateDrive(options: SimulationOptions): () => void {
-  const {
-    route,
-    speedMps = 13.4,
-    tickMs = 2000,
-    veerMeters = 0,
-    veerAfterFraction = 0.5,
-    onTick,
-    onFinish,
-  } = options;
-
-  const total = routeLengthMeters(route);
-  const veerAfter = total * veerAfterFraction;
-  let travelled = 0;
-
-  const timer = setInterval(() => {
-    travelled += speedMps * (tickMs / 1000);
-    if (travelled >= total) {
-      clearInterval(timer);
-      void onTick(positionAt(route, total), speedMps);
-      onFinish?.();
-      return;
-    }
-    const position =
-      veerMeters > 0 && travelled >= veerAfter
-        ? offsetPerpendicular(route, travelled, veerMeters)
-        : positionAt(route, travelled);
-    void onTick(position, speedMps);
-  }, tickMs);
-
-  return () => clearInterval(timer);
-}

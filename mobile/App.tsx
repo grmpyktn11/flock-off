@@ -1,11 +1,17 @@
 import "./global.css";
 
+import {
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+  useFonts,
+} from "@expo-google-fonts/space-grotesk";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { IconButton, PaperProvider } from "react-native-paper";
+import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { Place } from "./src/api/types";
@@ -20,15 +26,38 @@ import "./src/lib/tripService";
 import DrivingNotice from "./src/screens/DrivingNotice";
 import PlanScreen from "./src/screens/PlanScreen";
 import SearchScreen from "./src/screens/SearchScreen";
-import ThemePicker from "./src/screens/ThemePicker";
 import { ThemeProvider, useAppTheme } from "./src/theme";
 
 export type RootStackParamList = {
   Search: undefined;
-  Plan: { origin: Place; destination: Place; strict: boolean };
+  Plan: { origin: Place; destination: Place };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+// The Search -> Plan flow.
+function NavigateStack() {
+  const { tokens } = useAppTheme();
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: { fontFamily: tokens.fontFamilySemibold },
+        headerShadowVisible: false,
+      }}
+    >
+      <Stack.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ title: "Plan a route" }}
+      />
+      <Stack.Screen
+        name="Plan"
+        component={PlanScreen}
+        options={{ title: "Route plan" }}
+      />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   return (
@@ -39,7 +68,15 @@ export default function App() {
 }
 
 function ThemedApp() {
-  const { tokens, chosen, choose } = useAppTheme();
+  const { tokens } = useAppTheme();
+  // The whole look leans on the site's typeface, so hold the blank
+  // launch screen the extra beat the fonts take rather than flashing
+  // system type first.
+  const [fontsLoaded] = useFonts({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
   // null until the answer comes back from disk, so the dialog does not
   // flash on screen for someone who accepted it months ago.
   const [noticeAccepted, setNoticeAccepted] = useState<boolean | null>(null);
@@ -65,52 +102,15 @@ function ThemedApp() {
     return () => subscription.remove();
   }, []);
 
-  // Theme first, notice second: the picker is the very first screen a
-  // new install sees, and nothing else renders until it is answered.
-  if (chosen === null) {
+  if (!fontsLoaded) {
     return null;
   }
-  if (chosen === false) {
-    return (
-      <SafeAreaProvider>
-        <ThemePicker onChoose={choose} />
-        <StatusBar style="light" />
-      </SafeAreaProvider>
-    );
-  }
-
-  const ghost = tokens.name === "ghost";
 
   return (
     <SafeAreaProvider>
       <PaperProvider theme={tokens.paper}>
         <NavigationContainer theme={tokens.nav}>
-          <Stack.Navigator
-            screenOptions={{
-              headerTitleStyle: { fontFamily: tokens.fontFamily },
-            }}
-          >
-            <Stack.Screen
-              name="Search"
-              component={SearchScreen}
-              options={{
-                title: ghost ? "> plan_route" : "Plan a route",
-                // The picker promised "change your mind later"; this is
-                // where that promise is kept.
-                headerRight: () => (
-                  <IconButton
-                    icon="theme-light-dark"
-                    onPress={() => choose(ghost ? "standard" : "ghost")}
-                  />
-                ),
-              }}
-            />
-            <Stack.Screen
-              name="Plan"
-              component={PlanScreen}
-              options={{ title: ghost ? "> route_plan" : "Route plan" }}
-            />
-          </Stack.Navigator>
+          <NavigateStack />
         </NavigationContainer>
         <DrivingNotice
           visible={noticeAccepted === false}

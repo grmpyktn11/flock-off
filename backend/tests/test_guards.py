@@ -84,7 +84,7 @@ def test_plan_still_reads_its_body():
     """The body parameter had to be renamed off `request` to make room for
     slowapi, which is exactly the kind of rename that silently stops a
     handler seeing its input."""
-    body = client.post("/plan", json={**TRIP, "strict": True}).json()
+    body = client.post("/plan", json=TRIP).json()
     assert "deep_link" in body
     assert body["baseline_eta_seconds"] > 0
 

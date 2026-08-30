@@ -2,8 +2,6 @@ from app.geo import haversine_m, point_to_polyline_m, resample
 from app.waypoints import (
     DIVERGENCE_THRESHOLD_M,
     MAX_WAYPOINTS,
-    MAX_WAYPOINTS_STRICT,
-    SPAN_CAMERA_RADIUS_M,
     find_divergence_spans,
     pick_waypoints,
 )
@@ -26,11 +24,7 @@ def bumped_route(bump_ranges, offset_deg=0.004):
 
 
 def cameras_on(route, indexes):
-    """A camera sitting on the route at each given sample.
-
-    Spans only earn a waypoint when a camera we are dodging is nearby, so
-    a test about span handling has to put cameras where the spans are.
-    """
+    """A camera sitting on the route at each given sample."""
     return [route[i] for i in indexes]
 
 
@@ -52,13 +46,17 @@ def test_no_waypoints_when_there_is_nothing_to_avoid():
     assert pick_waypoints(ours, baseline, []).waypoints == []
 
 
-def test_a_span_far_from_every_camera_is_ignored():
+def test_a_span_far_from_every_camera_is_still_held():
+    """Every divergence span gets a waypoint, near a camera or not.
+
+    Pinning Google to our route instead of letting it rejoin its own is
+    the point: the plan avoids everything it possibly can, whatever the
+    detour costs.
+    """
     baseline = straight_route()
     ours = bumped_route([(10, 20)])
     far_away = [(38.5, -77.0)]
-    spans = find_divergence_spans(ours, baseline, far_away)
-    assert spans[0].nearest_camera_m > SPAN_CAMERA_RADIUS_M
-    assert pick_waypoints(ours, baseline, far_away).waypoints == []
+    assert pick_waypoints(ours, baseline, far_away).waypoints
 
 
 def test_one_waypoint_per_divergence_span():
@@ -83,24 +81,18 @@ def test_capped_closest_to_cameras_first():
     ours = bumped_route(ranges)
 
     # A camera near every span, each a little further off than the last, so
-    # the ordering the cap depends on is well defined. All well inside
-    # SPAN_CAMERA_RADIUS_M, so the cap is what does the dropping.
+    # the ordering the cap depends on is well defined.
     cameras = [
         (ours[start][0] + 0.0002 * i, ours[start][1]) for i, (start, _) in enumerate(ranges)
     ]
     picked = pick_waypoints(ours, baseline, cameras).waypoints
 
-    # A normal plan keeps few, because each waypoint is a visible stop in
-    # Google Maps and the ones furthest from a camera earn theirs least.
+    # The whole budget Google allows gets spent; when there are more spans
+    # than that, the ones furthest from a camera earn theirs least.
     assert len(picked) == MAX_WAYPOINTS
     kept = [(p.lat, p.lng) for p in picked]
     for start, _ in ranges[MAX_WAYPOINTS:]:
         assert not any(haversine_m(k, ours[start]) < 200 for k in kept)
-
-    # Avoiding at any cost spends the whole budget Google allows.
-    strict = pick_waypoints(ours, baseline, cameras, strict=True).waypoints
-    assert len(strict) == MAX_WAYPOINTS_STRICT
-    assert MAX_WAYPOINTS_STRICT > MAX_WAYPOINTS
 
 
 def test_waypoints_are_returned_in_travel_order():

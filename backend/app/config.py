@@ -47,6 +47,17 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 USE_MOCK_GOOGLE = GOOGLE_API_KEY == ""
 GOOGLE_TIMEOUT_S = 10
 
+# Same rule again: no key means use the canned explainer. The real one
+# asks Claude why a camera is plausibly where it is, once per camera -
+# the answer is cached in the cameras row after that.
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+USE_MOCK_EXPLAIN = ANTHROPIC_API_KEY == ""
+# Sonnet, not Haiku: the note argues a conclusion from given facts, and
+# Haiku kept inventing receipts ("12 injury crashes (VDOT)") under that
+# brief. Each note is generated once ever, so the cost stays trivial.
+EXPLAIN_MODEL = "claude-sonnet-5"
+EXPLAIN_TIMEOUT_S = 30
+
 # A shared secret the app sends as X-App-Key. Not authentication - it
 # ships inside every APK and anyone can read it out - but it costs a
 # scanner one more step than finding an open endpoint, and most of them

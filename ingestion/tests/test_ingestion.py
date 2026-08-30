@@ -127,6 +127,42 @@ def test_parse_way_becomes_a_linestring():
     assert list(road.geom.coords) == [(-77.39, 38.97), (-77.37, 38.97)]
 
 
+def test_parse_way_keeps_road_class_and_maxspeed():
+    """The highway= class and maxspeed used to be read and thrown away.
+
+    They are what lets an explanation say "a 45 mph arterial" rather than
+    "a road", so they ride along with the name and ref now.
+    """
+    way = {
+        "geometry": [{"lon": -77.39, "lat": 38.97}, {"lon": -77.37, "lat": 38.97}],
+        "tags": {"name": "Elden Street", "highway": "secondary", "maxspeed": "35 mph"},
+    }
+    road = overpass.parse_way(way)
+    assert road.road_class == "secondary"
+    assert road.maxspeed == "35 mph"
+    # Untagged ways stay None rather than becoming the string "None".
+    bare = overpass.parse_way({"geometry": way["geometry"]})
+    assert bare.road_class is None
+    assert bare.maxspeed is None
+
+
+def test_build_records_carries_road_class_and_maxspeed():
+    from ingestion.deadzone import Road
+    from ingestion.ingest import build_records
+
+    named = Road(geom=ROAD, name="Elden Street", road_class="secondary",
+                 maxspeed="35 mph")
+    on_road = {"osm_id": 1, "type": "alpr", "lon": CAMERA[0], "lat": CAMERA[1],
+               "facing_deg": 90.0, "operator": None, "brand": None}
+    off_road = {**on_road, "osm_id": 2, "lon": -77.2000, "lat": 38.8000}
+
+    snapped, unsnapped = build_records([on_road, off_road], [named])
+    assert snapped["road_class"] == "secondary"
+    assert snapped["maxspeed"] == "35 mph"
+    assert unsnapped["road_class"] is None
+    assert unsnapped["maxspeed"] is None
+
+
 def test_utm_zone_follows_longitude():
     from ingestion.deadzone import projection
 

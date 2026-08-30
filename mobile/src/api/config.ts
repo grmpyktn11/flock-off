@@ -18,3 +18,9 @@ export const APP_KEY = process.env.EXPO_PUBLIC_APP_KEY ?? "";
 // Long enough for a cold Valhalla call, short enough that a dead server
 // does not leave the user watching a spinner.
 export const REQUEST_TIMEOUT_MS = 15000;
+
+// Planning and explanations are legitimately slow: a plan is several
+// Google and database round trips (measured at ~15s with Valhalla down),
+// and a batch of uncached explanations is a Claude call per camera. 15s
+// aborts real work at the finish line, so they get a longer leash.
+export const SLOW_REQUEST_TIMEOUT_MS = 60000;

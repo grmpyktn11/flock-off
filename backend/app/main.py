@@ -13,10 +13,19 @@ from slowapi.errors import RateLimitExceeded
 
 from app import google
 from app.appkey import require_app_key
+from app.explain import ExplainError, explanations_for
 from app.google import GoogleError
 from app.planner import plan_route
-from app.ratelimit import SEARCH_LIMIT, limiter, plan_limit, too_many_requests
+from app.ratelimit import (
+    EXPLAIN_LIMIT,
+    SEARCH_LIMIT,
+    limiter,
+    plan_limit,
+    too_many_requests,
+)
 from app.schemas import (
+    ExplainRequest,
+    ExplainResponse,
     PlaceDetail,
     PlanRequest,
     PlanResponse,
@@ -70,6 +79,18 @@ def upstream_unavailable(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=503,
         content={"detail": "Route planning is temporarily unavailable. Try again shortly."},
+    )
+
+
+@app.exception_handler(ExplainError)
+def explain_unavailable(request: Request, exc: ExplainError) -> JSONResponse:
+    """Anthropic is down or out of quota and nothing could be generated.
+
+    Only a total failure lands here: a batch that produced anything at all
+    returns what it got. Same shape and reasoning as the handler above."""
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Explanations are temporarily unavailable. Try again shortly."},
     )
 
 
@@ -140,8 +161,23 @@ def plan(request: Request, response: Response, body: PlanRequest) -> PlanRespons
         (body.destination.lat, body.destination.lng),
         body.origin_place_id,
         body.destination_place_id,
-        body.strict,
     )
+
+
+@app.post(
+    "/explanations",
+    response_model=ExplainResponse,
+    dependencies=[Depends(require_app_key)],
+)
+@limiter.limit(EXPLAIN_LIMIT)
+def explanations(
+    request: Request, response: Response, body: ExplainRequest
+) -> ExplainResponse:
+    """Why each of these cameras is plausibly where it is.
+
+    One batch per plan. Cameras already explained are served from their
+    row; the rest cost one Claude call each, paid once ever."""
+    return ExplainResponse(explanations=explanations_for(body.camera_ids))
 
 
 @app.post(

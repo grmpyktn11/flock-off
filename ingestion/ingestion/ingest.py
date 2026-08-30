@@ -20,9 +20,10 @@ from ingestion.deadzone import RoadIndex, dead_zone_and_snap, load_roads
 
 UPSERT_SQL = """
 INSERT INTO cameras (osm_id, type, geom, facing_deg, dead_zone,
-                     operator, brand, road_name, road_ref)
+                     operator, brand, road_name, road_ref,
+                     road_class, maxspeed)
 VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326), %s,
-        ST_SetSRID(ST_GeomFromText(%s), 4326), %s, %s, %s, %s)
+        ST_SetSRID(ST_GeomFromText(%s), 4326), %s, %s, %s, %s, %s, %s)
 ON CONFLICT (osm_id) DO UPDATE SET
     type       = EXCLUDED.type,
     geom       = EXCLUDED.geom,
@@ -32,6 +33,8 @@ ON CONFLICT (osm_id) DO UPDATE SET
     brand      = EXCLUDED.brand,
     road_name  = EXCLUDED.road_name,
     road_ref   = EXCLUDED.road_ref,
+    road_class = EXCLUDED.road_class,
+    maxspeed   = EXCLUDED.maxspeed,
     last_seen  = now(),
     active     = TRUE;
 """
@@ -56,6 +59,8 @@ def build_records(cameras, roads):
             "snapped": road is not None,
             "road_name": road.name if road else None,
             "road_ref": road.ref if road else None,
+            "road_class": road.road_class if road else None,
+            "maxspeed": road.maxspeed if road else None,
         }
 
 
@@ -73,6 +78,8 @@ def write_geojson(records, stream):
                 "brand": r.get("brand"),
                 "road_name": r.get("road_name"),
                 "road_ref": r.get("road_ref"),
+                "road_class": r.get("road_class"),
+                "maxspeed": r.get("maxspeed"),
             },
             "geometry": r["dead_zone"].__geo_interface__,
         }
@@ -97,6 +104,8 @@ def write_postgres(records, database_url, batch_size=1000):
             r.get("brand"),
             r.get("road_name"),
             r.get("road_ref"),
+            r.get("road_class"),
+            r.get("maxspeed"),
         )
         for r in records
     ]

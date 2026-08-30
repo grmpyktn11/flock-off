@@ -130,6 +130,8 @@ def parse_way(way):
         geom=LineString([(p["lon"], p["lat"]) for p in way["geometry"]]),
         name=tags.get("name"),
         ref=tags.get("ref"),
+        road_class=tags.get("highway"),
+        maxspeed=tags.get("maxspeed"),
     )
 
 

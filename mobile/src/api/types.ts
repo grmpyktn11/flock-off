@@ -38,6 +38,17 @@ export type Camera = {
   brand: string | null;
   roadName: string | null;
   roadRef: string | null;
+  // Public-records factors and the computed usefulness score, null where
+  // the jurisdiction publishes nothing. The desc strings name the source
+  // and scope, e.g. "reported incidents within half a mile ... (DC MPD)".
+  crimeCount: number | null;
+  crimeDesc: string | null;
+  arrestCount: number | null;
+  arrestDesc: string | null;
+  tractIncome: number | null;
+  countyIncome: number | null;
+  usefulnessScore: number | null;
+  scoreDesc: string | null;
 };
 
 export type Waypoint = {

@@ -58,6 +58,12 @@ SEARCH_LIMIT = "30/minute"
 # an address ask for twice as much by alternating.
 PLAN_LIMIT = "10/minute"
 
+# One batch covers a whole plan's cameras, so a driver needs one of these
+# per trip. Tighter than the others because a cache miss inside a batch is
+# a billed Claude call, and a scraper walking camera ids could otherwise
+# pay to explain the whole table.
+EXPLAIN_LIMIT = "6/minute"
+
 
 def plan_limit():
     return limiter.shared_limit(PLAN_LIMIT, scope="plan")

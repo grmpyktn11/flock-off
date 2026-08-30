@@ -14,25 +14,14 @@ from app.geo import haversine_m, point_to_polyline_m, resample
 SAMPLE_INTERVAL_M = 100.0
 DIVERGENCE_THRESHOLD_M = 60.0
 
-# A span only earns a waypoint if it happens near a camera we are dodging.
-# Our route and Google's differ for reasons that have nothing to do with
-# cameras - the two engines simply prefer different roads - and forcing
-# Google through those points buys nothing and costs a great deal. Measured
-# on one Fairfax trip: three spans, nearest avoided camera 1.5km, 5.4km and
-# 7.2km away, together adding 23 minutes to avoid two cameras neither span
-# went near.
-SPAN_CAMERA_RADIUS_M = 500.0
 # Google Maps deep links take at most nine waypoints, and every one of
 # them shows in the app as a stop the driver appears to be heading for.
 # Confirmed on a real handover: our waypoint arrived in Google's stop list
 # as "Towers Crescent, Fashion Blvd", a road nobody is stopping at.
 #
-# So a normal plan keeps few. Real trips have needed 0 to 4, and each one
-# past that buys less avoidance while adding another phantom stop.
-# "Avoid at any cost" spends the whole budget, because holding the detour
-# is the entire point of asking for it.
-MAX_WAYPOINTS = 4
-MAX_WAYPOINTS_STRICT = 9
+# The whole budget gets spent, because holding the detour is the entire
+# point: the plan avoids every camera it possibly can, whatever it costs.
+MAX_WAYPOINTS = 9
 VALIDATION_TOLERANCE_M = 150.0
 MAX_ADJUSTMENTS = 2
 
@@ -144,7 +133,6 @@ def pick_waypoints(
     baseline_route: list[tuple[float, float]],
     camera_points: list[tuple[float, float]],
     directions_fn=None,
-    strict: bool = False,
 ) -> Picks:
     """Return the waypoints holding the detour, in travel order.
 
@@ -153,11 +141,9 @@ def pick_waypoints(
     would actually drive along with its duration. Spans whose waypoint
     fails validation are nudged to the middle of the span and rechecked.
 
-    strict keeps every divergence span rather than only those near a
-    camera, which pins Google to our route instead of letting it rejoin
-    its own. It avoids more and costs more, sometimes a great deal more,
-    because the two engines disagree about good roads for reasons that
-    have nothing to do with cameras.
+    Every divergence span is kept, which pins Google to our route instead
+    of letting it rejoin its own. That is the point: avoid every camera
+    that can possibly be avoided, whatever the detour costs.
     """
     if not camera_points:
         # Nothing to dodge, so nothing to steer around. Google's own route
@@ -165,14 +151,11 @@ def pick_waypoints(
         return Picks([], None)
 
     spans = find_divergence_spans(our_route, baseline_route, camera_points)
-    if not strict:
-        spans = [s for s in spans if s.nearest_camera_m <= SPAN_CAMERA_RADIUS_M]
     if not spans:
         return Picks([], None)
 
     # Closest-to-a-camera first, then keep travel order for the deep link.
-    cap = MAX_WAYPOINTS_STRICT if strict else MAX_WAYPOINTS
-    spans = sorted(spans, key=lambda s: s.nearest_camera_m)[:cap]
+    spans = sorted(spans, key=lambda s: s.nearest_camera_m)[:MAX_WAYPOINTS]
     spans = sorted(spans, key=lambda s: s.start_index)
 
     waypoints = [_anchor(span) for span in spans]

@@ -45,6 +45,11 @@ class Road:
     geom: LineString
     name: str | None = None
     ref: str | None = None
+    # The OSM highway= class and posted maxspeed, kept raw. They say what
+    # kind of road the camera watches - "primary, 45 mph" - which is the
+    # context the explanation feature grounds on.
+    road_class: str | None = None
+    maxspeed: str | None = None
 
 
 def _as_road(road):
@@ -213,6 +218,8 @@ def load_roads(path):
             geom=LineString(feature["geometry"]["coordinates"]),
             name=feature.get("properties", {}).get("name"),
             ref=feature.get("properties", {}).get("ref"),
+            road_class=feature.get("properties", {}).get("highway"),
+            maxspeed=feature.get("properties", {}).get("maxspeed"),
         )
         for feature in data["features"]
         if feature["geometry"]["type"] == "LineString"

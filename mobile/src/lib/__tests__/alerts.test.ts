@@ -11,7 +11,12 @@ const HERE = { lat: 38.86, lng: -77.32 };
 function cameraAt(id: number, metersEast: number, type: Camera["type"] = "alpr"): Camera {
   // ~1 degree of longitude is 111320*cos(38.86) metres here.
   const degrees = metersEast / (111320 * Math.cos((38.86 * Math.PI) / 180));
-  return { id, type, lat: HERE.lat, lng: HERE.lng + degrees, facingDeg: null, avoided: false, operator: null, brand: null, roadName: null, roadRef: null };
+  return {
+    id, type, lat: HERE.lat, lng: HERE.lng + degrees, facingDeg: null,
+    avoided: false, operator: null, brand: null, roadName: null, roadRef: null,
+    crimeCount: null, crimeDesc: null, arrestCount: null, arrestDesc: null,
+    tractIncome: null, countyIncome: null, usefulnessScore: null, scoreDesc: null,
+  };
 }
 
 describe("alertRadiusMeters", () => {
