@@ -8,17 +8,23 @@ import {
   REQUEST_TIMEOUT_MS,
   SLOW_REQUEST_TIMEOUT_MS,
 } from "./config";
+import { getAnthropicKey, getInstallId } from "../lib/aiKey";
 import { Camera, CameraType, Place, PlaceSuggestion, Plan, Waypoint } from "./types";
 
 export class ApiError extends Error {
   // True when retrying might work: a timeout, a dropped connection, or a
   // 5xx. False for a request the server rejected outright.
   readonly retryable: boolean;
+  // The HTTP status, when there was a response at all. Screens mostly
+  // show the message; the one status that changes behavior is 402, which
+  // means "add your own Anthropic key" and gets its own button.
+  readonly status: number | null;
 
-  constructor(message: string, retryable: boolean) {
+  constructor(message: string, retryable: boolean, status: number | null = null) {
     super(message);
     this.name = "ApiError";
     this.retryable = retryable;
+    this.status = status;
   }
 }
 
@@ -112,10 +118,25 @@ export async function cameraExplanations(
   if (cameraIds.length === 0) {
     return {};
   }
+  // Who pays for a brand-new explanation: the user's own key when they
+  // have added one, otherwise the free allowance the backend counts per
+  // install id. Cached explanations need neither.
+  const [anthropicKey, installId] = await Promise.all([
+    getAnthropicKey(),
+    getInstallId(),
+  ]);
+  const headers: Record<string, string> = {};
+  if (anthropicKey) {
+    headers["X-Anthropic-Key"] = anthropicKey;
+  }
+  if (installId) {
+    headers["X-Install-Id"] = installId;
+  }
   const body = await request(
     "/explanations",
     { camera_ids: cameraIds },
-    SLOW_REQUEST_TIMEOUT_MS
+    SLOW_REQUEST_TIMEOUT_MS,
+    headers
   );
   return body.explanations as Record<number, string>;
 }
@@ -123,14 +144,15 @@ export async function cameraExplanations(
 async function request(
   path: string,
   json?: unknown,
-  timeoutMs: number = REQUEST_TIMEOUT_MS
+  timeoutMs: number = REQUEST_TIMEOUT_MS,
+  extraHeaders: Record<string, string> = {}
 ): Promise<any> {
   // React Native has no default request timeout, so a server that accepts
   // the connection and then stalls would hang the screen forever.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...extraHeaders };
   if (json !== undefined) {
     headers["Content-Type"] = "application/json";
   }
@@ -161,7 +183,7 @@ async function request(
     // backend sends Retry-After with it, and a driver who waits a moment
     // and taps again is doing exactly the right thing.
     const retryable = response.status >= 500 || response.status === 429;
-    throw new ApiError(await failureMessage(response), retryable);
+    throw new ApiError(await failureMessage(response), retryable, response.status);
   }
 
   try {

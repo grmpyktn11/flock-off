@@ -13,7 +13,12 @@ from slowapi.errors import RateLimitExceeded
 
 from app import google
 from app.appkey import require_app_key
-from app.explain import ExplainError, explanations_for
+from app.explain import (
+    BadUserKeyError,
+    ExplainError,
+    NeedsKeyError,
+    explanations_for,
+)
 from app.google import GoogleError
 from app.planner import plan_route
 from app.ratelimit import (
@@ -91,6 +96,37 @@ def explain_unavailable(request: Request, exc: ExplainError) -> JSONResponse:
     return JSONResponse(
         status_code=503,
         content={"detail": "Explanations are temporarily unavailable. Try again shortly."},
+    )
+
+
+@app.exception_handler(NeedsKeyError)
+def needs_own_key(request: Request, exc: NeedsKeyError) -> JSONResponse:
+    """The free generations are spent; new ones need the user's key.
+
+    402 because it is literally about payment, and because the app treats
+    4xx as not-retryable - retrying without a key cannot help. The detail
+    is shown to the user as-is, so it says what to do, not what happened.
+    """
+    return JSONResponse(
+        status_code=402,
+        content={
+            "detail": "The free AI explanations are used up on this "
+            "device. Add your own Anthropic API key in settings to keep "
+            "generating new ones."
+        },
+    )
+
+
+@app.exception_handler(BadUserKeyError)
+def user_key_rejected(request: Request, exc: BadUserKeyError) -> JSONResponse:
+    """403, not 401: 401 here means the app key, and confusing the two
+    would send someone debugging the wrong secret."""
+    return JSONResponse(
+        status_code=403,
+        content={
+            "detail": "Anthropic rejected your API key. Check it in "
+            "settings - it should start with sk-ant-."
+        },
     )
 
 
@@ -176,8 +212,17 @@ def explanations(
     """Why each of these cameras is plausibly where it is.
 
     One batch per plan. Cameras already explained are served from their
-    row; the rest cost one Claude call each, paid once ever."""
-    return ExplainResponse(explanations=explanations_for(body.camera_ids))
+    row; the rest cost one Claude call each, paid once ever - on the
+    user's own key when X-Anthropic-Key comes along, otherwise on the
+    server's key against the install's free allowance. The user's key is
+    used for the one batch and never stored or logged."""
+    return ExplainResponse(
+        explanations=explanations_for(
+            body.camera_ids,
+            user_key=request.headers.get("x-anthropic-key", "").strip(),
+            install_id=request.headers.get("x-install-id", "").strip(),
+        )
+    )
 
 
 @app.post(

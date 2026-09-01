@@ -57,6 +57,10 @@ USE_MOCK_EXPLAIN = ANTHROPIC_API_KEY == ""
 # brief. Each note is generated once ever, so the cost stays trivial.
 EXPLAIN_MODEL = "claude-sonnet-5"
 EXPLAIN_TIMEOUT_S = 30
+# How many batches that generate NEW explanations each install may put on
+# the server's key before the app asks for the user's own. Serving cached
+# explanations never counts - those cost nothing.
+FREE_EXPLAIN_BATCHES = 3
 
 # A shared secret the app sends as X-App-Key. Not authentication - it
 # ships inside every APK and anyone can read it out - but it costs a

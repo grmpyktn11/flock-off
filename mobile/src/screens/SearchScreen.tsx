@@ -5,12 +5,14 @@ import {
   ActivityIndicator,
   Button,
   Divider,
+  IconButton,
   List,
   TextInput,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
+import AiKeyDialog from "../components/AiKeyDialog";
 import { useAppTheme } from "../theme";
 import { Place, PlaceSuggestion, placeDetails, searchPlaces } from "../api";
 import { newSessionToken } from "../lib/session";
@@ -28,6 +30,7 @@ export default function SearchScreen({ navigation }: Props) {
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // One Google billing session per search burst, closed by the details
   // call when a place is picked.
   const sessionToken = useRef(newSessionToken());
@@ -40,6 +43,20 @@ export default function SearchScreen({ navigation }: Props) {
 
   const query = activeField === "origin" ? originQuery : destinationQuery;
   const selected = activeField === "origin" ? origin : destination;
+
+  // The app's one setting - the user's own AI key - lives behind a gear
+  // here rather than a whole settings screen it would rattle around in.
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <IconButton
+          icon="cog-outline"
+          accessibilityLabel="AI settings"
+          onPress={() => setSettingsOpen(true)}
+        />
+      ),
+    });
+  }, [navigation]);
 
   useEffect(() => {
     // Nothing to look up when the field already holds a chosen place.
@@ -175,6 +192,8 @@ export default function SearchScreen({ navigation }: Props) {
           Plan route
         </Button>
       </View>
+
+      <AiKeyDialog visible={settingsOpen} onDismiss={() => setSettingsOpen(false)} />
     </View>
   );
 }

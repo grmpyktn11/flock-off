@@ -101,10 +101,22 @@ CREATE INDEX IF NOT EXISTS cameras_active_idx    ON cameras (active);
 --     last_seen  = now(),
 --     active     = TRUE;
 
+-- How many free explanation generations each app install has spent on the
+-- server's Anthropic key. Only batches that actually generate something
+-- new count; cached explanations are free reads forever. Once uses hits
+-- the backend's limit the app asks the user for their own key, which is
+-- sent per request and never stored here or anywhere else server-side.
+CREATE TABLE IF NOT EXISTS explain_usage (
+    install_id TEXT PRIMARY KEY,
+    uses       INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- The ingestion job and the backend both connect as postgres over a direct
--- connection, which bypasses RLS. Nothing should reach this table through
+-- connection, which bypasses RLS. Nothing should reach these tables through
 -- Supabase's PostgREST layer using the anon key that ships inside the app
 -- bundle, so enable RLS and add no policies: every anon and authenticated
 -- request is denied. Supabase's linter reports this as an INFO notice
 -- ("RLS enabled, no policies"), which is the intended state here.
 ALTER TABLE cameras ENABLE ROW LEVEL SECURITY;
+ALTER TABLE explain_usage ENABLE ROW LEVEL SECURITY;

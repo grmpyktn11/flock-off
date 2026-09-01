@@ -56,12 +56,29 @@ class ExplainError(Exception):
     """Anthropic is down, out of quota, or refused every request."""
 
 
-def explanations_for(camera_ids: list[int]) -> dict[int, str]:
+class NeedsKeyError(Exception):
+    """This install's free generations are spent and no user key came
+    with the request. Cached explanations are still served before this
+    is ever raised - only NEW generations are gated."""
+
+
+class BadUserKeyError(Exception):
+    """The Anthropic key the user supplied was rejected outright."""
+
+
+def explanations_for(
+    camera_ids: list[int], user_key: str = "", install_id: str = ""
+) -> dict[int, str]:
     """Explanations keyed by camera id.
 
     Ids that are unknown, inactive, or whose generation failed are simply
     absent - one bad camera must not cost the driver the rest of the list.
     ExplainError only when nothing could be generated at all.
+
+    Cached rows are always served; they cost nothing. Generating a new
+    explanation bills someone: the user's own key when the request brings
+    one, otherwise the server's key while the install's free allowance
+    lasts (NeedsKeyError after that).
     """
     if config.USE_MOCK_EXPLAIN:
         return mock_data.camera_explanations(camera_ids)
@@ -72,8 +89,19 @@ def explanations_for(camera_ids: list[int]) -> dict[int, str]:
     if not missing:
         return results
 
+    api_key = user_key or _claim_server_key(install_id)
+
+    import anthropic
+
     with ThreadPoolExecutor(max_workers=_MAX_CONCURRENT) as pool:
-        generated = list(pool.map(_generate_one, missing))
+        try:
+            generated = list(
+                pool.map(lambda row: _generate_one(row, api_key), missing)
+            )
+        except anthropic.AuthenticationError:
+            if user_key:
+                raise BadUserKeyError()
+            raise ExplainError("the server's Anthropic key was rejected")
 
     failures = 0
     for row, text in zip(missing, generated):
@@ -88,13 +116,25 @@ def explanations_for(camera_ids: list[int]) -> dict[int, str]:
     return results
 
 
-def _generate_one(row: tuple) -> str | None:
-    """One Claude call. None on failure, so the batch can go on without it."""
+def _claim_server_key(install_id: str) -> str:
+    """The server's key, if this install still has free generations.
+
+    No install id means no way to count, which means no free tier: the
+    app always sends one, so a request without it is not the app.
+    """
+    if not install_id or not db.claim_free_explain_use(
+        install_id, config.FREE_EXPLAIN_BATCHES
+    ):
+        raise NeedsKeyError()
+    return config.ANTHROPIC_API_KEY
+
+
+def _generate_one(row: tuple, api_key: str) -> str | None:
+    """One Claude call. None on failure, so the batch can go on without
+    it - except a rejected key, which no retry in this batch will fix."""
     import anthropic
 
-    client = anthropic.Anthropic(
-        api_key=config.ANTHROPIC_API_KEY, timeout=config.EXPLAIN_TIMEOUT_S
-    )
+    client = anthropic.Anthropic(api_key=api_key, timeout=config.EXPLAIN_TIMEOUT_S)
     try:
         response = client.messages.create(
             model=config.EXPLAIN_MODEL,
@@ -106,6 +146,10 @@ def _generate_one(row: tuple) -> str | None:
                 {"role": "user", "content": _facts(row) + "\n\n" + _BACKGROUND}
             ],
         )
+    except anthropic.AuthenticationError:
+        # A bad key fails the whole batch identically; let the caller
+        # name the problem instead of eating it camera by camera.
+        raise
     except anthropic.APIError:
         return None
     text = "".join(

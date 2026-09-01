@@ -1,6 +1,6 @@
 # Privacy policy
 
-**flock-off** &middot; last updated 30 August 2026
+**flock-off** &middot; last updated 1 September 2026
 
 flock-off plans driving routes around license plate readers and speed
 cameras, hands the route to Google Maps, and warns you about cameras the
@@ -9,8 +9,16 @@ map and example trips.
 
 ## What we collect
 
-Nothing that identifies you. No accounts, no sign-in, no email, no device
-identifier, no advertising ID. Nothing links one trip to another.
+Nothing that identifies you. No accounts, no sign-in, no email, no
+advertising ID. Nothing links one trip to another.
+
+The one identifier that exists: a token used solely to count how many
+free AI camera notes a device has used. On Android it is a one-way hash
+of the system's app-scoped device id (ANDROID_ID) - the id itself never
+leaves your phone, the hash cannot be reversed to it, and since the id
+is scoped to this app's signing key the token cannot be matched against
+any other app's records. It is sent only with explanation requests and
+stored only next to a counter.
 
 ## Your location
 
@@ -34,6 +42,13 @@ identifier, no advertising ID. Nothing links one trip to another.
   Tapping through to navigate puts you in the Google Maps app.
 - **OpenStreetMap** is where camera locations come from. Nothing about
   you is sent to it.
+- **Anthropic (Claude)** writes the short "why is this camera here"
+  notes, once per camera, from public facts about the camera - never
+  from anything about you or your trip. If you add your own Anthropic
+  API key in settings, it is stored only on your phone, sent only to our
+  server with explanation requests, used for that one batch, and never
+  stored or logged server-side; Anthropic's use of it is covered by
+  [Anthropic's privacy policy](https://www.anthropic.com/legal/privacy).
 
 ## On your device
 

@@ -115,13 +115,16 @@ def real_explain(monkeypatch):
     monkeypatch.setattr(config, "USE_MOCK_EXPLAIN", False)
     saved = []
     monkeypatch.setattr(db, "save_explanation", lambda cid, text: saved.append((cid, text)))
+    # Free generations granted by default, so tests about caching and
+    # failure handling are not also tests about the allowance.
+    monkeypatch.setattr(db, "claim_free_explain_use", lambda iid, limit: True)
     return saved
 
 
 def test_a_cached_row_is_served_without_a_claude_call(real_explain, monkeypatch):
     monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [EXPLAINED_ROW])
 
-    def no_call(row):
+    def no_call(row, api_key):
         raise AssertionError("a cached camera must not be regenerated")
 
     monkeypatch.setattr(explain, "_generate_one", no_call)
@@ -133,9 +136,9 @@ def test_a_miss_is_generated_once_and_saved(real_explain, monkeypatch):
     monkeypatch.setattr(
         db, "fetch_cameras_for_explain", lambda ids: [EXPLAINED_ROW, BARE_ROW]
     )
-    monkeypatch.setattr(explain, "_generate_one", lambda row: "Freshly written.")
+    monkeypatch.setattr(explain, "_generate_one", lambda row, key: "Freshly written.")
 
-    result = explain.explanations_for([1, 2])
+    result = explain.explanations_for([1, 2], install_id="phone-a")
     assert result == {1: "Already written.", 2: "Freshly written."}
     assert real_explain == [(2, "Freshly written.")]
 
@@ -144,19 +147,112 @@ def test_one_failure_does_not_cost_the_rest(real_explain, monkeypatch):
     monkeypatch.setattr(
         db, "fetch_cameras_for_explain", lambda ids: [EXPLAINED_ROW, BARE_ROW]
     )
-    monkeypatch.setattr(explain, "_generate_one", lambda row: None)
+    monkeypatch.setattr(explain, "_generate_one", lambda row, key: None)
 
-    assert explain.explanations_for([1, 2]) == {1: "Already written."}
+    result = explain.explanations_for([1, 2], install_id="phone-a")
+    assert result == {1: "Already written."}
     assert real_explain == []
 
 
 def test_total_failure_is_a_503(real_explain, monkeypatch):
     monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [BARE_ROW])
-    monkeypatch.setattr(explain, "_generate_one", lambda row: None)
+    monkeypatch.setattr(explain, "_generate_one", lambda row, key: None)
 
-    response = client.post("/explanations", json={"camera_ids": [2]})
+    response = client.post(
+        "/explanations",
+        json={"camera_ids": [2]},
+        headers={"X-Install-Id": "phone-a"},
+    )
     assert response.status_code == 503
     assert "unavailable" in response.json()["detail"]
+
+
+# --------------------------------------------------------------------------
+# Whose key pays: the free allowance, then the user's own
+# --------------------------------------------------------------------------
+
+
+def test_a_users_key_is_the_one_used(real_explain, monkeypatch):
+    monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [BARE_ROW])
+    keys_used = []
+
+    def record_key(row, api_key):
+        keys_used.append(api_key)
+        return "Written on their dime."
+
+    monkeypatch.setattr(explain, "_generate_one", record_key)
+    monkeypatch.setattr(
+        db,
+        "claim_free_explain_use",
+        lambda iid, limit: pytest.fail("a user key must not spend the allowance"),
+    )
+
+    result = explain.explanations_for([2], user_key="sk-ant-users-own")
+    assert result == {2: "Written on their dime."}
+    assert keys_used == ["sk-ant-users-own"]
+
+
+def test_cached_rows_never_touch_the_allowance(real_explain, monkeypatch):
+    monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [EXPLAINED_ROW])
+    monkeypatch.setattr(
+        db,
+        "claim_free_explain_use",
+        lambda iid, limit: pytest.fail("a fully cached batch is free"),
+    )
+    assert explain.explanations_for([1], install_id="phone-a") == {
+        1: "Already written."
+    }
+
+
+def test_a_spent_allowance_is_a_402_naming_the_fix(real_explain, monkeypatch):
+    monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [BARE_ROW])
+    monkeypatch.setattr(db, "claim_free_explain_use", lambda iid, limit: False)
+
+    response = client.post(
+        "/explanations",
+        json={"camera_ids": [2]},
+        headers={"X-Install-Id": "phone-a"},
+    )
+    assert response.status_code == 402
+    assert "Anthropic API key" in response.json()["detail"]
+
+
+def test_no_install_id_means_no_free_tier(real_explain, monkeypatch):
+    """A request without an install id is not the app; it gets no
+    allowance rather than an uncountable infinite one."""
+    monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [BARE_ROW])
+    monkeypatch.setattr(
+        db,
+        "claim_free_explain_use",
+        lambda iid, limit: pytest.fail("nothing to count without an id"),
+    )
+    response = client.post("/explanations", json={"camera_ids": [2]})
+    assert response.status_code == 402
+
+
+def test_a_rejected_user_key_is_a_403_blaming_the_key(real_explain, monkeypatch):
+    import anthropic
+    import httpx
+
+    monkeypatch.setattr(db, "fetch_cameras_for_explain", lambda ids: [BARE_ROW])
+
+    def rejected(row, api_key):
+        raise anthropic.AuthenticationError(
+            "invalid x-api-key",
+            response=httpx.Response(
+                401, request=httpx.Request("POST", "https://api.anthropic.com")
+            ),
+            body=None,
+        )
+
+    monkeypatch.setattr(explain, "_generate_one", rejected)
+    response = client.post(
+        "/explanations",
+        json={"camera_ids": [2]},
+        headers={"X-Anthropic-Key": "sk-ant-wrong"},
+    )
+    assert response.status_code == 403
+    assert "your API key" in response.json()["detail"]
 
 
 def test_facts_omit_what_we_do_not_know():
@@ -187,7 +283,9 @@ def test_facts_omit_what_we_do_not_know():
 )
 def test_claude_actually_answers(monkeypatch):
     monkeypatch.setattr(config, "USE_MOCK_EXPLAIN", False)
-    text = explain._generate_one(EXPLAINED_ROW[:17] + (None,))
+    text = explain._generate_one(
+        EXPLAINED_ROW[:17] + (None,), config.ANTHROPIC_API_KEY
+    )
     assert text is not None
     assert text.count(".") >= 1
     # The brief is two sentences, 40 words. Slack for the model counting

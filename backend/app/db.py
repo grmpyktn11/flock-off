@@ -109,6 +109,25 @@ def fetch_cameras_for_explain(camera_ids: list[int]) -> list[tuple]:
             return cur.fetchall()
 
 
+# One atomic claim of a free generation batch. The insert covers a first-
+# time install; the guarded update covers the rest, and stops silently at
+# the cap - no row back means the allowance is spent.
+_CLAIM_FREE_EXPLAIN = """
+    INSERT INTO explain_usage (install_id, uses) VALUES (%s, 1)
+    ON CONFLICT (install_id) DO UPDATE
+        SET uses = explain_usage.uses + 1, updated_at = now()
+        WHERE explain_usage.uses < %s
+    RETURNING uses
+"""
+
+
+def claim_free_explain_use(install_id: str, limit: int) -> bool:
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(_CLAIM_FREE_EXPLAIN, (install_id, limit))
+            return cur.fetchone() is not None
+
+
 def save_explanation(camera_id: int, text: str) -> None:
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RootStackParamList } from "../../App";
 import { ApiError, Camera, Plan, cameraExplanations, planRoute } from "../api";
+import AiKeyDialog from "../components/AiKeyDialog";
 import { cameraLabel, describeCamera, factorLines } from "../lib/cameraCopy";
 import { openInGoogleMaps } from "../lib/googleMaps";
 import { decodePolyline } from "../lib/polyline";
@@ -32,6 +33,11 @@ export default function PlanScreen({ route }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [explanations, setExplanations] = useState<Record<number, string>>({});
   const [explainError, setExplainError] = useState("");
+  // Set when the backend answered 402: the free AI notes are spent and
+  // new ones need the user's own key. Remembers which camera asked, so
+  // saving a key in the dialog can retry that exact request.
+  const [needsKeyFor, setNeedsKeyFor] = useState<Camera | null>(null);
+  const [keyDialogOpen, setKeyDialogOpen] = useState(false);
   const [canWarn, setCanWarn] = useState(true);
   const [watching, setWatching] = useState(false);
   const insets = useSafeAreaInsets();
@@ -121,6 +127,7 @@ export default function PlanScreen({ route }: Props) {
 
   function fetchWhy(camera: Camera) {
     setExplainError("");
+    setNeedsKeyFor(null);
     cameraExplanations([camera.id])
       .then((result) => {
         setExplanations((previous) => ({ ...previous, ...result }));
@@ -134,6 +141,9 @@ export default function PlanScreen({ route }: Props) {
             ? cause.message
             : "Could not load the explanation."
         );
+        if (cause instanceof ApiError && cause.status === 402) {
+          setNeedsKeyFor(camera);
+        }
       });
   }
 
@@ -255,13 +265,24 @@ export default function PlanScreen({ route }: Props) {
                   {explanations[camera.id]}
                 </Text>
               ) : explainError !== "" ? (
-                <View className="flex-row items-center">
+                <View>
                   <Text className="text-xs" style={muted}>
                     {explainError}
                   </Text>
-                  <Button compact mode="text" onPress={() => fetchWhy(camera)}>
-                    Retry
-                  </Button>
+                  <View className="flex-row items-center">
+                    {needsKeyFor !== null ? (
+                      <Button
+                        compact
+                        mode="text"
+                        onPress={() => setKeyDialogOpen(true)}
+                      >
+                        Add API key
+                      </Button>
+                    ) : null}
+                    <Button compact mode="text" onPress={() => fetchWhy(camera)}>
+                      Retry
+                    </Button>
+                  </View>
                 </View>
               ) : (
                 <View className="flex-row items-center">
@@ -407,6 +428,18 @@ export default function PlanScreen({ route }: Props) {
       <Snackbar visible={error !== ""} onDismiss={() => setError("")}>
         {error}
       </Snackbar>
+
+      <AiKeyDialog
+        visible={keyDialogOpen}
+        onDismiss={(saved) => {
+          setKeyDialogOpen(false);
+          // A newly saved key should immediately answer the question that
+          // surfaced the dialog, not leave the user to find Retry.
+          if (saved && needsKeyFor !== null) {
+            fetchWhy(needsKeyFor);
+          }
+        }}
+      />
     </View>
   );
 }
