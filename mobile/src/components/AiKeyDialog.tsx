@@ -5,7 +5,7 @@
 // the moment the field is wanted.
 
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Linking, Text } from "react-native";
 import { Button, Dialog, Portal, TextInput } from "react-native-paper";
 
 import { getAnthropicKey, setAnthropicKey } from "../lib/aiKey";
@@ -64,6 +64,22 @@ export default function AiKeyDialog({ visible, onDismiss }: Props) {
             autoCorrect={false}
             style={{ marginTop: 12 }}
           />
+          <Text
+            accessibilityRole="link"
+            onPress={() =>
+              Linking.openURL(
+                "https://github.com/grmpyktn11/flock-off/blob/main/docs/privacy.md"
+              )
+            }
+            style={{
+              color: tokens.textMuted,
+              fontFamily: tokens.fontFamily,
+              textDecorationLine: "underline",
+              marginTop: 12,
+            }}
+          >
+            Privacy policy
+          </Text>
         </Dialog.Content>
         <Dialog.Actions>
           {hadKey && draft === "" ? (

@@ -1,6 +1,6 @@
 # Privacy policy
 
-**flock-off** &middot; last updated 1 September 2026
+**flock-off** &middot; last updated 2 September 2026
 
 flock-off plans driving routes around license plate readers and speed
 cameras, hands the route to Google Maps, and warns you about cameras the
@@ -27,9 +27,11 @@ stored only next to a counter.
   device. Positions are never transmitted.
 - **Sent to our server:** planning a route sends an origin and a
   destination. Nothing else.
-- **Not stored:** the server does not write route requests to disk. It
-  keeps per-IP request counts for abuse detection; they contain no
-  coordinates and are discarded on restart.
+- **Not stored:** the server does not write route requests to disk, and
+  its request access log is turned off, so search text and addresses
+  never land in a log file either. It keeps per-IP request counts for
+  abuse detection; they contain no coordinates and are discarded on
+  restart.
 - **Background location:** optional. Grant it and warnings work while
   Google Maps is in front. Decline and planning still works; you lose
   the spoken warnings.

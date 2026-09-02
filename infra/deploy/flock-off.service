@@ -29,7 +29,10 @@ EnvironmentFile=/opt/flock-off/.env
 #   the rate limiter sees each phone's real IP and outsiders can't spoof.
 # No --workers flag: the rate limiter counts requests in process memory,
 #   and multiple workers would each keep their own, wrongly looser, count.
-ExecStart=/opt/flock-off/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1
+# --no-access-log: the default access log would write every request line -
+#   /search query strings and client IPs included - into the journal on
+#   disk, which the privacy policy promises not to do. Errors still log.
+ExecStart=/opt/flock-off/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1 --no-access-log
 Restart=on-failure
 RestartSec=3
 
