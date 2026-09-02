@@ -721,31 +721,6 @@ section[id] {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-
-/* The one distribution channel that is live: the file itself. */
-a.store-button.store-live {
-  opacity: 1;
-  cursor: pointer;
-  text-decoration: none;
-  border-color: var(--raspberry);
-}
-
-a.store-button.store-live:hover {
-  background: var(--raspberry);
-  color: #fff7eb;
-}
-
-a.store-button.store-live:hover .store-text small {
-  color: inherit;
-}
-
-.download-note {
-  margin: var(--space-4) auto 0;
-  max-width: 44ch;
-  font-size: 0.85rem;
-  color: var(--ink-muted);
-}
-
 /* ---- records ---- */
 
 .records-list {
