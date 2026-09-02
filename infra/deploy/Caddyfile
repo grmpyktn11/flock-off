@@ -15,12 +15,3 @@
 flock-api.grumpykitten.space {
 	reverse_proxy 127.0.0.1:8000
 }
-
-# The bare domain serves downloads (the Android APK) from a plain
-# directory; the site itself lives on GitHub Pages, so the root path
-# just forwards people there.
-grumpykitten.space {
-	redir / https://grmpyktn11.github.io/flock-off/ 302
-	root * /srv/downloads
-	file_server
-}
