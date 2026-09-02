@@ -10,8 +10,8 @@
 #
 # Install: copy over /etc/caddy/Caddyfile, then: systemctl reload caddy
 
-# flock-off API. Replace the hostname with your real one. The backend
-# listens only on localhost:8000, so this proxy is the only way in.
-api.example.com {
+# flock-off API. The backend listens only on localhost:8000, so this
+# proxy is the only way in.
+flock-api.grumpykitten.space {
 	reverse_proxy 127.0.0.1:8000
 }

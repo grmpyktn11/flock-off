@@ -15,8 +15,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://CHANGEME.example.com",
-        "EXPO_PUBLIC_APP_KEY": "CHANGEME"
+        "EXPO_PUBLIC_API_URL": "https://flock-api.grumpykitten.space"
       },
       "android": {
         "buildType": "apk",
@@ -27,8 +26,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://CHANGEME.example.com",
-        "EXPO_PUBLIC_APP_KEY": "CHANGEME"
+        "EXPO_PUBLIC_API_URL": "https://flock-api.grumpykitten.space"
       },
       "android": {
         "buildType": "app-bundle"
