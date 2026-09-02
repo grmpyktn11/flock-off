@@ -721,6 +721,23 @@ section[id] {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+/* ---- demo ---- */
+
+.demo {
+  text-align: center;
+}
+
+/* 1080x1350 source; capped well below full width so it reads as a
+   phone demo, not a billboard. */
+.demo-video {
+  display: block;
+  margin: var(--space-5) auto 0;
+  width: min(420px, 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
 /* ---- records ---- */
 
 .records-list {
