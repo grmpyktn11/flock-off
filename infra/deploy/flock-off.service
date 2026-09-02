@@ -1,0 +1,38 @@
+# systemd unit for the backend. systemd is Ubuntu's process manager: this
+# file tells it how to start uvicorn, and in exchange it starts the app at
+# boot, restarts it when it crashes, and collects its logs (journalctl -u
+# flock-off).
+#
+# Install with:
+#   cp infra/deploy/flock-off.service /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now flock-off
+
+[Unit]
+Description=flock-off backend (uvicorn)
+# Don't start until the network is actually up; the app connects to
+# Supabase on boot-adjacent requests.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Runs as the unprivileged user, never root: a bug in the app then can't
+# touch anything outside /opt/flock-off.
+User=flockoff
+WorkingDirectory=/opt/flock-off/backend
+# Secrets live in one root-owned-directory file instead of this unit, so
+# the unit itself is safe to commit to git.
+EnvironmentFile=/opt/flock-off/.env
+# Full path into the venv - services get no shell profile, so "activate"
+# doesn't exist here. Binds to localhost only; Caddy is the public face.
+# --proxy-headers makes uvicorn trust X-Forwarded-For from Caddy so the
+# rate limiter sees each phone's real IP instead of 127.0.0.1 for
+# everyone - but only from 127.0.0.1, so nobody outside can spoof it.
+# No --workers flag: the rate limiter counts in process memory, and
+# multiple workers would each keep their own count.
+ExecStart=/opt/flock-off/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
