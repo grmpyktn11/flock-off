@@ -1,12 +1,17 @@
-# Caddy is the front door: it owns ports 80/443, fetches and renews the
-# HTTPS certificate from Let's Encrypt on its own (that is why the DNS A
-# record must already point here), and forwards every request to the
-# backend, which listens only on localhost and is never exposed directly.
+# The server's front door. Caddy is the ONE program on this machine that
+# listens on ports 80 and 443; every app binds only to 127.0.0.1 on its
+# own private port, and Caddy routes each request to the right one by the
+# hostname it was addressed to. Hosting another app later means adding
+# another block like the one below - never a second web server.
 #
-# Replace YOUR.DOMAIN with the real domain, then install with:
-#   cp infra/deploy/Caddyfile /etc/caddy/Caddyfile
-#   systemctl reload caddy
+# Caddy also fetches and renews the HTTPS certificate for every hostname
+# named in this file, automatically, via Let's Encrypt. That only works
+# once the hostname's DNS record points at this server.
+#
+# Install: copy over /etc/caddy/Caddyfile, then: systemctl reload caddy
 
-YOUR.DOMAIN {
-    reverse_proxy 127.0.0.1:8000
+# flock-off API. Replace the hostname with your real one. The backend
+# listens only on localhost:8000, so this proxy is the only way in.
+api.example.com {
+	reverse_proxy 127.0.0.1:8000
 }
